@@ -3,113 +3,209 @@ package main
 import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
+	. "github.com/mmcloughlin/avo/reg"
 )
 
+var _ GPVirtual = nil
+
 func Hash8(c ctx) {
-	TEXT("hash8_avx", NOSPLIT, "func(inputs *[8]*byte, blocks int, key *[8]uint32, counter, inc uint64, flags, flags_start, flags_end uint8, out *[256]byte, v, m *[16][8]uint32)")
+	TEXT("hash8_avx", 0, "func(inputs *[8]*byte, blocks uint64, key *[8]uint32, counter, inc uint64, flags, flags_start, flags_end uint8, out *[256]byte)")
 
 	var (
-		// inputs      = Mem{Base: Load(Param("inputs"), GP64())}
-		// blocks      = Load(Param("blocks"), GP64())
-		// key         = Mem{Base: Load(Param("key"), GP64())}
-		// counter     = Load(Param("counter"), GP64())
-		// inc         = Load(Param("inc"), GP64())
-		// flags       = Load(Param("flags"), GP32())
-		// flags_start = Load(Param("flags_start"), GP32())
-		// flags_end   = Load(Param("flags_end"), GP32())
-		// out = Mem{Base: Load(Param("out"), GP64())}
-
-		vp = Mem{Base: Load(Param("v"), GP64())}
-		mp = Mem{Base: Load(Param("m"), GP64())}
+		inputs      = Mem{Base: Load(Param("inputs"), GP64())}
+		blocks      = Load(Param("blocks"), GP64())
+		key         = Mem{Base: Load(Param("key"), GP64())}
+		counter     = Load(Param("counter"), GP64()).(GPVirtual)
+		inc         = Load(Param("inc"), GP64()).(GPVirtual)
+		flags       = Load(Param("flags"), GP32()).(GPVirtual)
+		flags_start = Load(Param("flags_start"), GP32()).(GPVirtual)
+		flags_end   = Load(Param("flags_end"), GP32()).(GPVirtual)
+		out         = Mem{Base: Load(Param("out"), GP64())}
 	)
 
 	alloc := NewAlloc(AllocLocal(32))
+	defer alloc.Free()
 
-	// v0, v1, v2, v3 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-	// v4, v5, v6, v7 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-	// _, _, _, _ = v0.Get(), v1.Get(), v2.Get(), v3.Get()
-	// _, _, _, _ = v4.Get(), v5.Get(), v6.Get(), v7.Get()
+	block_flags := AllocLocal(8) // only need 4, but keeps 64 bit alignment
+	ctr_lo_mem := AllocLocal(32)
+	ctr_hi_mem := AllocLocal(32)
+	msg_vecs := AllocLocal(32 * 16)
 
-	// v0, v1, v2, v3, v4, v5, v6, v7 = transpose(c, alloc, v0, v1, v2, v3, v4, v5, v6, v7)
-
-	vs := [16]*Value{
-		alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value(),
-		alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value(),
-		alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value(),
-		alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value(),
+	Comment("Load key into vectors")
+	h_vecs := alloc.Values(8)
+	h_regs := make([]int, 8)
+	for i, v := range h_vecs {
+		VPBROADCASTD(key.Offset(4*i), v.Get())
+		h_regs[i] = v.Reg()
 	}
 
-	for i, v := range vs {
-		VMOVDQU(vp.Offset(32*i), v.Get())
+	{
+		// TODO: probably a better way to get these values on the stack
+		c := func(n int) GPVirtual {
+			r := GP64()
+			if n > 0 {
+				MOVQ(inc, r)
+				ANDQ(U8(n), r)
+				ADDQ(counter, r)
+			} else {
+				MOVQ(counter, r)
+			}
+			return r
+		}
+
+		Comment("Build and store counter data on the stack")
+		for i := 0; i < 8; i++ {
+			r := c(i)
+			MOVL(r.As32(), ctr_lo_mem.Offset(4*i))
+			SHRQ(U8(32), r)
+			MOVL(r.As32(), ctr_hi_mem.Offset(4*i))
+		}
 	}
 
-	for i := 0; i < 7; i++ {
-		vs = round(c, alloc, mp, i, vs)
-	}
+	Comment("Set up block flags for first iteration")
+	MOVL(flags, block_flags)
+	ORL(flags_start, block_flags)
 
-	// { // just to use all the registers for allocation purposes
-	// 	tmp := GP64()
-	// 	MOVQ(inputs.Base, tmp)
-	// 	MOVQ(blocks, tmp)
-	// 	MOVQ(key.Base, tmp)
-	// 	MOVQ(counter, tmp)
-	// 	MOVQ(inc, tmp)
-	// 	MOVL(flags, tmp.As32())
-	// 	MOVL(flags_start, tmp.As32())
-	// 	MOVL(flags_end, tmp.As32())
-	// 	MOVQ(out.Base, tmp)
-	// }
+	{
+		Label("loop")
+		CMPQ(blocks, Imm(0))
+		JEQ(LabelRef("finalize"))
+
+		Comment("Include end flags if last block")
+		CMPQ(blocks, Imm(1))
+		JNE(LabelRef("round_setup"))
+		ORL(flags_end, block_flags)
+
+		Label("round_setup")
+		Comment("Load and transpose message vectors")
+		transpose_msg_vecs_and_inc(c, alloc, inputs, msg_vecs)
+
+		Comment("Set up block length and flag vectors")
+		block_len_vec := alloc.Value()
+		VMOVDQU(c.block_len, block_len_vec.Get())
+		block_flags_vec := alloc.Value()
+		VPBROADCASTD(block_flags, block_flags_vec.Get())
+
+		Comment("Set up IV vectors")
+		iv := alloc.Values(4)
+		for i, v := range iv {
+			VPBROADCASTD(c.iv.Offset(4*i), v.Get())
+		}
+
+		Comment("Set up counter vectors")
+		ctr_low := alloc.Value()
+		VMOVDQU(ctr_lo_mem, ctr_low.Get())
+		ctr_hi := alloc.Value()
+		VMOVDQU(ctr_hi_mem, ctr_hi.Get())
+
+		vs := []*Value{
+			h_vecs[0], h_vecs[1], h_vecs[2], h_vecs[3],
+			h_vecs[4], h_vecs[5], h_vecs[6], h_vecs[7],
+			iv[0], iv[1], iv[2], iv[3],
+			ctr_low, ctr_hi, block_len_vec, block_flags_vec,
+		}
+
+		for r := 0; r < 7; r++ {
+			Commentf("Round %d", r+1)
+			round(c, alloc, msg_vecs, r, vs)
+		}
+
+		Comment("Finalize rounds")
+		for i := 0; i < 8; i++ {
+			h_vecs[i] = alloc.Value()
+			VPXOR(vs[i].ConsumeOp(), vs[8+i].Consume(), h_vecs[i].Get())
+		}
+
+		Comment("Fix up registers for next iteration")
+		for i := 7; i >= 0; i-- {
+			if h_vecs[i].Reg() != h_regs[i] {
+				Commentf("YMM%-2d => YMM%-2d", h_vecs[i].Reg(), h_regs[i])
+				h_vecs[i].Become(h_regs[i])
+			}
+		}
+
+		Comment("Decrement and loop")
+		DECQ(blocks)
+		MOVL(flags, block_flags)
+		JMP(LabelRef("loop"))
+	}
 
 	Label("finalize")
 
-	for i, v := range vs {
-		VMOVDQU(v.Consume(), vp.Offset(32*i))
+	Comment("Transpose output vectors")
+	transpose_vecs(c, alloc, h_vecs)
+
+	Comment("Store into output")
+	for i, v := range h_vecs {
+		VMOVDQU(v.Consume(), out.Offset(32*i))
 	}
 
 	RET()
 }
 
-func transpose(c ctx, alloc *Alloc,
-	v0, v1, v2, v3, v4, v5, v6, v7 *Value) (
-	_, _, _, _, _, _, _, _ *Value) {
-
+func transpose_vecs(c ctx, alloc *Alloc, vs []*Value) {
 	L01, H01, L23, H23 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 	L45, H45, L67, H67 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
-	VPUNPCKLDQ(v0.GetOp(), v1.Get(), L01.Get())
-	VPUNPCKHDQ(v0.ConsumeOp(), v1.Consume(), H01.Get())
-	VPUNPCKLDQ(v2.GetOp(), v3.Get(), L23.Get())
-	VPUNPCKHDQ(v2.ConsumeOp(), v3.Consume(), H23.Get())
-	VPUNPCKLDQ(v4.GetOp(), v5.Get(), L45.Get())
-	VPUNPCKHDQ(v4.ConsumeOp(), v5.Consume(), H45.Get())
-	VPUNPCKLDQ(v6.GetOp(), v7.Get(), L67.Get())
-	VPUNPCKHDQ(v6.ConsumeOp(), v7.Consume(), H67.Get())
+	VPUNPCKLDQ(vs[1].GetOp(), vs[0].Get(), L01.Get())
+	VPUNPCKHDQ(vs[1].ConsumeOp(), vs[0].Consume(), H01.Get())
+	VPUNPCKLDQ(vs[3].GetOp(), vs[2].Get(), L23.Get())
+	VPUNPCKHDQ(vs[3].ConsumeOp(), vs[2].Consume(), H23.Get())
+	VPUNPCKLDQ(vs[5].GetOp(), vs[4].Get(), L45.Get())
+	VPUNPCKHDQ(vs[5].ConsumeOp(), vs[4].Consume(), H45.Get())
+	VPUNPCKLDQ(vs[7].GetOp(), vs[6].Get(), L67.Get())
+	VPUNPCKHDQ(vs[7].ConsumeOp(), vs[6].Consume(), H67.Get())
 
 	LL0123, HL0123, LH0123, HH0123 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 	LL4567, HL4567, LH4567, HH4567 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
-	VPUNPCKLQDQ(L01.GetOp(), L23.Get(), LL0123.Get())
-	VPUNPCKHQDQ(L01.ConsumeOp(), L23.Consume(), HL0123.Get())
-	VPUNPCKLQDQ(H01.GetOp(), H23.Get(), LH0123.Get())
-	VPUNPCKHQDQ(H01.ConsumeOp(), H23.Consume(), HH0123.Get())
-	VPUNPCKLQDQ(L45.GetOp(), L67.Get(), LL4567.Get())
-	VPUNPCKHQDQ(L45.ConsumeOp(), L67.Consume(), HL4567.Get())
-	VPUNPCKLQDQ(H45.GetOp(), H67.Get(), LH4567.Get())
-	VPUNPCKHQDQ(H45.ConsumeOp(), H67.Consume(), HH4567.Get())
+	VPUNPCKLQDQ(L23.GetOp(), L01.Get(), LL0123.Get())
+	VPUNPCKHQDQ(L23.ConsumeOp(), L01.Consume(), HL0123.Get())
+	VPUNPCKLQDQ(H23.GetOp(), H01.Get(), LH0123.Get())
+	VPUNPCKHQDQ(H23.ConsumeOp(), H01.Consume(), HH0123.Get())
+	VPUNPCKLQDQ(L67.GetOp(), L45.Get(), LL4567.Get())
+	VPUNPCKHQDQ(L67.ConsumeOp(), L45.Consume(), HL4567.Get())
+	VPUNPCKLQDQ(H67.GetOp(), H45.Get(), LH4567.Get())
+	VPUNPCKHQDQ(H67.ConsumeOp(), H45.Consume(), HH4567.Get())
 
-	v0, v1, v2, v3 = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-	v4, v5, v6, v7 = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
+	vs[0], vs[1], vs[2], vs[3] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
+	vs[4], vs[5], vs[6], vs[7] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
-	VINSERTI128(Imm(1), LL4567.GetOp(AsX), LL0123.Get(), v0.Get())
-	VPERM2I128(Imm(49), LL4567.Consume(), LL0123.Consume(), v4.Get())
-	VINSERTI128(Imm(1), HL4567.GetOp(AsX), HL0123.Get(), v1.Get())
-	VPERM2I128(Imm(49), HL4567.Consume(), HL0123.Consume(), v5.Get())
-	VINSERTI128(Imm(1), LH4567.GetOp(AsX), LH0123.Get(), v2.Get())
-	VPERM2I128(Imm(49), LH4567.Consume(), LH0123.Consume(), v6.Get())
-	VINSERTI128(Imm(1), HH4567.GetOp(AsX), HH0123.Get(), v3.Get())
-	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), v7.Get())
+	VINSERTI128(Imm(1), LL4567.GetOp(AsX), LL0123.Get(), vs[0].Get())
+	VPERM2I128(Imm(49), LL4567.Consume(), LL0123.Consume(), vs[4].Get())
+	VINSERTI128(Imm(1), HL4567.GetOp(AsX), HL0123.Get(), vs[1].Get())
+	VPERM2I128(Imm(49), HL4567.Consume(), HL0123.Consume(), vs[5].Get())
+	VINSERTI128(Imm(1), LH4567.GetOp(AsX), LH0123.Get(), vs[2].Get())
+	VPERM2I128(Imm(49), LH4567.Consume(), LH0123.Consume(), vs[6].Get())
+	VINSERTI128(Imm(1), HH4567.GetOp(AsX), HH0123.Get(), vs[3].Get())
+	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), vs[7].Get())
+}
 
-	return v0, v1, v2, v3, v4, v5, v6, v7
+func transpose_msg_vecs_and_inc(c ctx, alloc *Alloc, inputs, msg_vecs Mem) {
+	vs := alloc.Values(8)
+	for i, v := range vs {
+		addr := GP64()
+		MOVQ(inputs.Offset(8*i), addr)
+		VMOVDQU(Mem{Base: addr}, v.Get())
+	}
+	transpose_vecs(c, alloc, vs)
+	for i, v := range vs {
+		VMOVDQU(v.Get(), msg_vecs.Offset(32*i))
+	}
+
+	for i, v := range vs {
+		addr := GP64()
+		MOVQ(inputs.Offset(8*i), addr)
+		VMOVDQU(Mem{Base: addr}.Offset(32), v.Get())
+	}
+	transpose_vecs(c, alloc, vs)
+	for i, v := range vs {
+		VMOVDQU(v.Consume(), msg_vecs.Offset(256+32*i))
+	}
+
+	for i := range vs {
+		ADDQ(U8(64), inputs.Offset(8*i))
+	}
 }
 
 func addm(alloc *Alloc, mp Mem, a *Value) *Value {
@@ -192,7 +288,7 @@ func rotTs(alloc *Alloc, tab Mem, as []*Value) {
 	}
 }
 
-func round(c ctx, alloc *Alloc, mp Mem, r int, vs [16]*Value) (out [16]*Value) {
+func round(c ctx, alloc *Alloc, mp Mem, r int, vs []*Value) {
 	m := func(n int) Mem { return mp.Offset(msgSched[r][n] * 32) }
 	ms := func(ns ...int) (o []Mem) {
 		for _, n := range ns {
@@ -240,6 +336,4 @@ func round(c ctx, alloc *Alloc, mp Mem, r int, vs [16]*Value) (out [16]*Value) {
 	vs[4], vs[5], vs[6], vs[7] = vs[7], vs[4], vs[5], vs[6]
 	vs[8], vs[9], vs[10], vs[11] = vs[10], vs[11], vs[8], vs[9]
 	vs[12], vs[13], vs[14], vs[15] = vs[13], vs[14], vs[15], vs[12]
-
-	return vs
 }

@@ -5,20 +5,31 @@ import (
 	. "github.com/mmcloughlin/avo/operand"
 )
 
+var msgSched = [7][16]int{
+	{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	{2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8},
+	{3, 4, 10, 12, 13, 2, 7, 14, 6, 5, 9, 0, 11, 15, 8, 1},
+	{10, 7, 12, 9, 14, 3, 13, 15, 4, 0, 11, 2, 5, 8, 1, 6},
+	{12, 13, 9, 11, 15, 10, 14, 8, 7, 2, 5, 3, 0, 1, 6, 4},
+	{9, 14, 11, 5, 8, 12, 15, 1, 13, 3, 0, 10, 2, 6, 4, 7},
+	{11, 15, 5, 0, 1, 9, 8, 6, 14, 10, 2, 12, 3, 4, 7, 13},
+}
+
 type ctx struct {
-	rot16 Mem
-	rot8  Mem
-	iv    Mem
+	rot16     Mem
+	rot8      Mem
+	iv        Mem
+	block_len Mem
 }
 
 func main() {
-	// iv := GLOBL("iv", RODATA|NOPTR)
-	// for n, v := range []U32{
-	// 	0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
-	// 	0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
-	// } {
-	// 	DATA(4*n, v)
-	// }
+	iv := GLOBL("iv", RODATA|NOPTR)
+	for n, v := range []U32{
+		0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
+		0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
+	} {
+		DATA(4*n, v)
+	}
 
 	rot16 := GLOBL("rot16_shuf", RODATA|NOPTR)
 	for n, v := range []U8{
@@ -40,10 +51,16 @@ func main() {
 		DATA(n, v)
 	}
 
+	block_len := GLOBL("block_len", RODATA|NOPTR)
+	for i := 0; i < 8; i++ {
+		DATA(4*i, U32(64))
+	}
+
 	c := ctx{
-		rot16: rot16,
-		rot8:  rot8,
-		// iv:    iv,
+		rot16:     rot16,
+		rot8:      rot8,
+		iv:        iv,
+		block_len: block_len,
 	}
 
 	// AVX(c)
