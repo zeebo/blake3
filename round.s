@@ -1385,13 +1385,8 @@ round_setup:
 	VPXOR Y7, Y8, Y6
 
 	// Fix up registers for next iteration
-	// YMM6  => YMM7 
 	VMOVDQU Y6, Y7
-
-	// YMM0  => YMM6 
 	VMOVDQU Y0, Y6
-
-	// YMM9  => YMM0 
 	VMOVDQU Y9, Y0
 
 	// Decrement and loop

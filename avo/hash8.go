@@ -118,10 +118,7 @@ func Hash8(c ctx) {
 
 		Comment("Fix up registers for next iteration")
 		for i := 7; i >= 0; i-- {
-			if h_vecs[i].Reg() != h_regs[i] {
-				Commentf("YMM%-2d => YMM%-2d", h_vecs[i].Reg(), h_regs[i])
-				h_vecs[i].Become(h_regs[i])
-			}
+			h_vecs[i].Become(h_regs[i])
 		}
 
 		Comment("Decrement and loop")
