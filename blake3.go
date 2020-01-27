@@ -65,104 +65,121 @@ func first8words(in [16]uint32) [8]uint32 {
 // core primitives
 //
 
-func round(state, m *[16]uint32) {
+const (
+	r0 = 0xfedcba9876543210
+	r1 = 0x8fe95cb1d407a362
+	r2 = 0x18fb0956e72dca43
+	r3 = 0x61852b04fd3e9c7a
+	r4 = 0x461035278eafb9dc
+	r5 = 0x7462a03d1fc85be9
+	r6 = 0xd743c2ae689105fb
+)
+
+func round(state, m *[16]uint32, r uint64) {
 	{
-		const a, b, c, d, x, y = 0, 4, 8, 12, 0, 1
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 0, 4, 8, 12
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 	{
-		const a, b, c, d, x, y = 1, 5, 9, 13, 2, 3
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 1, 5, 9, 13
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 	{
-		const a, b, c, d, x, y = 2, 6, 10, 14, 4, 5
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 2, 6, 10, 14
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 	{
-		const a, b, c, d, x, y = 3, 7, 11, 15, 6, 7
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 3, 7, 11, 15
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 
 	{
-		const a, b, c, d, x, y = 0, 5, 10, 15, 8, 9
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 0, 5, 10, 15
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 	{
-		const a, b, c, d, x, y = 1, 6, 11, 12, 10, 11
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 1, 6, 11, 12
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 	{
-		const a, b, c, d, x, y = 2, 7, 8, 13, 12, 13
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 2, 7, 8, 13
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
 	}
 	{
-		const a, b, c, d, x, y = 3, 4, 9, 14, 14, 15
-		state[a] = state[a] + state[b] + m[x]
+		const a, b, c, d = 3, 4, 9, 14
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -16)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -12)
-		state[a] = state[a] + state[b] + m[y]
+		state[a] = state[a] + state[b] + m[r%16]
+		r >>= 4
 		state[d] = bits.RotateLeft32(state[d]^state[a], -8)
 		state[c] = state[c] + state[d]
 		state[b] = bits.RotateLeft32(state[b]^state[c], -7)
-	}
-}
-
-func permute(m *[16]uint32) {
-	*m = [16]uint32{
-		m[2], m[6], m[3], m[10],
-		m[7], m[0], m[4], m[13],
-		m[1], m[11], m[12], m[5],
-		m[9], m[14], m[15], m[8],
 	}
 }
 
@@ -182,20 +199,13 @@ func compress(
 	}
 
 	{
-		block := *block
-		round(&state, &block)
-		permute(&block)
-		round(&state, &block)
-		permute(&block)
-		round(&state, &block)
-		permute(&block)
-		round(&state, &block)
-		permute(&block)
-		round(&state, &block)
-		permute(&block)
-		round(&state, &block)
-		permute(&block)
-		round(&state, &block)
+		round(&state, block, r0)
+		round(&state, block, r1)
+		round(&state, block, r2)
+		round(&state, block, r3)
+		round(&state, block, r4)
+		round(&state, block, r5)
+		round(&state, block, r6)
 	}
 
 	{
