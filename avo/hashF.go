@@ -9,9 +9,7 @@ import (
 func HashF(c ctx) {
 	TEXT("hashF_avx", 0, `func(
 		input *[8192]byte,
-		chunks uint64,
-		blocks uint64,
-		blen uint64,
+		length uint64,
 		counter uint64,
 		flags uint32,
 		out *[256]byte,
@@ -19,9 +17,7 @@ func HashF(c ctx) {
 
 	var (
 		input   = Mem{Base: Load(Param("input"), GP64())}
-		chunks  = Load(Param("chunks"), GP64()).(GPVirtual)
-		blocks  = Load(Param("blocks"), GP64()).(GPVirtual)
-		blen    = Load(Param("blen"), GP64()).(GPVirtual)
+		length  = Load(Param("length"), GP64()).(GPVirtual)
 		counter = Load(Param("counter"), GP64()).(GPVirtual)
 		flags   = Load(Param("flags"), GP32()).(GPVirtual)
 		out     = Mem{Base: Load(Param("out"), GP64())}
@@ -30,6 +26,9 @@ func HashF(c ctx) {
 	loop := GP64()
 	maskO := Mem{Base: GP64()}
 	maskP := Mem{Base: GP64()}
+	chunks := GP64()
+	blocks := GP64()
+	blen := GP64()
 
 	alloc := NewAlloc(AllocLocal(32))
 	defer alloc.Free()
@@ -54,6 +53,25 @@ func HashF(c ctx) {
 	)
 
 	{
+		Comment("Compute complete chunks, blocks and blen")
+
+		// chunks = (length / 1024) * 32
+		MOVQ(length, chunks)
+		SHRQ(U8(10), chunks)
+		SHLQ(U8(5), chunks)
+
+		// blocks = (length - 1) % 1024 / 64 * 64
+		DECQ(length)
+		MOVQ(length, blocks)
+		ANDQ(U32(960), blocks)
+
+		// blen = (length - 1) % 64 + 1
+		MOVQ(length, blen)
+		ANDQ(U8(63), blen)
+		INCQ(blen)
+	}
+
+	{
 		Comment("Load some params into the stack (avo improvment?)")
 		MOVL(flags, flags_mem)
 		MOVQ(counter, counter_mem)
@@ -62,16 +80,10 @@ func HashF(c ctx) {
 
 	{
 		Comment("Set up masks for block flags and stores")
-		SHLQ(Imm(5), chunks) // 32
 		LEAQ(c.maskO, maskO.Base)
 		LEAQ(maskO.Idx(chunks, 1), maskO.Base)
 		LEAQ(c.maskP, maskP.Base)
 		LEAQ(maskP.Idx(chunks, 1), maskP.Base)
-	}
-
-	{
-		Comment("Premultiply blocks for loop comparisons")
-		SHLQ(Imm(6), blocks) // 64
 	}
 
 	{

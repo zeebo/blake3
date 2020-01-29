@@ -73,25 +73,14 @@ func TestHashF(t *testing.T) {
 		}
 	}
 
-	for n := 0; n < len(input); n++ {
+	for n := 1; n < len(input); n++ {
 		var out [256]byte
 
 		fill(n)
 
-		chunks := uint64(n) / 1024
-		blocks := uint64(n) % 1024 / 64
-		blen := uint64(n) % 64
-
-		if blen == 0 && blocks > 0 {
-			blen = 64
-			blocks--
-		}
-
 		hashF_avx(
 			&input,
-			chunks,
-			blocks,
-			blen,
+			uint64(n),
 			0,
 			0,
 			&out,
@@ -176,15 +165,16 @@ func BenchmarkHash8(b *testing.B) {
 	}
 }
 
-func BenchmarkHashF_0(b *testing.B) {
+func BenchmarkHashF_1(b *testing.B) {
 	var input [8192]byte
 	var out [256]byte
 
+	b.SetBytes(1)
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF_avx(&input, 0, 0, 0, 0, 0, &out)
+		hashF_avx(&input, 1, 0, 0, &out)
 	}
 }
 
@@ -197,7 +187,7 @@ func BenchmarkHashF_8K(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF_avx(&input, 8, 15, 64, 0, 0, &out)
+		hashF_avx(&input, 8192, 0, 0, &out)
 	}
 }
 

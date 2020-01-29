@@ -1513,31 +1513,35 @@ finalize:
 	VMOVDQU Y7, 224(BX)
 	RET
 
-// func hashF_avx(input *[8192]byte, chunks uint64, blocks uint64, blen uint64, counter uint64, flags uint32, out *[256]byte)
+// func hashF_avx(input *[8192]byte, length uint64, counter uint64, flags uint32, out *[256]byte)
 // Requires: AVX, AVX2
-TEXT ·hashF_avx(SB), $632-56
+TEXT ·hashF_avx(SB), $632-40
 	MOVQ input+0(FP), AX
-	MOVQ chunks+8(FP), CX
-	MOVQ blocks+16(FP), DX
-	MOVQ blen+24(FP), BX
-	MOVQ counter+32(FP), BP
-	MOVL flags+40(FP), SI
-	MOVQ out+48(FP), DI
+	MOVQ length+8(FP), CX
+	MOVQ counter+16(FP), DX
+	MOVL flags+24(FP), BX
+	MOVQ out+32(FP), BP
+
+	// Compute complete chunks, blocks and blen
+	MOVQ CX, SI
+	SHRQ $0x0a, SI
+	SHLQ $0x05, SI
+	DECQ CX
+	MOVQ CX, DI
+	ANDQ $0x000003c0, DI
+	ANDQ $0x3f, CX
+	INCQ CX
 
 	// Load some params into the stack (avo improvment?)
-	MOVL SI, 32(SP)
-	MOVQ BP, 40(SP)
-	MOVQ BX, 48(SP)
+	MOVL BX, 32(SP)
+	MOVQ DX, 40(SP)
+	MOVQ CX, 48(SP)
 
 	// Set up masks for block flags and stores
-	SHLQ $0x05, CX
-	LEAQ maskO<>+0(SB), BP
-	LEAQ (BP)(CX*1), BP
+	LEAQ maskO<>+0(SB), DX
+	LEAQ (DX)(SI*1), DX
 	LEAQ maskP<>+0(SB), R8
-	LEAQ (R8)(CX*1), R8
-
-	// Premultiply blocks for loop comparisons
-	SHLQ $0x06, DX
+	LEAQ (R8)(SI*1), R8
 
 	// Load IV into vectors
 	VPBROADCASTD iv<>+0(SB), Y0
@@ -1564,28 +1568,28 @@ TEXT ·hashF_avx(SB), $632-56
 	VMOVDQU      Y8, 88(SP)
 
 	// Set up block flags and variables for iteration
-	XORQ BX, BX
+	XORQ CX, CX
 	ORL  $0x01, 32(SP)
 
 loop:
-	CMPQ BX, $0x00000400
+	CMPQ CX, $0x00000400
 	JEQ  finalize
 
 	// Include end flags if last block
-	CMPQ BX, $0x000003c0
+	CMPQ CX, $0x000003c0
 	JNE  round_setup
 	ORL  $0x02, 32(SP)
 
 round_setup:
 	// Load and transpose message vectors
-	VMOVDQU     (AX)(BX*1), Y8
-	VMOVDQU     1024(AX)(BX*1), Y9
-	VMOVDQU     2048(AX)(BX*1), Y10
-	VMOVDQU     3072(AX)(BX*1), Y11
-	VMOVDQU     4096(AX)(BX*1), Y12
-	VMOVDQU     5120(AX)(BX*1), Y13
-	VMOVDQU     6144(AX)(BX*1), Y14
-	VMOVDQU     7168(AX)(BX*1), Y15
+	VMOVDQU     (AX)(CX*1), Y8
+	VMOVDQU     1024(AX)(CX*1), Y9
+	VMOVDQU     2048(AX)(CX*1), Y10
+	VMOVDQU     3072(AX)(CX*1), Y11
+	VMOVDQU     4096(AX)(CX*1), Y12
+	VMOVDQU     5120(AX)(CX*1), Y13
+	VMOVDQU     6144(AX)(CX*1), Y14
+	VMOVDQU     7168(AX)(CX*1), Y15
 	VMOVDQU     Y0, (SP)
 	VPUNPCKLDQ  Y9, Y8, Y0
 	VPUNPCKHDQ  Y9, Y8, Y8
@@ -1619,14 +1623,14 @@ round_setup:
 	VMOVDQU     Y0, 280(SP)
 	VMOVDQU     Y9, 312(SP)
 	VMOVDQU     Y8, 344(SP)
-	VMOVDQU     32(AX)(BX*1), Y14
-	VMOVDQU     1056(AX)(BX*1), Y15
-	VMOVDQU     2080(AX)(BX*1), Y11
-	VMOVDQU     3104(AX)(BX*1), Y13
-	VMOVDQU     4128(AX)(BX*1), Y10
-	VMOVDQU     5152(AX)(BX*1), Y0
-	VMOVDQU     6176(AX)(BX*1), Y9
-	VMOVDQU     7200(AX)(BX*1), Y8
+	VMOVDQU     32(AX)(CX*1), Y14
+	VMOVDQU     1056(AX)(CX*1), Y15
+	VMOVDQU     2080(AX)(CX*1), Y11
+	VMOVDQU     3104(AX)(CX*1), Y13
+	VMOVDQU     4128(AX)(CX*1), Y10
+	VMOVDQU     5152(AX)(CX*1), Y0
+	VMOVDQU     6176(AX)(CX*1), Y9
+	VMOVDQU     7200(AX)(CX*1), Y8
 	VPUNPCKLDQ  Y15, Y14, Y12
 	VPUNPCKHDQ  Y15, Y14, Y14
 	VPUNPCKLDQ  Y13, Y11, Y15
@@ -1675,16 +1679,16 @@ round_setup:
 	VMOVDQU 88(SP), Y14
 
 	// Insert flag and length if last block in partial chunk
-	CMPQ         BX, DX
+	CMPQ         CX, DI
 	JNE          begin_rounds
 	VPBROADCASTD chunk_end<>+0(SB), Y15
-	VPAND        (BP), Y15, Y15
+	VPAND        (DX), Y15, Y15
 	VPOR         Y15, Y8, Y8
-	VMOVDQU      (BP), Y15
+	VMOVDQU      (DX), Y15
 	VPXOR        all<>+0(SB), Y15, Y15
 	VPAND        Y0, Y15, Y0
 	VPBROADCASTD 48(SP), Y15
-	VPAND        (BP), Y15, Y15
+	VPAND        (DX), Y15, Y15
 	VPOR         Y0, Y15, Y0
 
 begin_rounds:
@@ -2778,20 +2782,20 @@ begin_rounds:
 	VPXOR Y7, Y8, Y6
 
 	// Save state for partial chunk if necessary
-	CMPQ       BX, DX
+	CMPQ       CX, DI
 	JNE        register_fixup
-	VMOVDQU    (BP), Y7
-	VPMASKMOVD Y9, Y7, (DI)
-	VPMASKMOVD Y1, Y7, 32(DI)
-	VPMASKMOVD Y2, Y7, 64(DI)
-	VPMASKMOVD Y3, Y7, 96(DI)
-	VPMASKMOVD Y4, Y7, 128(DI)
-	VPMASKMOVD Y5, Y7, 160(DI)
-	VPMASKMOVD Y0, Y7, 192(DI)
-	VPMASKMOVD Y6, Y7, 224(DI)
+	VMOVDQU    (DX), Y7
+	VPMASKMOVD Y9, Y7, (BP)
+	VPMASKMOVD Y1, Y7, 32(BP)
+	VPMASKMOVD Y2, Y7, 64(BP)
+	VPMASKMOVD Y3, Y7, 96(BP)
+	VPMASKMOVD Y4, Y7, 128(BP)
+	VPMASKMOVD Y5, Y7, 160(BP)
+	VPMASKMOVD Y0, Y7, 192(BP)
+	VPMASKMOVD Y6, Y7, 224(BP)
 
 	// If we have zero complete chunks, we're done
-	CMPQ CX, $0x00
+	CMPQ SI, $0x00
 	JNE  register_fixup
 	RET
 
@@ -2802,21 +2806,21 @@ register_fixup:
 	VMOVDQU Y9, Y0
 
 	// Increment, reset flags, and loop
-	ADDQ $0x40, BX
-	MOVL SI, 32(SP)
+	ADDQ $0x40, CX
+	MOVL BX, 32(SP)
 	JMP  loop
 
 finalize:
 	// Store prefix of full chunks into output
 	VMOVDQU    (R8), Y8
-	VPMASKMOVD Y0, Y8, (DI)
-	VPMASKMOVD Y1, Y8, 32(DI)
-	VPMASKMOVD Y2, Y8, 64(DI)
-	VPMASKMOVD Y3, Y8, 96(DI)
-	VPMASKMOVD Y4, Y8, 128(DI)
-	VPMASKMOVD Y5, Y8, 160(DI)
-	VPMASKMOVD Y6, Y8, 192(DI)
-	VPMASKMOVD Y7, Y8, 224(DI)
+	VPMASKMOVD Y0, Y8, (BP)
+	VPMASKMOVD Y1, Y8, 32(BP)
+	VPMASKMOVD Y2, Y8, 64(BP)
+	VPMASKMOVD Y3, Y8, 96(BP)
+	VPMASKMOVD Y4, Y8, 128(BP)
+	VPMASKMOVD Y5, Y8, 160(BP)
+	VPMASKMOVD Y6, Y8, 192(BP)
+	VPMASKMOVD Y7, Y8, 224(BP)
 	RET
 
 // func hashP_avx(left *[256]byte, right *[256]byte, flags uint8, out *[256]byte)
