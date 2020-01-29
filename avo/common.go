@@ -16,7 +16,7 @@ const (
 	flag_keyMat     = 1 << 6
 )
 
-func transpose_vecs(c ctx, alloc *Alloc, vs []*Value) {
+func transpose(c ctx, alloc *Alloc, vs []*Value) {
 	L01, H01, L23, H23 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 	L45, H45, L67, H67 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
@@ -54,23 +54,46 @@ func transpose_vecs(c ctx, alloc *Alloc, vs []*Value) {
 	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), vs[7].Get())
 }
 
-func transpose_msg_vecs_and_inc(c ctx, alloc *Alloc, block GPVirtual, input, msg_vecs Mem) {
+func transposeMsg(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
 	vs := alloc.Values(8)
 	for i, v := range vs {
 		VMOVDQU(input.Offset(1024*i).Idx(block, 1), v.Get())
 	}
-	transpose_vecs(c, alloc, vs)
+	transpose(c, alloc, vs)
 	for i, v := range vs {
-		VMOVDQU(v.Get(), msg_vecs.Offset(32*i))
+		VMOVDQU(v.Get(), msg.Offset(32*i))
 	}
 
 	for i, v := range vs {
 		VMOVDQU(input.Offset(1024*i+32).Idx(block, 1), v.Get())
 	}
-	transpose_vecs(c, alloc, vs)
+	transpose(c, alloc, vs)
 	for i, v := range vs {
-		VMOVDQU(v.Consume(), msg_vecs.Offset(32*i+256))
+		VMOVDQU(v.Consume(), msg.Offset(32*i+256))
 	}
+}
+
+func loadCounter(c ctx, alloc *Alloc, mem, lo_mem, hi_mem Mem) {
+	ctr0, ctr1 := alloc.Value(), alloc.Value()
+	VPBROADCASTQ(mem, ctr0.Get())
+	VPADDQ(c.counter, ctr0.Get(), ctr0.Get())
+	VPBROADCASTQ(mem, ctr1.Get())
+	VPADDQ(c.counter.Offset(32), ctr1.Get(), ctr1.Get())
+
+	L, H := alloc.Value(), alloc.Value()
+	VPUNPCKLDQ(ctr1.GetOp(), ctr0.Get(), L.Get())
+	VPUNPCKHDQ(ctr1.ConsumeOp(), ctr0.Consume(), H.Get())
+
+	LLH, HLH := alloc.Value(), alloc.Value()
+	VPUNPCKLDQ(H.GetOp(), L.Get(), LLH.Get())
+	VPUNPCKHDQ(H.ConsumeOp(), L.Consume(), HLH.Get())
+
+	ctrl, ctrh := alloc.Value(), alloc.Value()
+	VPERMQ(U8(0b11_01_10_00), LLH.ConsumeOp(), ctrl.Get())
+	VPERMQ(U8(0b11_01_10_00), HLH.ConsumeOp(), ctrh.Get())
+
+	VMOVDQU(ctrl.Consume(), lo_mem)
+	VMOVDQU(ctrh.Consume(), hi_mem)
 }
 
 func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {

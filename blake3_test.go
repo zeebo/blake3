@@ -23,8 +23,6 @@ func TestVectors(t *testing.T) {
 }
 
 func TestHash8(t *testing.T) {
-	const BLOCKS = 16
-
 	var input [8192]byte
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 1024; j++ {
@@ -58,6 +56,67 @@ func TestHash8(t *testing.T) {
 	sum := sha256.Sum256(out[:])
 	assert.Equal(t, hex.EncodeToString(sum[:]),
 		"c0589b33091c650f868859d99e7618a745d2bbd3f81a2b9493880e9dbabcf948")
+}
+
+func TestHashF(t *testing.T) {
+	var input [8192]byte
+
+	fill := func(n int) {
+		input = [8192]byte{}
+
+		for i := 0; i < 8; i++ {
+			for j := 0; j < 1024; j++ {
+				if 1024*i+j < n {
+					input[1024*i+j] = byte(32*i + j)
+				}
+			}
+		}
+	}
+
+	for n := 0; n < len(input); n++ {
+		var out [256]byte
+
+		fill(n)
+
+		chunks := uint64(n) / 1024
+		blocks := uint64(n) % 1024 / 64
+		blen := uint64(n) % 64
+
+		if blen == 0 && blocks > 0 {
+			blen = 64
+			blocks--
+		}
+
+		hashF_avx(
+			&input,
+			chunks,
+			blocks,
+			blen,
+			0,
+			0,
+			&out,
+		)
+
+		for i := 0; i < 8 && (i*1024 < n || (i == 0 && n == 0)); i++ {
+			high := 1024 * (i + 1)
+			if high > n {
+				high = n
+			}
+
+			chain := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+			chunk := newChunkState(chain, uint64(i), 0)
+			chunk.update(input[1024*i : high])
+			output := chunk.output()
+			exp := output.compress()
+
+			var got [8]uint32
+			for j := range got {
+				got[j] = binary.LittleEndian.Uint32(out[32*j+4*i:])
+			}
+
+			assert.Equal(t, exp, got)
+		}
+	}
 }
 
 func TestHashP(t *testing.T) {
@@ -117,7 +176,32 @@ func BenchmarkHash8(b *testing.B) {
 	}
 }
 
-func BenchmarkHashP8(b *testing.B) {
+func BenchmarkHashF_0(b *testing.B) {
+	var input [8192]byte
+	var out [256]byte
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		hashF_avx(&input, 0, 0, 0, 0, 0, &out)
+	}
+}
+
+func BenchmarkHashF_8K(b *testing.B) {
+	var input [8192]byte
+	var out [256]byte
+
+	b.SetBytes(8192)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		hashF_avx(&input, 8, 15, 64, 0, 0, &out)
+	}
+}
+
+func BenchmarkHashP(b *testing.B) {
 	var left [256]byte
 	var right [256]byte
 	var out [256]byte

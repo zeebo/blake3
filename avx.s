@@ -110,6 +110,151 @@ DATA counter<>+48(SB)/8, $0x0000000000000006
 DATA counter<>+56(SB)/8, $0x0000000000000007
 GLOBL counter<>(SB), RODATA|NOPTR, $64
 
+DATA maskO<>+0(SB)/4, $0xffffffff
+DATA maskO<>+4(SB)/4, $0x00000000
+DATA maskO<>+8(SB)/4, $0x00000000
+DATA maskO<>+12(SB)/4, $0x00000000
+DATA maskO<>+16(SB)/4, $0x00000000
+DATA maskO<>+20(SB)/4, $0x00000000
+DATA maskO<>+24(SB)/4, $0x00000000
+DATA maskO<>+28(SB)/4, $0x00000000
+DATA maskO<>+32(SB)/4, $0x00000000
+DATA maskO<>+36(SB)/4, $0xffffffff
+DATA maskO<>+40(SB)/4, $0x00000000
+DATA maskO<>+44(SB)/4, $0x00000000
+DATA maskO<>+48(SB)/4, $0x00000000
+DATA maskO<>+52(SB)/4, $0x00000000
+DATA maskO<>+56(SB)/4, $0x00000000
+DATA maskO<>+60(SB)/4, $0x00000000
+DATA maskO<>+64(SB)/4, $0x00000000
+DATA maskO<>+68(SB)/4, $0x00000000
+DATA maskO<>+72(SB)/4, $0xffffffff
+DATA maskO<>+76(SB)/4, $0x00000000
+DATA maskO<>+80(SB)/4, $0x00000000
+DATA maskO<>+84(SB)/4, $0x00000000
+DATA maskO<>+88(SB)/4, $0x00000000
+DATA maskO<>+92(SB)/4, $0x00000000
+DATA maskO<>+96(SB)/4, $0x00000000
+DATA maskO<>+100(SB)/4, $0x00000000
+DATA maskO<>+104(SB)/4, $0x00000000
+DATA maskO<>+108(SB)/4, $0xffffffff
+DATA maskO<>+112(SB)/4, $0x00000000
+DATA maskO<>+116(SB)/4, $0x00000000
+DATA maskO<>+120(SB)/4, $0x00000000
+DATA maskO<>+124(SB)/4, $0x00000000
+DATA maskO<>+128(SB)/4, $0x00000000
+DATA maskO<>+132(SB)/4, $0x00000000
+DATA maskO<>+136(SB)/4, $0x00000000
+DATA maskO<>+140(SB)/4, $0x00000000
+DATA maskO<>+144(SB)/4, $0xffffffff
+DATA maskO<>+148(SB)/4, $0x00000000
+DATA maskO<>+152(SB)/4, $0x00000000
+DATA maskO<>+156(SB)/4, $0x00000000
+DATA maskO<>+160(SB)/4, $0x00000000
+DATA maskO<>+164(SB)/4, $0x00000000
+DATA maskO<>+168(SB)/4, $0x00000000
+DATA maskO<>+172(SB)/4, $0x00000000
+DATA maskO<>+176(SB)/4, $0x00000000
+DATA maskO<>+180(SB)/4, $0xffffffff
+DATA maskO<>+184(SB)/4, $0x00000000
+DATA maskO<>+188(SB)/4, $0x00000000
+DATA maskO<>+192(SB)/4, $0x00000000
+DATA maskO<>+196(SB)/4, $0x00000000
+DATA maskO<>+200(SB)/4, $0x00000000
+DATA maskO<>+204(SB)/4, $0x00000000
+DATA maskO<>+208(SB)/4, $0x00000000
+DATA maskO<>+212(SB)/4, $0x00000000
+DATA maskO<>+216(SB)/4, $0xffffffff
+DATA maskO<>+220(SB)/4, $0x00000000
+DATA maskO<>+224(SB)/4, $0x00000000
+DATA maskO<>+228(SB)/4, $0x00000000
+DATA maskO<>+232(SB)/4, $0x00000000
+DATA maskO<>+236(SB)/4, $0x00000000
+DATA maskO<>+240(SB)/4, $0x00000000
+DATA maskO<>+244(SB)/4, $0x00000000
+DATA maskO<>+248(SB)/4, $0x00000000
+DATA maskO<>+252(SB)/4, $0xffffffff
+GLOBL maskO<>(SB), RODATA|NOPTR, $256
+
+DATA maskP<>+0(SB)/4, $0x00000000
+DATA maskP<>+4(SB)/4, $0x00000000
+DATA maskP<>+8(SB)/4, $0x00000000
+DATA maskP<>+12(SB)/4, $0x00000000
+DATA maskP<>+16(SB)/4, $0x00000000
+DATA maskP<>+20(SB)/4, $0x00000000
+DATA maskP<>+24(SB)/4, $0x00000000
+DATA maskP<>+28(SB)/4, $0x00000000
+DATA maskP<>+32(SB)/4, $0xffffffff
+DATA maskP<>+36(SB)/4, $0x00000000
+DATA maskP<>+40(SB)/4, $0x00000000
+DATA maskP<>+44(SB)/4, $0x00000000
+DATA maskP<>+48(SB)/4, $0x00000000
+DATA maskP<>+52(SB)/4, $0x00000000
+DATA maskP<>+56(SB)/4, $0x00000000
+DATA maskP<>+60(SB)/4, $0x00000000
+DATA maskP<>+64(SB)/4, $0xffffffff
+DATA maskP<>+68(SB)/4, $0xffffffff
+DATA maskP<>+72(SB)/4, $0x00000000
+DATA maskP<>+76(SB)/4, $0x00000000
+DATA maskP<>+80(SB)/4, $0x00000000
+DATA maskP<>+84(SB)/4, $0x00000000
+DATA maskP<>+88(SB)/4, $0x00000000
+DATA maskP<>+92(SB)/4, $0x00000000
+DATA maskP<>+96(SB)/4, $0xffffffff
+DATA maskP<>+100(SB)/4, $0xffffffff
+DATA maskP<>+104(SB)/4, $0xffffffff
+DATA maskP<>+108(SB)/4, $0x00000000
+DATA maskP<>+112(SB)/4, $0x00000000
+DATA maskP<>+116(SB)/4, $0x00000000
+DATA maskP<>+120(SB)/4, $0x00000000
+DATA maskP<>+124(SB)/4, $0x00000000
+DATA maskP<>+128(SB)/4, $0xffffffff
+DATA maskP<>+132(SB)/4, $0xffffffff
+DATA maskP<>+136(SB)/4, $0xffffffff
+DATA maskP<>+140(SB)/4, $0xffffffff
+DATA maskP<>+144(SB)/4, $0x00000000
+DATA maskP<>+148(SB)/4, $0x00000000
+DATA maskP<>+152(SB)/4, $0x00000000
+DATA maskP<>+156(SB)/4, $0x00000000
+DATA maskP<>+160(SB)/4, $0xffffffff
+DATA maskP<>+164(SB)/4, $0xffffffff
+DATA maskP<>+168(SB)/4, $0xffffffff
+DATA maskP<>+172(SB)/4, $0xffffffff
+DATA maskP<>+176(SB)/4, $0xffffffff
+DATA maskP<>+180(SB)/4, $0x00000000
+DATA maskP<>+184(SB)/4, $0x00000000
+DATA maskP<>+188(SB)/4, $0x00000000
+DATA maskP<>+192(SB)/4, $0xffffffff
+DATA maskP<>+196(SB)/4, $0xffffffff
+DATA maskP<>+200(SB)/4, $0xffffffff
+DATA maskP<>+204(SB)/4, $0xffffffff
+DATA maskP<>+208(SB)/4, $0xffffffff
+DATA maskP<>+212(SB)/4, $0xffffffff
+DATA maskP<>+216(SB)/4, $0x00000000
+DATA maskP<>+220(SB)/4, $0x00000000
+DATA maskP<>+224(SB)/4, $0xffffffff
+DATA maskP<>+228(SB)/4, $0xffffffff
+DATA maskP<>+232(SB)/4, $0xffffffff
+DATA maskP<>+236(SB)/4, $0xffffffff
+DATA maskP<>+240(SB)/4, $0xffffffff
+DATA maskP<>+244(SB)/4, $0xffffffff
+DATA maskP<>+248(SB)/4, $0xffffffff
+DATA maskP<>+252(SB)/4, $0x00000000
+GLOBL maskP<>(SB), RODATA|NOPTR, $256
+
+DATA all<>+0(SB)/4, $0xffffffff
+DATA all<>+4(SB)/4, $0xffffffff
+DATA all<>+8(SB)/4, $0xffffffff
+DATA all<>+12(SB)/4, $0xffffffff
+DATA all<>+16(SB)/4, $0xffffffff
+DATA all<>+20(SB)/4, $0xffffffff
+DATA all<>+24(SB)/4, $0xffffffff
+DATA all<>+28(SB)/4, $0xffffffff
+GLOBL all<>(SB), RODATA|NOPTR, $32
+
+DATA chunk_end<>+0(SB)/4, $0x00000002
+GLOBL chunk_end<>(SB), RODATA|NOPTR, $4
+
 // func hash8_avx(input *[8192]byte, counter uint64, flags uint32, out *[256]byte)
 // Requires: AVX, AVX2
 TEXT ·hash8_avx(SB), $624-32
@@ -117,6 +262,10 @@ TEXT ·hash8_avx(SB), $624-32
 	MOVQ counter+8(FP), CX
 	MOVL flags+16(FP), DX
 	MOVQ out+24(FP), BX
+
+	// Load some params into the stack (avo improvment?)
+	MOVL DX, 32(SP)
+	MOVQ CX, 40(SP)
 
 	// Load IV into vectors
 	VPBROADCASTD iv<>+0(SB), Y0
@@ -129,7 +278,6 @@ TEXT ·hash8_avx(SB), $624-32
 	VPBROADCASTD iv<>+28(SB), Y7
 
 	// Build and store counter data on the stack
-	MOVQ         CX, 40(SP)
 	VPBROADCASTQ 40(SP), Y8
 	VPADDQ       counter<>+0(SB), Y8, Y8
 	VPBROADCASTQ 40(SP), Y9
@@ -145,7 +293,6 @@ TEXT ·hash8_avx(SB), $624-32
 
 	// Set up block flags and variables for iteration
 	XORQ CX, CX
-	MOVL DX, 32(SP)
 	ORL  $0x01, 32(SP)
 
 loop:
@@ -255,6 +402,7 @@ round_setup:
 	VMOVDQU 48(SP), Y13
 	VMOVDQU 80(SP), Y14
 
+	// Perform the rounds
 	// Round 1
 	VMOVDQU (SP), Y15
 	VPADDD  112(SP), Y15, Y15
@@ -1348,7 +1496,7 @@ round_setup:
 	VMOVDQU Y0, Y6
 	VMOVDQU Y9, Y0
 
-	// Decrement and loop
+	// Increment, reset flags, and loop
 	ADDQ $0x40, CX
 	MOVL DX, 32(SP)
 	JMP  loop
@@ -1365,15 +1513,31 @@ finalize:
 	VMOVDQU Y7, 224(BX)
 	RET
 
-// func hashF_avx(input *[8192]byte, chunks uint64, blocks uint64, counter uint64, flags uint32, out *[256]byte)
+// func hashF_avx(input *[8192]byte, chunks uint64, blocks uint64, blen uint64, counter uint64, flags uint32, out *[256]byte)
 // Requires: AVX, AVX2
-TEXT ·hashF_avx(SB), $616-48
+TEXT ·hashF_avx(SB), $632-56
 	MOVQ input+0(FP), AX
 	MOVQ chunks+8(FP), CX
-	MOVQ blocks+16(FP), CX
-	MOVQ counter+24(FP), DX
-	MOVL flags+32(FP), BX
-	MOVQ out+40(FP), BP
+	MOVQ blocks+16(FP), DX
+	MOVQ blen+24(FP), BX
+	MOVQ counter+32(FP), BP
+	MOVL flags+40(FP), SI
+	MOVQ out+48(FP), DI
+
+	// Load some params into the stack (avo improvment?)
+	MOVL SI, 32(SP)
+	MOVQ BP, 40(SP)
+	MOVQ BX, 48(SP)
+
+	// Set up masks for block flags and stores
+	SHLQ $0x05, CX
+	LEAQ maskO<>+0(SB), BP
+	LEAQ (BP)(CX*1), BP
+	LEAQ maskP<>+0(SB), R8
+	LEAQ (R8)(CX*1), R8
+
+	// Premultiply blocks for loop comparisons
+	SHLQ $0x06, DX
 
 	// Load IV into vectors
 	VPBROADCASTD iv<>+0(SB), Y0
@@ -1386,63 +1550,42 @@ TEXT ·hashF_avx(SB), $616-48
 	VPBROADCASTD iv<>+28(SB), Y7
 
 	// Build and store counter data on the stack
-	MOVQ DX, SI
-	MOVL SI, 40(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 72(SP)
-	LEAQ 1(DX), SI
-	MOVL SI, 44(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 76(SP)
-	LEAQ 2(DX), SI
-	MOVL SI, 48(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 80(SP)
-	LEAQ 3(DX), SI
-	MOVL SI, 52(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 84(SP)
-	LEAQ 4(DX), SI
-	MOVL SI, 56(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 88(SP)
-	LEAQ 5(DX), SI
-	MOVL SI, 60(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 92(SP)
-	LEAQ 6(DX), SI
-	MOVL SI, 64(SP)
-	SHRQ $0x20, SI
-	MOVL SI, 96(SP)
-	LEAQ 7(DX), DX
-	MOVL DX, 68(SP)
-	SHRQ $0x20, DX
-	MOVL DX, 100(SP)
+	VPBROADCASTQ 40(SP), Y8
+	VPADDQ       counter<>+0(SB), Y8, Y8
+	VPBROADCASTQ 40(SP), Y9
+	VPADDQ       counter<>+32(SB), Y9, Y9
+	VPUNPCKLDQ   Y9, Y8, Y10
+	VPUNPCKHDQ   Y9, Y8, Y8
+	VPUNPCKLDQ   Y8, Y10, Y9
+	VPUNPCKHDQ   Y8, Y10, Y8
+	VPERMQ       $0xd8, Y9, Y9
+	VPERMQ       $0xd8, Y8, Y8
+	VMOVDQU      Y9, 56(SP)
+	VMOVDQU      Y8, 88(SP)
 
-	// Set up block flags for first iteration
-	MOVQ $0x00000000, DX
-	MOVL BX, 32(SP)
+	// Set up block flags and variables for iteration
+	XORQ BX, BX
 	ORL  $0x01, 32(SP)
 
 loop:
-	CMPQ CX, $0x10
+	CMPQ BX, $0x00000400
 	JEQ  finalize
 
 	// Include end flags if last block
-	CMPQ CX, $0x0f
+	CMPQ BX, $0x000003c0
 	JNE  round_setup
 	ORL  $0x02, 32(SP)
 
 round_setup:
 	// Load and transpose message vectors
-	VMOVDQU     (AX)(DX*1), Y8
-	VMOVDQU     1024(AX)(DX*1), Y9
-	VMOVDQU     2048(AX)(DX*1), Y10
-	VMOVDQU     3072(AX)(DX*1), Y11
-	VMOVDQU     4096(AX)(DX*1), Y12
-	VMOVDQU     5120(AX)(DX*1), Y13
-	VMOVDQU     6144(AX)(DX*1), Y14
-	VMOVDQU     7168(AX)(DX*1), Y15
+	VMOVDQU     (AX)(BX*1), Y8
+	VMOVDQU     1024(AX)(BX*1), Y9
+	VMOVDQU     2048(AX)(BX*1), Y10
+	VMOVDQU     3072(AX)(BX*1), Y11
+	VMOVDQU     4096(AX)(BX*1), Y12
+	VMOVDQU     5120(AX)(BX*1), Y13
+	VMOVDQU     6144(AX)(BX*1), Y14
+	VMOVDQU     7168(AX)(BX*1), Y15
 	VMOVDQU     Y0, (SP)
 	VPUNPCKLDQ  Y9, Y8, Y0
 	VPUNPCKHDQ  Y9, Y8, Y8
@@ -1468,22 +1611,22 @@ round_setup:
 	VPERM2I128  $0x31, Y13, Y9, Y9
 	VINSERTI128 $0x01, X12, Y8, Y13
 	VPERM2I128  $0x31, Y12, Y8, Y8
-	VMOVDQU     Y14, 104(SP)
-	VMOVDQU     Y15, 136(SP)
-	VMOVDQU     Y11, 168(SP)
-	VMOVDQU     Y13, 200(SP)
-	VMOVDQU     Y10, 232(SP)
-	VMOVDQU     Y0, 264(SP)
-	VMOVDQU     Y9, 296(SP)
-	VMOVDQU     Y8, 328(SP)
-	VMOVDQU     32(AX)(DX*1), Y14
-	VMOVDQU     1056(AX)(DX*1), Y15
-	VMOVDQU     2080(AX)(DX*1), Y11
-	VMOVDQU     3104(AX)(DX*1), Y13
-	VMOVDQU     4128(AX)(DX*1), Y10
-	VMOVDQU     5152(AX)(DX*1), Y0
-	VMOVDQU     6176(AX)(DX*1), Y9
-	VMOVDQU     7200(AX)(DX*1), Y8
+	VMOVDQU     Y14, 120(SP)
+	VMOVDQU     Y15, 152(SP)
+	VMOVDQU     Y11, 184(SP)
+	VMOVDQU     Y13, 216(SP)
+	VMOVDQU     Y10, 248(SP)
+	VMOVDQU     Y0, 280(SP)
+	VMOVDQU     Y9, 312(SP)
+	VMOVDQU     Y8, 344(SP)
+	VMOVDQU     32(AX)(BX*1), Y14
+	VMOVDQU     1056(AX)(BX*1), Y15
+	VMOVDQU     2080(AX)(BX*1), Y11
+	VMOVDQU     3104(AX)(BX*1), Y13
+	VMOVDQU     4128(AX)(BX*1), Y10
+	VMOVDQU     5152(AX)(BX*1), Y0
+	VMOVDQU     6176(AX)(BX*1), Y9
+	VMOVDQU     7200(AX)(BX*1), Y8
 	VPUNPCKLDQ  Y15, Y14, Y12
 	VPUNPCKHDQ  Y15, Y14, Y14
 	VPUNPCKLDQ  Y13, Y11, Y15
@@ -1508,14 +1651,14 @@ round_setup:
 	VPERM2I128  $0x31, Y13, Y15, Y13
 	VINSERTI128 $0x01, X0, Y11, Y15
 	VPERM2I128  $0x31, Y0, Y11, Y0
-	VMOVDQU     Y8, 360(SP)
-	VMOVDQU     Y14, 392(SP)
-	VMOVDQU     Y12, 424(SP)
-	VMOVDQU     Y15, 456(SP)
-	VMOVDQU     Y9, 488(SP)
-	VMOVDQU     Y10, 520(SP)
-	VMOVDQU     Y13, 552(SP)
-	VMOVDQU     Y0, 584(SP)
+	VMOVDQU     Y8, 376(SP)
+	VMOVDQU     Y14, 408(SP)
+	VMOVDQU     Y12, 440(SP)
+	VMOVDQU     Y15, 472(SP)
+	VMOVDQU     Y9, 504(SP)
+	VMOVDQU     Y10, 536(SP)
+	VMOVDQU     Y13, 568(SP)
+	VMOVDQU     Y0, 600(SP)
 
 	// Set up block length and flag vectors
 	VMOVDQU      block_len<>+0(SB), Y0
@@ -1528,15 +1671,30 @@ round_setup:
 	VPBROADCASTD iv<>+12(SB), Y12
 
 	// Set up counter vectors
-	VMOVDQU 40(SP), Y13
-	VMOVDQU 72(SP), Y14
+	VMOVDQU 56(SP), Y13
+	VMOVDQU 88(SP), Y14
 
+	// Insert flag and length if last block in partial chunk
+	CMPQ         BX, DX
+	JNE          begin_rounds
+	VPBROADCASTD chunk_end<>+0(SB), Y15
+	VPAND        (BP), Y15, Y15
+	VPOR         Y15, Y8, Y8
+	VMOVDQU      (BP), Y15
+	VPXOR        all<>+0(SB), Y15, Y15
+	VPAND        Y0, Y15, Y0
+	VPBROADCASTD 48(SP), Y15
+	VPAND        (BP), Y15, Y15
+	VPOR         Y0, Y15, Y0
+
+begin_rounds:
+	// Perform the rounds
 	// Round 1
 	VMOVDQU (SP), Y15
-	VPADDD  104(SP), Y15, Y15
-	VPADDD  168(SP), Y1, Y1
-	VPADDD  232(SP), Y2, Y2
-	VPADDD  296(SP), Y3, Y3
+	VPADDD  120(SP), Y15, Y15
+	VPADDD  184(SP), Y1, Y1
+	VPADDD  248(SP), Y2, Y2
+	VPADDD  312(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -1571,10 +1729,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  136(SP), Y15, Y15
-	VPADDD  200(SP), Y1, Y1
-	VPADDD  264(SP), Y2, Y2
-	VPADDD  328(SP), Y3, Y3
+	VPADDD  152(SP), Y15, Y15
+	VPADDD  216(SP), Y1, Y1
+	VPADDD  280(SP), Y2, Y2
+	VPADDD  344(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -1609,10 +1767,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  360(SP), Y15, Y15
-	VPADDD  424(SP), Y1, Y1
-	VPADDD  488(SP), Y2, Y2
-	VPADDD  552(SP), Y3, Y3
+	VPADDD  376(SP), Y15, Y15
+	VPADDD  440(SP), Y1, Y1
+	VPADDD  504(SP), Y2, Y2
+	VPADDD  568(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -1647,10 +1805,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  392(SP), Y15, Y15
-	VPADDD  456(SP), Y1, Y1
-	VPADDD  520(SP), Y2, Y2
-	VPADDD  584(SP), Y3, Y3
+	VPADDD  408(SP), Y15, Y15
+	VPADDD  472(SP), Y1, Y1
+	VPADDD  536(SP), Y2, Y2
+	VPADDD  600(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -1687,10 +1845,10 @@ round_setup:
 
 	// Round 2
 	VMOVDQU (SP), Y15
-	VPADDD  168(SP), Y15, Y15
-	VPADDD  200(SP), Y1, Y1
-	VPADDD  328(SP), Y2, Y2
-	VPADDD  232(SP), Y3, Y3
+	VPADDD  184(SP), Y15, Y15
+	VPADDD  216(SP), Y1, Y1
+	VPADDD  344(SP), Y2, Y2
+	VPADDD  248(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -1725,10 +1883,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  296(SP), Y15, Y15
-	VPADDD  424(SP), Y1, Y1
-	VPADDD  104(SP), Y2, Y2
-	VPADDD  520(SP), Y3, Y3
+	VPADDD  312(SP), Y15, Y15
+	VPADDD  440(SP), Y1, Y1
+	VPADDD  120(SP), Y2, Y2
+	VPADDD  536(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -1763,10 +1921,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  136(SP), Y15, Y15
-	VPADDD  488(SP), Y1, Y1
-	VPADDD  392(SP), Y2, Y2
-	VPADDD  584(SP), Y3, Y3
+	VPADDD  152(SP), Y15, Y15
+	VPADDD  504(SP), Y1, Y1
+	VPADDD  408(SP), Y2, Y2
+	VPADDD  600(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -1801,10 +1959,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  456(SP), Y15, Y15
-	VPADDD  264(SP), Y1, Y1
-	VPADDD  552(SP), Y2, Y2
-	VPADDD  360(SP), Y3, Y3
+	VPADDD  472(SP), Y15, Y15
+	VPADDD  280(SP), Y1, Y1
+	VPADDD  568(SP), Y2, Y2
+	VPADDD  376(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -1841,10 +1999,10 @@ round_setup:
 
 	// Round 3
 	VMOVDQU (SP), Y15
-	VPADDD  200(SP), Y15, Y15
-	VPADDD  424(SP), Y1, Y1
-	VPADDD  520(SP), Y2, Y2
-	VPADDD  328(SP), Y3, Y3
+	VPADDD  216(SP), Y15, Y15
+	VPADDD  440(SP), Y1, Y1
+	VPADDD  536(SP), Y2, Y2
+	VPADDD  344(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -1879,10 +2037,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  232(SP), Y15, Y15
-	VPADDD  488(SP), Y1, Y1
-	VPADDD  168(SP), Y2, Y2
-	VPADDD  552(SP), Y3, Y3
+	VPADDD  248(SP), Y15, Y15
+	VPADDD  504(SP), Y1, Y1
+	VPADDD  184(SP), Y2, Y2
+	VPADDD  568(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -1917,10 +2075,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  296(SP), Y15, Y15
-	VPADDD  392(SP), Y1, Y1
-	VPADDD  456(SP), Y2, Y2
-	VPADDD  360(SP), Y3, Y3
+	VPADDD  312(SP), Y15, Y15
+	VPADDD  408(SP), Y1, Y1
+	VPADDD  472(SP), Y2, Y2
+	VPADDD  376(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -1955,10 +2113,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  264(SP), Y15, Y15
-	VPADDD  104(SP), Y1, Y1
-	VPADDD  584(SP), Y2, Y2
-	VPADDD  136(SP), Y3, Y3
+	VPADDD  280(SP), Y15, Y15
+	VPADDD  120(SP), Y1, Y1
+	VPADDD  600(SP), Y2, Y2
+	VPADDD  152(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -1995,10 +2153,10 @@ round_setup:
 
 	// Round 4
 	VMOVDQU (SP), Y15
-	VPADDD  424(SP), Y15, Y15
-	VPADDD  488(SP), Y1, Y1
-	VPADDD  552(SP), Y2, Y2
-	VPADDD  520(SP), Y3, Y3
+	VPADDD  440(SP), Y15, Y15
+	VPADDD  504(SP), Y1, Y1
+	VPADDD  568(SP), Y2, Y2
+	VPADDD  536(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2033,10 +2191,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  328(SP), Y15, Y15
-	VPADDD  392(SP), Y1, Y1
-	VPADDD  200(SP), Y2, Y2
-	VPADDD  584(SP), Y3, Y3
+	VPADDD  344(SP), Y15, Y15
+	VPADDD  408(SP), Y1, Y1
+	VPADDD  216(SP), Y2, Y2
+	VPADDD  600(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2071,10 +2229,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  232(SP), Y15, Y15
-	VPADDD  456(SP), Y1, Y1
-	VPADDD  264(SP), Y2, Y2
-	VPADDD  136(SP), Y3, Y3
+	VPADDD  248(SP), Y15, Y15
+	VPADDD  472(SP), Y1, Y1
+	VPADDD  280(SP), Y2, Y2
+	VPADDD  152(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2109,10 +2267,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  104(SP), Y15, Y15
-	VPADDD  168(SP), Y1, Y1
-	VPADDD  360(SP), Y2, Y2
-	VPADDD  296(SP), Y3, Y3
+	VPADDD  120(SP), Y15, Y15
+	VPADDD  184(SP), Y1, Y1
+	VPADDD  376(SP), Y2, Y2
+	VPADDD  312(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2149,10 +2307,10 @@ round_setup:
 
 	// Round 5
 	VMOVDQU (SP), Y15
-	VPADDD  488(SP), Y15, Y15
-	VPADDD  392(SP), Y1, Y1
-	VPADDD  584(SP), Y2, Y2
-	VPADDD  552(SP), Y3, Y3
+	VPADDD  504(SP), Y15, Y15
+	VPADDD  408(SP), Y1, Y1
+	VPADDD  600(SP), Y2, Y2
+	VPADDD  568(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2187,10 +2345,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  520(SP), Y15, Y15
-	VPADDD  456(SP), Y1, Y1
-	VPADDD  424(SP), Y2, Y2
-	VPADDD  360(SP), Y3, Y3
+	VPADDD  536(SP), Y15, Y15
+	VPADDD  472(SP), Y1, Y1
+	VPADDD  440(SP), Y2, Y2
+	VPADDD  376(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2225,10 +2383,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  328(SP), Y15, Y15
-	VPADDD  264(SP), Y1, Y1
-	VPADDD  104(SP), Y2, Y2
-	VPADDD  296(SP), Y3, Y3
+	VPADDD  344(SP), Y15, Y15
+	VPADDD  280(SP), Y1, Y1
+	VPADDD  120(SP), Y2, Y2
+	VPADDD  312(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2263,10 +2421,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  168(SP), Y15, Y15
-	VPADDD  200(SP), Y1, Y1
-	VPADDD  136(SP), Y2, Y2
-	VPADDD  232(SP), Y3, Y3
+	VPADDD  184(SP), Y15, Y15
+	VPADDD  216(SP), Y1, Y1
+	VPADDD  152(SP), Y2, Y2
+	VPADDD  248(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2303,10 +2461,10 @@ round_setup:
 
 	// Round 6
 	VMOVDQU (SP), Y15
-	VPADDD  392(SP), Y15, Y15
-	VPADDD  456(SP), Y1, Y1
-	VPADDD  360(SP), Y2, Y2
-	VPADDD  584(SP), Y3, Y3
+	VPADDD  408(SP), Y15, Y15
+	VPADDD  472(SP), Y1, Y1
+	VPADDD  376(SP), Y2, Y2
+	VPADDD  600(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2341,10 +2499,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  552(SP), Y15, Y15
-	VPADDD  264(SP), Y1, Y1
-	VPADDD  488(SP), Y2, Y2
-	VPADDD  136(SP), Y3, Y3
+	VPADDD  568(SP), Y15, Y15
+	VPADDD  280(SP), Y1, Y1
+	VPADDD  504(SP), Y2, Y2
+	VPADDD  152(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2379,10 +2537,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  520(SP), Y15, Y15
-	VPADDD  104(SP), Y1, Y1
-	VPADDD  168(SP), Y2, Y2
-	VPADDD  232(SP), Y3, Y3
+	VPADDD  536(SP), Y15, Y15
+	VPADDD  120(SP), Y1, Y1
+	VPADDD  184(SP), Y2, Y2
+	VPADDD  248(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2417,10 +2575,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  200(SP), Y15, Y15
-	VPADDD  424(SP), Y1, Y1
-	VPADDD  296(SP), Y2, Y2
-	VPADDD  328(SP), Y3, Y3
+	VPADDD  216(SP), Y15, Y15
+	VPADDD  440(SP), Y1, Y1
+	VPADDD  312(SP), Y2, Y2
+	VPADDD  344(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2457,10 +2615,10 @@ round_setup:
 
 	// Round 7
 	VMOVDQU (SP), Y15
-	VPADDD  456(SP), Y15, Y15
-	VPADDD  264(SP), Y1, Y1
-	VPADDD  136(SP), Y2, Y2
-	VPADDD  360(SP), Y3, Y3
+	VPADDD  472(SP), Y15, Y15
+	VPADDD  280(SP), Y1, Y1
+	VPADDD  152(SP), Y2, Y2
+	VPADDD  376(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2495,10 +2653,10 @@ round_setup:
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  584(SP), Y15, Y15
-	VPADDD  104(SP), Y1, Y1
-	VPADDD  392(SP), Y2, Y2
-	VPADDD  296(SP), Y3, Y3
+	VPADDD  600(SP), Y15, Y15
+	VPADDD  120(SP), Y1, Y1
+	VPADDD  408(SP), Y2, Y2
+	VPADDD  312(SP), Y3, Y3
 	VPADDD  Y4, Y15, Y15
 	VPADDD  Y5, Y1, Y1
 	VPADDD  Y6, Y2, Y2
@@ -2533,10 +2691,10 @@ round_setup:
 	VPSLLD  $0x19, Y7, Y7
 	VPOR    Y15, Y7, Y7
 	VMOVDQU (SP), Y15
-	VPADDD  552(SP), Y15, Y15
-	VPADDD  168(SP), Y1, Y1
-	VPADDD  200(SP), Y2, Y2
-	VPADDD  328(SP), Y3, Y3
+	VPADDD  568(SP), Y15, Y15
+	VPADDD  184(SP), Y1, Y1
+	VPADDD  216(SP), Y2, Y2
+	VPADDD  344(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2571,10 +2729,10 @@ round_setup:
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y15, Y4, Y4
 	VMOVDQU (SP), Y15
-	VPADDD  424(SP), Y15, Y15
-	VPADDD  488(SP), Y1, Y1
-	VPADDD  232(SP), Y2, Y2
-	VPADDD  520(SP), Y3, Y3
+	VPADDD  440(SP), Y15, Y15
+	VPADDD  504(SP), Y1, Y1
+	VPADDD  248(SP), Y2, Y2
+	VPADDD  536(SP), Y3, Y3
 	VPADDD  Y5, Y15, Y15
 	VPADDD  Y6, Y1, Y1
 	VPADDD  Y7, Y2, Y2
@@ -2619,52 +2777,46 @@ round_setup:
 	VPXOR Y6, Y0, Y0
 	VPXOR Y7, Y8, Y6
 
+	// Save state for partial chunk if necessary
+	CMPQ       BX, DX
+	JNE        register_fixup
+	VMOVDQU    (BP), Y7
+	VPMASKMOVD Y9, Y7, (DI)
+	VPMASKMOVD Y1, Y7, 32(DI)
+	VPMASKMOVD Y2, Y7, 64(DI)
+	VPMASKMOVD Y3, Y7, 96(DI)
+	VPMASKMOVD Y4, Y7, 128(DI)
+	VPMASKMOVD Y5, Y7, 160(DI)
+	VPMASKMOVD Y0, Y7, 192(DI)
+	VPMASKMOVD Y6, Y7, 224(DI)
+
+	// If we have zero complete chunks, we're done
+	CMPQ CX, $0x00
+	JNE  register_fixup
+	RET
+
+register_fixup:
 	// Fix up registers for next iteration
 	VMOVDQU Y6, Y7
 	VMOVDQU Y0, Y6
 	VMOVDQU Y9, Y0
 
-	// Decrement and loop
-	DECQ CX
-	MOVL BX, 32(SP)
+	// Increment, reset flags, and loop
+	ADDQ $0x40, BX
+	MOVL SI, 32(SP)
 	JMP  loop
 
 finalize:
-	// Transpose output vectors
-	VPUNPCKLDQ  Y1, Y0, Y8
-	VPUNPCKHDQ  Y1, Y0, Y0
-	VPUNPCKLDQ  Y3, Y2, Y1
-	VPUNPCKHDQ  Y3, Y2, Y2
-	VPUNPCKLDQ  Y5, Y4, Y3
-	VPUNPCKHDQ  Y5, Y4, Y4
-	VPUNPCKLDQ  Y7, Y6, Y5
-	VPUNPCKHDQ  Y7, Y6, Y6
-	VPUNPCKLQDQ Y1, Y8, Y7
-	VPUNPCKHQDQ Y1, Y8, Y1
-	VPUNPCKLQDQ Y2, Y0, Y8
-	VPUNPCKHQDQ Y2, Y0, Y0
-	VPUNPCKLQDQ Y5, Y3, Y2
-	VPUNPCKHQDQ Y5, Y3, Y3
-	VPUNPCKLQDQ Y6, Y4, Y5
-	VPUNPCKHQDQ Y6, Y4, Y4
-	VINSERTI128 $0x01, X2, Y7, Y6
-	VPERM2I128  $0x31, Y2, Y7, Y2
-	VINSERTI128 $0x01, X3, Y1, Y7
-	VPERM2I128  $0x31, Y3, Y1, Y1
-	VINSERTI128 $0x01, X5, Y8, Y3
-	VPERM2I128  $0x31, Y5, Y8, Y5
-	VINSERTI128 $0x01, X4, Y0, Y8
-	VPERM2I128  $0x31, Y4, Y0, Y0
-
-	// Store into output
-	VMOVDQU Y6, (BP)
-	VMOVDQU Y7, 32(BP)
-	VMOVDQU Y3, 64(BP)
-	VMOVDQU Y8, 96(BP)
-	VMOVDQU Y2, 128(BP)
-	VMOVDQU Y1, 160(BP)
-	VMOVDQU Y5, 192(BP)
-	VMOVDQU Y0, 224(BP)
+	// Store prefix of full chunks into output
+	VMOVDQU    (R8), Y8
+	VPMASKMOVD Y0, Y8, (DI)
+	VPMASKMOVD Y1, Y8, 32(DI)
+	VPMASKMOVD Y2, Y8, 64(DI)
+	VPMASKMOVD Y3, Y8, 96(DI)
+	VPMASKMOVD Y4, Y8, 128(DI)
+	VPMASKMOVD Y5, Y8, 160(DI)
+	VPMASKMOVD Y6, Y8, 192(DI)
+	VPMASKMOVD Y7, Y8, 224(DI)
 	RET
 
 // func hashP_avx(left *[256]byte, right *[256]byte, flags uint8, out *[256]byte)
@@ -2676,8 +2828,8 @@ TEXT ·hashP_avx(SB), $40-32
 	MOVQ    out+24(FP), BX
 
 	// Set up flags value
-	MOVL DX, (SP)
-	ORL  $0x04, (SP)
+	MOVL DX, 32(SP)
+	ORL  $0x04, 32(SP)
 
 	// Load IV into vectors
 	VPBROADCASTD iv<>+0(SB), Y0
@@ -2697,8 +2849,9 @@ TEXT ·hashP_avx(SB), $40-32
 	VMOVDQU      zero<>+0(SB), Y12
 	VMOVDQU      zero<>+0(SB), Y13
 	VMOVDQU      block_len<>+0(SB), Y14
-	VPBROADCASTD (SP), Y15
+	VPBROADCASTD 32(SP), Y15
 
+	// Perform the rounds
 	// Round 1
 	VPADDD  (AX), Y0, Y0
 	VPADDD  64(AX), Y1, Y1
@@ -2724,7 +2877,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y5, Y5
 	VPXOR   Y10, Y6, Y6
 	VPXOR   Y11, Y7, Y7
-	VMOVDQU Y0, 8(SP)
+	VMOVDQU Y0, (SP)
 	VPSRLD  $0x0c, Y4, Y0
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y0, Y4, Y0
@@ -2737,7 +2890,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y7, Y6
 	VPSLLD  $0x14, Y7, Y7
 	VPOR    Y6, Y7, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  32(AX), Y7, Y7
 	VPADDD  96(AX), Y1, Y1
 	VPADDD  160(AX), Y2, Y2
@@ -2762,7 +2915,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -2775,7 +2928,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  (CX), Y7, Y7
 	VPADDD  64(CX), Y1, Y1
 	VPADDD  128(CX), Y2, Y2
@@ -2800,7 +2953,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -2813,7 +2966,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  32(CX), Y7, Y7
 	VPADDD  96(CX), Y1, Y1
 	VPADDD  160(CX), Y2, Y2
@@ -2838,7 +2991,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -2853,7 +3006,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Round 2
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  64(AX), Y7, Y7
 	VPADDD  96(AX), Y1, Y1
 	VPADDD  224(AX), Y2, Y2
@@ -2878,7 +3031,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -2891,7 +3044,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y6, Y7
 	VPSLLD  $0x14, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  192(AX), Y7, Y7
 	VPADDD  64(CX), Y1, Y1
 	VPADDD  (AX), Y2, Y2
@@ -2916,7 +3069,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -2929,7 +3082,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  32(AX), Y7, Y7
 	VPADDD  128(CX), Y1, Y1
 	VPADDD  32(CX), Y2, Y2
@@ -2954,7 +3107,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -2967,7 +3120,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  96(CX), Y7, Y7
 	VPADDD  160(AX), Y1, Y1
 	VPADDD  192(CX), Y2, Y2
@@ -2992,7 +3145,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3007,7 +3160,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Round 3
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  96(AX), Y7, Y7
 	VPADDD  64(CX), Y1, Y1
 	VPADDD  160(CX), Y2, Y2
@@ -3032,7 +3185,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3045,7 +3198,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y6, Y7
 	VPSLLD  $0x14, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  128(AX), Y7, Y7
 	VPADDD  128(CX), Y1, Y1
 	VPADDD  64(AX), Y2, Y2
@@ -3070,7 +3223,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3083,7 +3236,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  192(AX), Y7, Y7
 	VPADDD  32(CX), Y1, Y1
 	VPADDD  96(CX), Y2, Y2
@@ -3108,7 +3261,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3121,7 +3274,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  160(AX), Y7, Y7
 	VPADDD  (AX), Y1, Y1
 	VPADDD  224(CX), Y2, Y2
@@ -3146,7 +3299,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3161,7 +3314,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Round 4
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  64(CX), Y7, Y7
 	VPADDD  128(CX), Y1, Y1
 	VPADDD  192(CX), Y2, Y2
@@ -3186,7 +3339,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3199,7 +3352,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y6, Y7
 	VPSLLD  $0x14, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  224(AX), Y7, Y7
 	VPADDD  32(CX), Y1, Y1
 	VPADDD  96(AX), Y2, Y2
@@ -3224,7 +3377,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3237,7 +3390,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  128(AX), Y7, Y7
 	VPADDD  96(CX), Y1, Y1
 	VPADDD  160(AX), Y2, Y2
@@ -3262,7 +3415,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3275,7 +3428,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  (AX), Y7, Y7
 	VPADDD  64(AX), Y1, Y1
 	VPADDD  (CX), Y2, Y2
@@ -3300,7 +3453,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3315,7 +3468,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Round 5
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  128(CX), Y7, Y7
 	VPADDD  32(CX), Y1, Y1
 	VPADDD  224(CX), Y2, Y2
@@ -3340,7 +3493,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3353,7 +3506,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y6, Y7
 	VPSLLD  $0x14, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  160(CX), Y7, Y7
 	VPADDD  96(CX), Y1, Y1
 	VPADDD  64(CX), Y2, Y2
@@ -3378,7 +3531,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3391,7 +3544,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  224(AX), Y7, Y7
 	VPADDD  160(AX), Y1, Y1
 	VPADDD  (AX), Y2, Y2
@@ -3416,7 +3569,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3429,7 +3582,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  64(AX), Y7, Y7
 	VPADDD  96(AX), Y1, Y1
 	VPADDD  32(AX), Y2, Y2
@@ -3454,7 +3607,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3469,7 +3622,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Round 6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  32(CX), Y7, Y7
 	VPADDD  96(CX), Y1, Y1
 	VPADDD  (CX), Y2, Y2
@@ -3494,7 +3647,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3507,7 +3660,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y6, Y7
 	VPSLLD  $0x14, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  192(CX), Y7, Y7
 	VPADDD  160(AX), Y1, Y1
 	VPADDD  128(CX), Y2, Y2
@@ -3532,7 +3685,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3545,7 +3698,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  160(CX), Y7, Y7
 	VPADDD  (AX), Y1, Y1
 	VPADDD  64(AX), Y2, Y2
@@ -3570,7 +3723,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3583,7 +3736,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  96(AX), Y7, Y7
 	VPADDD  64(CX), Y1, Y1
 	VPADDD  192(AX), Y2, Y2
@@ -3608,7 +3761,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3623,7 +3776,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Round 7
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  96(CX), Y7, Y7
 	VPADDD  160(AX), Y1, Y1
 	VPADDD  32(AX), Y2, Y2
@@ -3648,7 +3801,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3661,7 +3814,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y6, Y7
 	VPSLLD  $0x14, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  224(CX), Y7, Y7
 	VPADDD  (AX), Y1, Y1
 	VPADDD  32(CX), Y2, Y2
@@ -3686,7 +3839,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y9, Y4, Y4
 	VPXOR   Y10, Y5, Y5
 	VPXOR   Y11, Y6, Y6
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y0, Y7
 	VPSLLD  $0x19, Y0, Y0
 	VPOR    Y7, Y0, Y0
@@ -3699,7 +3852,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x07, Y6, Y7
 	VPSLLD  $0x19, Y6, Y6
 	VPOR    Y7, Y6, Y6
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  192(CX), Y7, Y7
 	VPADDD  64(AX), Y1, Y1
 	VPADDD  96(AX), Y2, Y2
@@ -3724,7 +3877,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x0c, Y4, Y7
 	VPSLLD  $0x14, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3737,7 +3890,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPSRLD  $0x0c, Y0, Y7
 	VPSLLD  $0x14, Y0, Y0
 	VPOR    Y7, Y0, Y0
-	VMOVDQU 8(SP), Y7
+	VMOVDQU (SP), Y7
 	VPADDD  64(CX), Y7, Y7
 	VPADDD  128(CX), Y1, Y1
 	VPADDD  128(AX), Y2, Y2
@@ -3762,7 +3915,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPXOR   Y11, Y5, Y5
 	VPXOR   Y8, Y6, Y6
 	VPXOR   Y9, Y0, Y0
-	VMOVDQU Y7, 8(SP)
+	VMOVDQU Y7, (SP)
 	VPSRLD  $0x07, Y4, Y7
 	VPSLLD  $0x19, Y4, Y4
 	VPOR    Y7, Y4, Y4
@@ -3777,7 +3930,7 @@ TEXT ·hashP_avx(SB), $40-32
 	VPOR    Y7, Y0, Y0
 
 	// Finalize
-	VPXOR 8(SP), Y8, Y7
+	VPXOR (SP), Y8, Y7
 	VPXOR Y1, Y9, Y1
 	VPXOR Y2, Y10, Y2
 	VPXOR Y3, Y11, Y3

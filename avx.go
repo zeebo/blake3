@@ -11,8 +11,9 @@ func hash8_avx(
 //go:noescape
 func hashF_avx(
 	input *[8192]byte,
-	blocks uint64,
 	chunks uint64,
+	blocks uint64,
+	blen uint64,
 	counter uint64,
 	flags uint32,
 	out *[256]byte,

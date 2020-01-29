@@ -16,16 +16,22 @@ var msgSched = [7][16]int{
 }
 
 type ctx struct {
-	rot16     Mem
-	rot8      Mem
-	iv        Mem
-	block_len Mem
-	zero      Mem
-	counter   Mem
+	rot16    Mem
+	rot8     Mem
+	iv       Mem
+	blockLen Mem
+	zero     Mem
+	counter  Mem
+	maskO    Mem
+	maskP    Mem
+	all      Mem
+	chunkEnd Mem
 }
 
 func main() {
-	iv := GLOBL("iv", RODATA|NOPTR)
+	var c ctx
+
+	c.iv = GLOBL("iv", RODATA|NOPTR)
 	for n, v := range []U32{
 		0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
 		0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
@@ -33,7 +39,7 @@ func main() {
 		DATA(4*n, v)
 	}
 
-	rot16 := GLOBL("rot16_shuf", RODATA|NOPTR)
+	c.rot16 = GLOBL("rot16_shuf", RODATA|NOPTR)
 	for n, v := range []U8{
 		0x02, 0x03, 0x00, 0x01, 0x06, 0x07, 0x04, 0x05,
 		0x0A, 0x0B, 0x08, 0x09, 0x0E, 0x0F, 0x0C, 0x0D,
@@ -43,7 +49,7 @@ func main() {
 		DATA(n, v)
 	}
 
-	rot8 := GLOBL("rot8_shuf", RODATA|NOPTR)
+	c.rot8 = GLOBL("rot8_shuf", RODATA|NOPTR)
 	for n, v := range []U8{
 		0x01, 0x02, 0x03, 0x00, 0x05, 0x06, 0x07, 0x04,
 		0x09, 0x0A, 0x0B, 0x08, 0x0D, 0x0E, 0x0F, 0x0C,
@@ -53,29 +59,50 @@ func main() {
 		DATA(n, v)
 	}
 
-	block_len := GLOBL("block_len", RODATA|NOPTR)
+	c.blockLen = GLOBL("block_len", RODATA|NOPTR)
 	for i := 0; i < 8; i++ {
 		DATA(4*i, U32(64))
 	}
 
-	zero := GLOBL("zero", RODATA|NOPTR)
+	c.zero = GLOBL("zero", RODATA|NOPTR)
 	for i := 0; i < 8; i++ {
 		DATA(4*i, U32(0))
 	}
 
-	counter := GLOBL("counter", RODATA|NOPTR)
+	c.counter = GLOBL("counter", RODATA|NOPTR)
 	for i := 0; i < 8; i++ {
 		DATA(8*i, U64(i))
 	}
 
-	c := ctx{
-		rot16:     rot16,
-		rot8:      rot8,
-		iv:        iv,
-		block_len: block_len,
-		zero:      zero,
-		counter:   counter,
+	c.maskO = GLOBL("maskO", RODATA|NOPTR)
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			if i == j {
+				DATA(32*i+4*j, ^U32(0))
+			} else {
+				DATA(32*i+4*j, U32(0))
+			}
+		}
 	}
+
+	c.maskP = GLOBL("maskP", RODATA|NOPTR)
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			if i > j {
+				DATA(32*i+4*j, ^U32(0))
+			} else {
+				DATA(32*i+4*j, U32(0))
+			}
+		}
+	}
+
+	c.all = GLOBL("all", RODATA|NOPTR)
+	for i := 0; i < 8; i++ {
+		DATA(4*i, ^U32(0))
+	}
+
+	c.chunkEnd = GLOBL("chunk_end", RODATA|NOPTR)
+	DATA(0, U32(flag_chunkEnd))
 
 	Hash8(c)
 	HashF(c)

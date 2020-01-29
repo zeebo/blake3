@@ -135,6 +135,18 @@ func (a *Alloc) Value() *Value {
 	return v
 }
 
+func (a *Alloc) ValueFrom(m Mem) *Value {
+	v := a.Value()
+	VMOVDQU(m, v.Get())
+	return v
+}
+
+func (a *Alloc) ValueWith(m Mem) *Value {
+	v := a.Value()
+	VPBROADCASTD(m, v.Get())
+	return v
+}
+
 func (v *Value) Reg() int {
 	_ = v.Get()
 	return v.regn
@@ -173,6 +185,22 @@ func (a *Alloc) Values(n int) []*Value {
 	out := make([]*Value, n)
 	for i := range out {
 		out[i] = a.Value()
+	}
+	return out
+}
+
+func (a *Alloc) ValuesFrom(n int, m Mem) []*Value {
+	out := make([]*Value, n)
+	for i := range out {
+		out[i] = a.ValueFrom(m.Offset(32 * i))
+	}
+	return out
+}
+
+func (a *Alloc) ValuesWith(n int, m Mem) []*Value {
+	out := make([]*Value, n)
+	for i := range out {
+		out[i] = a.ValueWith(m.Offset(4 * i))
 	}
 	return out
 }
