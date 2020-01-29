@@ -6,9 +6,11 @@ import (
 	. "github.com/mmcloughlin/avo/reg"
 )
 
-func Hash8(c ctx) {
-	TEXT("hash8_avx", 0, `func(
+func HashF(c ctx) {
+	TEXT("hashF_avx", 0, `func(
 		input *[8192]byte,
+		chunks uint64,
+		blocks uint64,
 		counter uint64,
 		flags uint32,
 		out *[256]byte,
@@ -16,17 +18,20 @@ func Hash8(c ctx) {
 
 	var (
 		input   = Mem{Base: Load(Param("input"), GP64())}
-		counter = Load(Param("counter"), GP64())
+		chunks  = Load(Param("chunks"), GP64())
+		blocks  = Load(Param("blocks"), GP64())
+		counter = Load(Param("counter"), GP64()).(GPVirtual)
 		flags   = Load(Param("flags"), GP32()).(GPVirtual)
 		out     = Mem{Base: Load(Param("out"), GP64())}
 	)
+
+	_ = chunks
 
 	alloc := NewAlloc(AllocLocal(32))
 	defer alloc.Free()
 
 	loop := GP64()
 	block_flags := AllocLocal(8) // only need 4, but keeps 64 bit alignment
-	ctr_mem := AllocLocal(8)     // can't do a mov from the param directly
 	ctr_lo_mem := AllocLocal(32)
 	ctr_hi_mem := AllocLocal(32)
 	msg_vecs := AllocLocal(32 * 16)
@@ -40,43 +45,37 @@ func Hash8(c ctx) {
 	}
 
 	{
+		c := func(n int) GPVirtual {
+			r := GP64()
+			if n > 0 {
+				LEAQ(Mem{Base: counter}.Offset(n), r)
+			} else {
+				MOVQ(counter, r)
+			}
+			return r
+		}
+
 		Comment("Build and store counter data on the stack")
-		MOVQ(counter, ctr_mem)
-
-		ctr0, ctr1 := alloc.Value(), alloc.Value()
-		VPBROADCASTQ(ctr_mem, ctr0.Get())
-		VPADDQ(c.counter, ctr0.Get(), ctr0.Get())
-		VPBROADCASTQ(ctr_mem, ctr1.Get())
-		VPADDQ(c.counter.Offset(32), ctr1.Get(), ctr1.Get())
-
-		L, H := alloc.Value(), alloc.Value()
-		VPUNPCKLDQ(ctr1.GetOp(), ctr0.Get(), L.Get())
-		VPUNPCKHDQ(ctr1.ConsumeOp(), ctr0.Consume(), H.Get())
-
-		LLH, HLH := alloc.Value(), alloc.Value()
-		VPUNPCKLDQ(H.GetOp(), L.Get(), LLH.Get())
-		VPUNPCKHDQ(H.ConsumeOp(), L.Consume(), HLH.Get())
-
-		ctrl, ctrh := alloc.Value(), alloc.Value()
-		VPERMQ(U8(0b11_01_10_00), LLH.ConsumeOp(), ctrl.Get())
-		VPERMQ(U8(0b11_01_10_00), HLH.ConsumeOp(), ctrh.Get())
-
-		VMOVDQU(ctrl.Consume(), ctr_lo_mem)
-		VMOVDQU(ctrh.Consume(), ctr_hi_mem)
+		for i := 0; i < 8; i++ {
+			r := c(i)
+			MOVL(r.As32(), ctr_lo_mem.Offset(4*i))
+			SHRQ(U8(32), r)
+			MOVL(r.As32(), ctr_hi_mem.Offset(4*i))
+		}
 	}
 
-	Comment("Set up block flags and variables for iteration")
-	XORQ(loop, loop)
+	Comment("Set up block flags for first iteration")
+	MOVQ(U32(0), loop)
 	MOVL(flags, block_flags)
 	ORL(U8(flag_chunkStart), block_flags)
 
 	{
 		Label("loop")
-		CMPQ(loop, U32(16*64))
+		CMPQ(blocks, Imm(16))
 		JEQ(LabelRef("finalize"))
 
 		Comment("Include end flags if last block")
-		CMPQ(loop, U32(15*64))
+		CMPQ(blocks, Imm(15))
 		JNE(LabelRef("round_setup"))
 		ORL(U8(flag_chunkEnd), block_flags)
 
@@ -111,7 +110,7 @@ func Hash8(c ctx) {
 
 		for r := 0; r < 7; r++ {
 			Commentf("Round %d", r+1)
-			round8(c, alloc, vs, r, msg_vecs)
+			roundF(c, alloc, vs, r, msg_vecs)
 		}
 
 		Comment("Finalize rounds")
@@ -126,12 +125,15 @@ func Hash8(c ctx) {
 		}
 
 		Comment("Decrement and loop")
-		ADDQ(Imm(64), loop)
+		DECQ(blocks)
 		MOVL(flags, block_flags)
 		JMP(LabelRef("loop"))
 	}
 
 	Label("finalize")
+
+	Comment("Transpose output vectors")
+	transpose_vecs(c, alloc, h_vecs)
 
 	Comment("Store into output")
 	for i, v := range h_vecs {
@@ -141,7 +143,7 @@ func Hash8(c ctx) {
 	RET()
 }
 
-func round8(c ctx, alloc *Alloc, vs []*Value, r int, mp Mem) {
+func roundF(c ctx, alloc *Alloc, vs []*Value, r int, mp Mem) {
 	round(c, alloc, vs, r, func(n int) Mem {
 		return mp.Offset(n * 32)
 	})

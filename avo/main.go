@@ -20,6 +20,8 @@ type ctx struct {
 	rot8      Mem
 	iv        Mem
 	block_len Mem
+	zero      Mem
+	counter   Mem
 }
 
 func main() {
@@ -56,15 +58,28 @@ func main() {
 		DATA(4*i, U32(64))
 	}
 
+	zero := GLOBL("zero", RODATA|NOPTR)
+	for i := 0; i < 8; i++ {
+		DATA(4*i, U32(0))
+	}
+
+	counter := GLOBL("counter", RODATA|NOPTR)
+	for i := 0; i < 8; i++ {
+		DATA(8*i, U64(i))
+	}
+
 	c := ctx{
 		rot16:     rot16,
 		rot8:      rot8,
 		iv:        iv,
 		block_len: block_len,
+		zero:      zero,
+		counter:   counter,
 	}
 
-	// AVX(c)
 	Hash8(c)
+	HashF(c)
+	HashP(c)
 
 	Generate()
 }
