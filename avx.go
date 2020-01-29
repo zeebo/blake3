@@ -1,14 +1,6 @@
 package blake3
 
 //go:noescape
-func hash8_avx(
-	input *[8192]byte,
-	counter uint64,
-	flags uint32,
-	out *[256]byte,
-)
-
-//go:noescape
 func hashF_avx(
 	input *[8192]byte,
 	length uint64,

@@ -4,7 +4,7 @@ import "unsafe"
 
 type avxHasher struct {
 	buf    [8192]byte
-	len    int
+	len    uint64
 	stack  []*[256]byte
 	chunks uint64
 	flags  uint32
@@ -21,37 +21,30 @@ func (a *avxHasher) getOutputBuffer() (out *[256]byte) {
 }
 
 func (a *avxHasher) update(buf []byte) {
-	var input *byte
+	var input *[8192]byte
 
 	for len(buf) > 0 {
 		if a.len == 0 && len(buf) >= 8*1024 {
 			// consume 8k directly with no memcpy if possible
 			a.len = 8 * 1024
-			input = &buf[0]
+			input = (*[8192]byte)(unsafe.Pointer(&buf[0]))
 			buf = buf[8*1024:]
 
 		} else {
 			// otherwise, copy into the buffer
 			n := copy(a.buf[a.len:], buf)
-			a.len += n
+			a.len += uint64(n)
 			buf = buf[n:]
-			input = &a.buf[0]
+			input = &a.buf
 		}
 
-		if a.len != len(a.buf) {
+		if a.len != 8192 {
 			continue
 		}
 
 		// allocate or reuse an output buffer
 		out := a.getOutputBuffer()
-
-		// hash 8k of input
-		hash8_avx(
-			(*[8192]byte)(unsafe.Pointer(input)),
-			a.chunks,
-			a.flags,
-			out,
-		)
+		hashF_avx(input, 8192, a.chunks, a.flags, out)
 
 		// update our state
 		a.stack = append(a.stack, out)
@@ -72,21 +65,9 @@ func (a *avxHasher) update(buf []byte) {
 }
 
 func (a *avxHasher) finalize() {
-	chunks := a.chunks
+	var out [256]byte
+	hashF_avx(&a.buf, a.len, a.chunks, a.flags, &out)
+	chunks := a.chunks + (a.len / 1024)
 
-	if complete := a.len / 1024; complete > 0 {
-		// stack allocate output buffer
-		var out [256]byte
-
-		// hash the full 1k blocks of input
-		hash8_avx(
-			&a.buf,
-			chunks,
-			a.flags,
-			&out,
-		)
-
-		// update our finalization state
-		chunks += uint64(complete)
-	}
+	_ = chunks
 }

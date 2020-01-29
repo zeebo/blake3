@@ -22,7 +22,7 @@ func TestVectors(t *testing.T) {
 	}
 }
 
-func TestHash8(t *testing.T) {
+func TestHashF_8K(t *testing.T) {
 	var input [8192]byte
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 1024; j++ {
@@ -31,7 +31,7 @@ func TestHash8(t *testing.T) {
 	}
 
 	out := [256]byte{}
-	hash8_avx(&input, 0, 0, &out)
+	hashF_avx(&input, 8192, 0, 0, &out)
 
 	for i := 0; i < 8; i++ {
 		buf := make([]byte, 1024)
@@ -59,32 +59,21 @@ func TestHash8(t *testing.T) {
 }
 
 func TestHashF(t *testing.T) {
-	var input [8192]byte
+	for n := 1; n < 8192; n++ {
+		var input [8192]byte
 
-	fill := func(n int) {
-		input = [8192]byte{}
-
+	fill:
 		for i := 0; i < 8; i++ {
 			for j := 0; j < 1024; j++ {
-				if 1024*i+j < n {
-					input[1024*i+j] = byte(32*i + j)
+				if 1024*i+j >= n {
+					break fill
 				}
+				input[1024*i+j] = byte(32*i + j)
 			}
 		}
-	}
 
-	for n := 1; n < len(input); n++ {
 		var out [256]byte
-
-		fill(n)
-
-		hashF_avx(
-			&input,
-			uint64(n),
-			0,
-			0,
-			&out,
-		)
+		hashF_avx(&input, uint64(n), 0, 0, &out)
 
 		for i := 0; i < 8 && (i*1024 < n || (i == 0 && n == 0)); i++ {
 			high := 1024 * (i + 1)
@@ -150,19 +139,6 @@ func TestHashP(t *testing.T) {
 	sum := sha256.Sum256(out[:])
 	assert.Equal(t, hex.EncodeToString(sum[:]),
 		"4b162634638c59e9058342fc5daa95c0036ada22e606dc0020f7a5ee1ad08c57")
-}
-
-func BenchmarkHash8(b *testing.B) {
-	var input [8192]byte
-	var out [256]byte
-
-	b.SetBytes(8192)
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		hash8_avx(&input, 0, 0, &out)
-	}
 }
 
 func BenchmarkHashF_1(b *testing.B) {

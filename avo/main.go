@@ -75,7 +75,7 @@ func main() {
 	}
 
 	c.maskO = GLOBL("maskO", RODATA|NOPTR)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 9; i++ {
 		for j := 0; j < 8; j++ {
 			if i == j {
 				DATA(32*i+4*j, ^U32(0))
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	c.maskP = GLOBL("maskP", RODATA|NOPTR)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 9; i++ {
 		for j := 0; j < 8; j++ {
 			if i > j {
 				DATA(32*i+4*j, ^U32(0))
@@ -104,7 +104,6 @@ func main() {
 	c.chunkEnd = GLOBL("chunk_end", RODATA|NOPTR)
 	DATA(0, U32(flag_chunkEnd))
 
-	Hash8(c)
 	HashF(c)
 	HashP(c)
 
