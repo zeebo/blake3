@@ -22,60 +22,17 @@ func TestVectors(t *testing.T) {
 	}
 }
 
-func TestHashF_8K(t *testing.T) {
-	var input [8192]byte
-	for i := 0; i < 8; i++ {
-		for j := 0; j < 1024; j++ {
-			input[1024*i+j] = byte(32*i + j)
-		}
-	}
-
-	out := [256]byte{}
-	hashF_avx(&input, 8192, 0, 0, &out)
-
-	for i := 0; i < 8; i++ {
-		buf := make([]byte, 1024)
-		for j := range buf {
-			buf[j] = byte(32*i + j)
-		}
-
-		chain := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
-		chunk := newChunkState(chain, uint64(i), 0)
-		chunk.update(buf)
-		output := chunk.output()
-		exp := output.compress()
-
-		var got [8]uint32
-		for j := range got {
-			got[j] = binary.LittleEndian.Uint32(out[32*j+4*i:])
-		}
-
-		assert.Equal(t, exp, got)
-	}
-
-	sum := sha256.Sum256(out[:])
-	assert.Equal(t, hex.EncodeToString(sum[:]),
-		"c0589b33091c650f868859d99e7618a745d2bbd3f81a2b9493880e9dbabcf948")
-}
-
 func TestHashF(t *testing.T) {
-	for n := 1; n < 8192; n++ {
+	for n := 0; n <= 8192; n++ {
 		var input [8192]byte
-
-	fill:
-		for i := 0; i < 8; i++ {
-			for j := 0; j < 1024; j++ {
-				if 1024*i+j >= n {
-					break fill
-				}
-				input[1024*i+j] = byte(32*i + j)
-			}
+		for i := 0; i < n; i++ {
+			input[i] = byte(i) % 251
 		}
 
 		var out [256]byte
 		hashF_avx(&input, uint64(n), 0, 0, &out)
 
-		for i := 0; i < 8 && (i*1024 < n || (i == 0 && n == 0)); i++ {
+		for i := 0; i < 8 && i*1024 < n; i++ {
 			high := 1024 * (i + 1)
 			if high > n {
 				high = n
@@ -139,6 +96,27 @@ func TestHashP(t *testing.T) {
 	sum := sha256.Sum256(out[:])
 	assert.Equal(t, hex.EncodeToString(sum[:]),
 		"4b162634638c59e9058342fc5daa95c0036ada22e606dc0020f7a5ee1ad08c57")
+}
+
+func TestRotate(t *testing.T) {
+	var buf [256]byte
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			binary.LittleEndian.PutUint32(buf[32*i+4*j:], uint32(j))
+		}
+	}
+
+	for n := 0; n < 4; n++ {
+		rotate_avx(&buf)
+
+		for i := 0; i < 8; i++ {
+			for j := 0; j < 8; j++ {
+				got := binary.LittleEndian.Uint32(buf[32*i+4*j:])
+				exp := uint32((j+3-n)%4 + (j / 4 * 4))
+				assert.Equal(t, exp, got)
+			}
+		}
+	}
 }
 
 func BenchmarkHashF_1(b *testing.B) {

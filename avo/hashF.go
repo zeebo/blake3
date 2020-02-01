@@ -53,6 +53,12 @@ func HashF(c ctx) {
 	)
 
 	{
+		Comment("Skip if the length is zero")
+		TESTQ(length, length)
+		JZ(LabelRef("return"))
+	}
+
+	{
 		Comment("Compute complete chunks, blocks and blen")
 
 		// chunks = (length / 1024) * 32
@@ -232,6 +238,7 @@ func HashF(c ctx) {
 		}
 	}
 
+	Label("return")
 	RET()
 }
 

@@ -106,6 +106,7 @@ func main() {
 
 	HashF(c)
 	HashP(c)
+	Rotate(c)
 
 	Generate()
 }

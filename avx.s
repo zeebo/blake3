@@ -280,6 +280,10 @@ TEXT ·hashF_avx(SB), $632-40
 	MOVL flags+24(FP), BX
 	MOVQ out+32(FP), BP
 
+	// Skip if the length is zero
+	TESTQ CX, CX
+	JZ    return
+
 	// Compute complete chunks, blocks and blen
 	MOVQ CX, SI
 	SHRQ $0x0a, SI
@@ -1579,6 +1583,8 @@ finalize:
 	VPMASKMOVD Y5, Y8, 160(BP)
 	VPMASKMOVD Y6, Y8, 192(BP)
 	VPMASKMOVD Y7, Y8, 224(BP)
+
+return:
 	RET
 
 // func hashP_avx(left *[256]byte, right *[256]byte, flags uint8, out *[256]byte)
@@ -2710,4 +2716,26 @@ TEXT ·hashP_avx(SB), $40-32
 	VMOVDQU Y4, 160(BX)
 	VMOVDQU Y5, 192(BX)
 	VMOVDQU Y6, 224(BX)
+	RET
+
+// func rotate_avx(in *[256]byte)
+// Requires: AVX, AVX2
+TEXT ·rotate_avx(SB), $0-8
+	MOVQ    in+0(FP), AX
+	VPSHUFD $0x93, (AX), Y0
+	VMOVDQU Y0, (AX)
+	VPSHUFD $0x93, 32(AX), Y0
+	VMOVDQU Y0, 32(AX)
+	VPSHUFD $0x93, 64(AX), Y0
+	VMOVDQU Y0, 64(AX)
+	VPSHUFD $0x93, 96(AX), Y0
+	VMOVDQU Y0, 96(AX)
+	VPSHUFD $0x93, 128(AX), Y0
+	VMOVDQU Y0, 128(AX)
+	VPSHUFD $0x93, 160(AX), Y0
+	VMOVDQU Y0, 160(AX)
+	VPSHUFD $0x93, 192(AX), Y0
+	VMOVDQU Y0, 192(AX)
+	VPSHUFD $0x93, 224(AX), Y0
+	VMOVDQU Y0, 224(AX)
 	RET
