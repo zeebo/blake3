@@ -21,7 +21,7 @@ func HashP(c ctx) {
 		out   = Mem{Base: Load(Param("out"), GP64())}
 	)
 
-	alloc := NewAlloc(AllocLocal(32))
+	alloc := NewAlloc(AllocLocal(roundSize))
 	defer alloc.Free()
 
 	flags_mem := AllocLocal(8)
@@ -38,23 +38,16 @@ func HashP(c ctx) {
 
 	{
 		Comment("Set up flags value")
+		ORL(U8(flag_parent), flags)
 		MOVL(flags, flags_mem)
-		ORL(U8(flag_parent), flags_mem)
 	}
 
-	{
-		Comment("Load IV into vectors")
-		h_vecs = alloc.ValuesWith(8, c.iv)
-	}
-
-	{
-		Comment("Set up constant vectors")
-		iv = alloc.ValuesWith(4, c.iv)
-		ctr_low = alloc.ValueFrom(c.zero)
-		ctr_hi = alloc.ValueFrom(c.zero)
-		blen_vec = alloc.ValueFrom(c.blockLen)
-		flags_vec = alloc.ValueWith(flags_mem)
-	}
+	h_vecs = alloc.ValuesWith(8, c.iv)
+	iv = alloc.ValuesWith(4, c.iv)
+	ctr_low = alloc.ValueFrom(c.zero)
+	ctr_hi = alloc.ValueFrom(c.zero)
+	blen_vec = alloc.ValueFrom(c.blockLen)
+	flags_vec = alloc.ValueWith(flags_mem)
 
 	{
 		Comment("Perform the rounds")
@@ -74,10 +67,7 @@ func HashP(c ctx) {
 
 	{
 		Comment("Finalize")
-		for i := 0; i < 8; i++ {
-			h_vecs[i] = alloc.Value()
-			VPXOR(vs[i].ConsumeOp(), vs[8+i].Consume(), h_vecs[i].Get())
-		}
+		finalizeRounds(alloc, vs, h_vecs, nil)
 	}
 
 	{

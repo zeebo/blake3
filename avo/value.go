@@ -16,6 +16,10 @@ var ymmRegs = [...]VecPhysical{
 	Y12, Y13, Y14, Y15,
 }
 
+//
+// used set
+//
+
 type used map[int]struct{}
 
 func (u used) alloc(max int) (n int, ok bool) {
@@ -29,14 +33,26 @@ func (u used) alloc(max int) (n int, ok bool) {
 	return 0, false
 }
 
+func (u used) mustAlloc() (n int) {
+	n, ok := u.alloc(0)
+	if !ok {
+		panic("unable to alloc")
+	}
+	return n
+}
+
 func (u used) free(n int) {
 	delete(u, n)
 }
 
+//
+// alloc
+//
+
 type Alloc struct {
 	m      Mem
 	regs   used
-	slots  used
+	stack  used
 	values map[int]*Value
 	ctr    int
 	spills int
@@ -47,7 +63,7 @@ func NewAlloc(m Mem) *Alloc {
 	return &Alloc{
 		m:      m,
 		regs:   make(used),
-		slots:  make(used),
+		stack:  make(used),
 		values: make(map[int]*Value),
 		ctr:    0,
 		spills: 0,
@@ -65,57 +81,57 @@ func (a *Alloc) Debug(name string) func() {
 	return func() { a.stats(name, "out") }
 }
 
+func (a *Alloc) FreeReg() int {
+	n, ok := a.regs.alloc(16)
+	if !ok {
+		return -1
+	}
+	a.regs.free(n)
+	return n
+}
+
 func (a *Alloc) Free() {
 	for id, v := range a.values {
 		fmt.Println("leaked value:", id, "==", v.id, "\n", v.stack)
 	}
 }
 
-type ymmState int
-
-const (
-	ymmState_empty ymmState = iota
-	ymmState_live
-	ymmState_spilled
-)
-
-type Value struct {
-	a     *Alloc
-	id    int
-	age   int
-	state ymmState
-	regn  int
-	slotn int
-	stack string
-	free  bool
-}
-
-func (a *Alloc) spillOldest(except *Value) int {
+func (a *Alloc) findOldestLive(except *Value) *Value {
 	var oldest *Value
-	for _, val := range a.values {
-		if val.state != ymmState_live || oldest == except {
+	for _, v := range a.values {
+		if oldest == except || !v.state.Live() {
 			continue
 		}
-		if oldest == nil || val.age < oldest.age {
-			oldest = val
+		if oldest == nil || v.age < oldest.age {
+			oldest = v
 		}
 	}
-	n := oldest.regn
-	a.spill(oldest)
-	return n
+	return oldest
 }
 
-func (a *Alloc) spill(v *Value) {
-	n := v.regn
-	v.slotn, _ = a.slots.alloc(0)
-	v.regn = -1
-	v.state = ymmState_spilled
-
-	a.spills++
-	VMOVDQU(ymmRegs[n], a.m.Offset(v.slotn*32))
-	if v.slotn > a.mslot {
-		a.mslot = v.slotn
+func (a *Alloc) allocSpot() valueState {
+	reg, ok := a.regs.alloc(16)
+	if ok {
+		return stateLive{Reg: reg}
 	}
+	slot := a.stack.mustAlloc()
+	a.spills++
+	if slot > a.mslot {
+		a.mslot = slot
+	}
+	return stateSpilled{mem: a.m, Slot: slot}
+}
+
+func (a *Alloc) allocReg(except *Value) int {
+	reg, ok := a.regs.alloc(16)
+	if ok {
+		return reg
+	}
+	oldest := a.findOldestLive(except)
+	state := oldest.state.(stateLive)
+	oldest.displaceTo(a.allocSpot())
+	a.regs[state.Reg] = struct{}{}
+	return state.Reg
 }
 
 func (a *Alloc) Value() *Value {
@@ -127,58 +143,14 @@ func (a *Alloc) Value() *Value {
 		a:     a,
 		id:    a.ctr,
 		age:   a.ctr,
-		state: ymmState_empty,
 		stack: string(buf[:runtime.Stack(buf[:], false)]),
+		reg:   -1,
+
+		state: stateEmpty{},
 	}
 	a.values[v.id] = v
 
 	return v
-}
-
-func (a *Alloc) ValueFrom(m Mem) *Value {
-	v := a.Value()
-	VMOVDQU(m, v.Get())
-	return v
-}
-
-func (a *Alloc) ValueWith(m Mem) *Value {
-	v := a.Value()
-	VPBROADCASTD(m, v.Get())
-	return v
-}
-
-func (v *Value) Reg() int {
-	_ = v.Get()
-	return v.regn
-}
-
-func (v *Value) Become(regn int) {
-	if v.state == ymmState_live && v.regn == regn {
-		return
-	}
-
-	for _, v := range v.a.values {
-		if v.regn == regn {
-			n, ok := v.a.regs.alloc(16)
-			if !ok {
-				v.a.spill(v)
-			} else {
-				delete(v.a.regs, v.regn)
-				v.a.regs[n] = struct{}{}
-				VMOVDQU(ymmRegs[v.regn], ymmRegs[n])
-				v.regn = n
-			}
-			break
-		}
-	}
-
-	if v.state == ymmState_live {
-		delete(v.a.regs, v.regn)
-	}
-	v.a.regs[regn] = struct{}{}
-	VMOVDQU(v.GetOp(), ymmRegs[regn])
-	v.regn = regn
-	v.state = ymmState_live
 }
 
 func (a *Alloc) Values(n int) []*Value {
@@ -189,12 +161,24 @@ func (a *Alloc) Values(n int) []*Value {
 	return out
 }
 
+func (a *Alloc) ValueFrom(m Mem) *Value {
+	v := a.Value()
+	v.state = stateLazy{Mem: m}
+	return v
+}
+
 func (a *Alloc) ValuesFrom(n int, m Mem) []*Value {
 	out := make([]*Value, n)
 	for i := range out {
 		out[i] = a.ValueFrom(m.Offset(32 * i))
 	}
 	return out
+}
+
+func (a *Alloc) ValueWith(m Mem) *Value {
+	v := a.Value()
+	v.state = stateLazy{Mem: m, Broadcast: true}
+	return v
 }
 
 func (a *Alloc) ValuesWith(n int, m Mem) []*Value {
@@ -205,23 +189,146 @@ func (a *Alloc) ValuesWith(n int, m Mem) []*Value {
 	return out
 }
 
-func (v *Value) Free() {
-	if v.state == ymmState_spilled {
-		v.a.slots.free(v.slotn)
-	}
-	if v.state == ymmState_live {
-		v.a.regs.free(v.regn)
-	}
-	delete(v.a.values, v.id)
-	v.free = true
+//
+// value states
+//
+
+type valueState interface {
+	Op() Op
+	Live() bool
+	String() string
+
+	ymmState()
 }
 
-type XF func(VecPhysical) VecPhysical
+type stateBase struct{}
 
-func AsX(p VecPhysical) VecPhysical { return p.AsX().(VecPhysical) }
+func (stateBase) Op() Op         { panic("no location for this state") }
+func (stateBase) Live() bool     { return false }
+func (stateBase) String() string { return "Base" }
 
-func (v *Value) Spilled() bool {
-	return v.state == ymmState_spilled
+func (stateBase) ymmState() {}
+
+type stateEmpty struct {
+	stateBase
+}
+
+func (stateEmpty) String() string { return "Empty" }
+
+type stateLive struct {
+	stateBase
+
+	Reg int
+}
+
+func (s stateLive) Op() Op         { return s.Register() }
+func (s stateLive) Live() bool     { return true }
+func (s stateLive) String() string { return fmt.Sprintf("Live(%d)", s.Reg) }
+
+func (s stateLive) Register() VecPhysical { return ymmRegs[s.Reg] }
+
+type stateSpilled struct {
+	stateBase
+
+	mem  Mem
+	Slot int
+}
+
+func (s stateSpilled) Op() Op         { return s.GetMem() }
+func (s stateSpilled) String() string { return fmt.Sprintf("Spilled(%d)", s.Slot) }
+
+func (s stateSpilled) GetMem() Mem { return s.mem.Offset(32 * s.Slot) }
+
+type stateLazy struct {
+	stateBase
+
+	Mem       Mem
+	Broadcast bool
+}
+
+func (s stateLazy) String() string { return fmt.Sprintf("Lazy(%s, %t)", s.Mem.Asm(), s.Broadcast) }
+
+//
+// value
+//
+
+type Value struct {
+	a     *Alloc
+	id    int
+	age   int
+	stack string
+	free  bool
+	reg   int // currently allocated register (sometimes dup'd in state)
+
+	state valueState
+}
+
+func (v *Value) Reg() int {
+	if v.reg < 0 {
+		v.reg = v.a.allocReg(v)
+	}
+	return v.reg
+}
+
+func (v *Value) setState(state valueState) {
+	v.freeSpot()
+	v.state = state
+	v.useSpot()
+}
+
+func (v *Value) Become(reg int) {
+	// if we already are/will be it: done.
+	if v.reg == reg {
+		return
+	}
+
+	// if it's free: displace to it.
+	if _, ok := v.a.regs[reg]; !ok {
+		v.a.regs[reg] = struct{}{}
+		v.displaceTo(stateLive{Reg: reg})
+		return
+	}
+
+	// someone else owns it. displace them and then displace ourselves.
+	for _, cand := range v.a.values {
+		if cand.reg != reg {
+			continue
+		}
+		state := cand.state
+		cand.displaceTo(cand.a.allocSpot())
+		v.displaceTo(state)
+		return
+	}
+}
+
+func (v *Value) displaceTo(dest valueState) {
+	VMOVDQU(v.Get(), dest.Op())
+	v.setState(dest)
+}
+
+func (v *Value) freeSpot() {
+	switch state := v.state.(type) {
+	case stateLive:
+		v.a.regs.free(state.Reg)
+		v.reg = -1
+	case stateSpilled:
+		v.a.stack.free(state.Slot)
+	}
+}
+
+func (v *Value) useSpot() {
+	switch state := v.state.(type) {
+	case stateLive:
+		v.a.regs[state.Reg] = struct{}{}
+		v.reg = state.Reg
+	case stateSpilled:
+		v.a.stack[state.Slot] = struct{}{}
+	}
+}
+
+func (v *Value) Free() {
+	v.setState(nil)
+	delete(v.a.values, v.id)
 }
 
 func (v *Value) Consume() VecPhysical {
@@ -230,52 +337,68 @@ func (v *Value) Consume() VecPhysical {
 	return reg
 }
 
-func (v *Value) ConsumeOp(xfs ...XF) Op {
-	op := v.GetOp(xfs...)
+func (v *Value) ConsumeOp() Op {
+	op := v.GetOp()
 	v.Free()
 	return op
 }
 
-func (v *Value) GetOp(xfs ...XF) Op {
+func (v *Value) allocReg() int {
+	if v.reg >= 0 {
+		return v.reg
+	}
+	return v.a.allocReg(v)
+}
+
+func (v *Value) GetOp() Op {
 	v.a.ctr++
 	v.age = v.a.ctr
 
-	if v.state == ymmState_spilled {
-		return v.a.m.Offset(v.slotn * 32)
-	} else if v.state == ymmState_empty {
-		n, ok := v.a.regs.alloc(16)
-		if !ok {
-			n = v.a.spillOldest(v)
+	switch state := v.state.(type) {
+	case stateLive:
+	case stateSpilled:
+		return state.GetMem()
+	case stateLazy:
+		if !state.Broadcast {
+			return state.Mem
 		}
-		v.regn = n
-		v.slotn = -1
-		v.state = ymmState_live
+		reg := v.allocReg()
+		VPBROADCASTD(state.Mem, ymmRegs[reg])
+		v.setState(stateLive{Reg: reg})
+	case stateEmpty:
+		reg := v.allocReg()
+		v.setState(stateLive{Reg: reg})
 	}
 
-	vp := ymmRegs[v.regn]
-	for _, xf := range xfs {
-		vp = xf(vp)
-	}
-	return vp
+	return v.state.(stateLive).Register()
 }
 
 func (v *Value) Get() VecPhysical {
 	v.a.ctr++
 	v.age = v.a.ctr
 
-	if v.state != ymmState_live {
-		n, ok := v.a.regs.alloc(16)
-		if !ok {
-			n = v.a.spillOldest(v)
+	switch state := v.state.(type) {
+	case stateLive:
+	case stateSpilled:
+		reg := v.allocReg()
+		VMOVDQU(state.GetMem(), ymmRegs[reg])
+		v.setState(stateLive{Reg: reg})
+	case stateLazy:
+		reg := v.allocReg()
+		v.setState(stateLive{Reg: reg})
+		if !state.Broadcast {
+			VMOVDQU(state.Mem, v.state.(stateLive).Register())
+		} else {
+			VPBROADCASTD(state.Mem, v.state.(stateLive).Register())
 		}
-		v.regn = n
-		if v.state == ymmState_spilled {
-			VMOVDQU(v.a.m.Offset(v.slotn*32), ymmRegs[v.regn])
-			v.a.slots.free(v.slotn)
-		}
-		v.slotn = -1
-		v.state = ymmState_live
+	case stateEmpty:
+		reg := v.allocReg()
+		v.setState(stateLive{Reg: reg})
 	}
 
-	return ymmRegs[v.regn]
+	return v.state.(stateLive).Register()
+}
+
+func (v *Value) String() string {
+	return fmt.Sprintf("Value(reg:%-2d state:%s)", v.reg, v.state)
 }

@@ -101,6 +101,8 @@ func (a *avxHasher) finalize() {
 
 	// compress the final one? it's tricky. need at worst 3 copies i think.
 	// maybe we can append in to the stack backwards?
+
+	_ = chunks
 }
 
 func (a *avxHasher) normalize(in *[256]byte) {

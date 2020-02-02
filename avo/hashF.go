@@ -30,7 +30,7 @@ func HashF(c ctx) {
 	blocks := GP64()
 	blen := GP64()
 
-	alloc := NewAlloc(AllocLocal(32))
+	alloc := NewAlloc(AllocLocal(roundSize))
 	defer alloc.Free()
 
 	flags_mem := AllocLocal(8)
@@ -52,6 +52,13 @@ func HashF(c ctx) {
 		flags_vec *Value
 	)
 
+	h_vecs = alloc.ValuesWith(8, c.iv)
+	blen_vec = alloc.ValueFrom(c.blockLen)
+	flags_vec = alloc.ValueWith(flags_mem)
+	iv = alloc.ValuesWith(4, c.iv)
+	ctr_low = alloc.ValueFrom(ctr_lo_mem)
+	ctr_hi = alloc.ValueFrom(ctr_hi_mem)
+
 	{
 		Comment("Skip if the length is zero")
 		TESTQ(length, length)
@@ -67,14 +74,14 @@ func HashF(c ctx) {
 		SHLQ(U8(5), chunks)
 
 		// blocks = (length - 1) % 1024 / 64 * 64
-		DECQ(length)
+		SUBQ(U8(1), length)
 		MOVQ(length, blocks)
 		ANDQ(U32(960), blocks)
 
 		// blen = (length - 1) % 64 + 1
 		MOVQ(length, blen)
 		ANDQ(U8(63), blen)
-		INCQ(blen)
+		ADDQ(U8(1), blen)
 	}
 
 	{
@@ -94,10 +101,10 @@ func HashF(c ctx) {
 
 	{
 		Comment("Load IV into vectors")
-		h_vecs = alloc.ValuesWith(8, c.iv)
 		h_regs = make([]int, 8)
 		for i, v := range h_vecs {
 			h_regs[i] = v.Reg()
+			_ = v.Get()
 		}
 	}
 
@@ -134,20 +141,14 @@ func HashF(c ctx) {
 	}
 
 	{
-		Comment("Set up block length and flag vectors")
-		blen_vec = alloc.ValueFrom(c.blockLen)
-		flags_vec = alloc.ValueWith(flags_mem)
-	}
-
-	{
-		Comment("Set up IV vectors")
-		iv = alloc.ValuesWith(4, c.iv)
-	}
-
-	{
-		Comment("Set up counter vectors")
-		ctr_low = alloc.ValueFrom(ctr_lo_mem)
-		ctr_hi = alloc.ValueFrom(ctr_hi_mem)
+		Comment("Load constants for the round")
+		_ = blen_vec.Get()
+		_ = flags_vec.Get()
+		for _, v := range iv {
+			_ = v.Get()
+		}
+		_ = ctr_low.Get()
+		_ = ctr_hi.Get()
 	}
 
 	{
@@ -163,12 +164,12 @@ func HashF(c ctx) {
 		// clear out the block len
 		tmp = alloc.ValueFrom(maskO)
 		VPXOR(c.all, tmp.Get(), tmp.Get())
-		VPAND(blen_vec.GetOp(), tmp.Consume(), blen_vec.Get())
+		VPAND(tmp.Consume(), blen_vec.Get(), blen_vec.Get())
 
 		// or in the appropriate block len
 		tmp = alloc.ValueWith(blen_mem)
 		VPAND(maskO, tmp.Get(), tmp.Get())
-		VPOR(blen_vec.GetOp(), tmp.Consume(), blen_vec.Get())
+		VPOR(tmp.Consume(), blen_vec.Get(), blen_vec.Get())
 	}
 
 	Label("begin_rounds")
@@ -191,16 +192,13 @@ func HashF(c ctx) {
 
 	{
 		Comment("Finalize rounds")
-		for i := 0; i < 8; i++ {
-			h_vecs[i] = alloc.Value()
-			VPXOR(vs[i].ConsumeOp(), vs[8+i].Consume(), h_vecs[i].Get())
-		}
+		finalizeRounds(alloc, vs, h_vecs, h_regs)
 	}
 
 	{
 		Comment("Save state for partial chunk if necessary")
 		CMPQ(loop, blocks)
-		JNE(LabelRef("register_fixup"))
+		JNE(LabelRef("loop_tail"))
 
 		extractMask(c, alloc, h_vecs, maskO, out)
 	}
@@ -208,11 +206,12 @@ func HashF(c ctx) {
 	{
 		Comment("If we have zero complete chunks, we're done")
 		CMPQ(chunks, U8(0))
-		JNE(LabelRef("register_fixup"))
+		JNE(LabelRef("loop_tail"))
+
 		RET()
 	}
 
-	Label("register_fixup")
+	Label("loop_tail")
 
 	{
 		Comment("Fix up registers for next iteration")

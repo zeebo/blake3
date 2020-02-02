@@ -1,7 +1,12 @@
-github.com/mmcloughlin/avo v0.0.0-20200127213545-5a144d9b535c h1:1KOclD6fQ5ZTXxielBqUug8Xi5cyBsXL5h+oVKJE+dI=
-github.com/mmcloughlin/avo v0.0.0-20200127213545-5a144d9b535c/go.mod h1:L0u9qfRMLNBO97u6pPukRp6ncoQz0Q25W69fvtht3vA=
+github.com/mmcloughlin/avo v0.0.0-20200201205037-fb157e1de836 h1:knhFIJojRvDc83PlhHV2u9hn1co3QEwZ6ZHwle3KtHs=
+github.com/mmcloughlin/avo v0.0.0-20200201205037-fb157e1de836/go.mod h1:L0u9qfRMLNBO97u6pPukRp6ncoQz0Q25W69fvtht3vA=
 github.com/zeebo/assert v1.1.0 h1:hU1L1vLTHsnO8x8c9KAR5GmM5QscxHg5RNU5z5qbUWY=
 github.com/zeebo/assert v1.1.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN/wJ0=
+github.com/zeebo/errs v1.2.0 h1:Tk8UszIOLEjtx6DWnvfmMJe6N8q7vu03Bj95HMWDUkc=
+github.com/zeebo/errs v1.2.0/go.mod h1:sgbWHsvVuTPHcqJJGQ1WhI5KbWlHYz+2+2C/LSEtCw4=
+github.com/zeebo/iaca v0.0.0-20190830165230-db4bcd8fc158 h1:1xpamrrtDRGff/rEE72CNTwdYP0M1l0bxWozBolzqqw=
+github.com/zeebo/iaca v0.0.0-20190830165230-db4bcd8fc158/go.mod h1:RWpOpctgpbaIanFyq8txS5qa8Udkge92WKbE2njEyqY=
+golang.org/x/arch v0.0.0-20190815191158-8a70ba74b3a1/go.mod h1:flIaEI6LNU6xOCD5PaJvn9wGP0agmIOqjrtsKGRguv4=
 golang.org/x/arch v0.0.0-20190909030613-46d78d1859ac/go.mod h1:flIaEI6LNU6xOCD5PaJvn9wGP0agmIOqjrtsKGRguv4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=

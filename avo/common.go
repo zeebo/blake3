@@ -44,13 +44,13 @@ func transpose(c ctx, alloc *Alloc, vs []*Value) {
 	vs[0], vs[1], vs[2], vs[3] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 	vs[4], vs[5], vs[6], vs[7] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
-	VINSERTI128(Imm(1), LL4567.GetOp(AsX), LL0123.Get(), vs[0].Get())
+	VINSERTI128(Imm(1), LL4567.Get().(VecPhysical).AsX(), LL0123.Get(), vs[0].Get())
 	VPERM2I128(Imm(49), LL4567.Consume(), LL0123.Consume(), vs[4].Get())
-	VINSERTI128(Imm(1), HL4567.GetOp(AsX), HL0123.Get(), vs[1].Get())
+	VINSERTI128(Imm(1), HL4567.Get().(VecPhysical).AsX(), HL0123.Get(), vs[1].Get())
 	VPERM2I128(Imm(49), HL4567.Consume(), HL0123.Consume(), vs[5].Get())
-	VINSERTI128(Imm(1), LH4567.GetOp(AsX), LH0123.Get(), vs[2].Get())
+	VINSERTI128(Imm(1), LH4567.Get().(VecPhysical).AsX(), LH0123.Get(), vs[2].Get())
 	VPERM2I128(Imm(49), LH4567.Consume(), LH0123.Consume(), vs[6].Get())
-	VINSERTI128(Imm(1), HH4567.GetOp(AsX), HH0123.Get(), vs[3].Get())
+	VINSERTI128(Imm(1), HH4567.Get().(VecPhysical).AsX(), HH0123.Get(), vs[3].Get())
 	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), vs[7].Get())
 }
 
@@ -96,6 +96,35 @@ func loadCounter(c ctx, alloc *Alloc, mem, lo_mem, hi_mem Mem) {
 	VMOVDQU(ctrh.Consume(), hi_mem)
 }
 
+func finalizeRounds(alloc *Alloc, vs, h_vecs []*Value, h_regs []int) {
+	finalized := [8]bool{}
+
+finalize:
+	for j := 0; j < 8; j++ {
+		free := alloc.FreeReg()
+		for i, reg := range h_regs {
+			if reg == free && !finalized[i] {
+				tmp := alloc.Value()
+				_ = tmp.Reg()
+				VPXOR(vs[i].ConsumeOp(), vs[8+i].ConsumeOp(), tmp.Get())
+				h_vecs[i] = tmp
+				finalized[i] = true
+				continue finalize
+			}
+		}
+
+		for i, f := range finalized[:] {
+			if !f {
+				tmp := alloc.Value()
+				VPXOR(vs[i].ConsumeOp(), vs[8+i].ConsumeOp(), tmp.Get())
+				h_vecs[i] = tmp
+				finalized[i] = true
+				continue finalize
+			}
+		}
+	}
+}
+
 func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 	ms := func(ns ...int) (o []Mem) {
 		for _, n := range ns {
@@ -103,6 +132,34 @@ func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 		}
 		return o
 	}
+
+	// {
+	// 	rot16 := alloc.ValueFrom(c.rot16)
+	// 	addms(alloc, ms(0, 2, 4, 6), vs[0:4])
+	// 	for i := 0; i < 4; i++ {
+	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
+	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
+	// 		vs[12+i] = rotTv(alloc, rot16, vs[12+i])
+	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
+	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
+	// 	}
+	// 	rot16.Free()
+	// 	rotNs(alloc, 12, vs[4:8])
+	// }
+
+	// {
+	// 	rot8 := alloc.ValueFrom(c.rot8)
+	// 	addms(alloc, ms(1, 3, 5, 7), vs[0:4])
+	// 	for i := 0; i < 4; i++ {
+	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
+	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
+	// 		vs[12+i] = rotTv(alloc, rot8, vs[12+i])
+	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
+	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
+	// 	}
+	// 	rot8.Free()
+	// 	rotNs(alloc, 7, vs[4:8])
+	// }
 
 	addms(alloc, ms(0, 2, 4, 6), vs[0:4])
 	adds(alloc, vs[4:8], vs[0:4])
@@ -123,6 +180,34 @@ func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 	vs[4], vs[5], vs[6], vs[7] = vs[5], vs[6], vs[7], vs[4]
 	vs[8], vs[9], vs[10], vs[11] = vs[10], vs[11], vs[8], vs[9]
 	vs[12], vs[13], vs[14], vs[15] = vs[15], vs[12], vs[13], vs[14]
+
+	// {
+	// 	rot16 := alloc.ValueFrom(c.rot16)
+	// 	addms(alloc, ms(8, 10, 12, 14), vs[0:4])
+	// 	for i := 0; i < 4; i++ {
+	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
+	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
+	// 		vs[12+i] = rotTv(alloc, rot16, vs[12+i])
+	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
+	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
+	// 	}
+	// 	rot16.Free()
+	// 	rotNs(alloc, 12, vs[4:8])
+	// }
+
+	// {
+	// 	rot8 := alloc.ValueFrom(c.rot8)
+	// 	addms(alloc, ms(9, 11, 13, 15), vs[0:4])
+	// 	for i := 0; i < 4; i++ {
+	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
+	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
+	// 		vs[12+i] = rotTv(alloc, rot8, vs[12+i])
+	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
+	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
+	// 	}
+	// 	rot8.Free()
+	// 	rotNs(alloc, 7, vs[4:8])
+	// }
 
 	addms(alloc, ms(8, 10, 12, 14), vs[0:4])
 	adds(alloc, vs[4:8], vs[0:4])
@@ -159,16 +244,7 @@ func addms(alloc *Alloc, mps []Mem, as []*Value) {
 
 func add(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
-
-	switch {
-	case a.Spilled() && !b.Spilled():
-		VPADDD(a.GetOp(), b.Consume(), o.Get())
-	case b.Spilled() && !a.Spilled():
-		VPADDD(b.ConsumeOp(), a.Get(), o.Get())
-	default: // TODO: spill inefficiency
-		VPADDD(a.GetOp(), b.Consume(), o.Get())
-	}
-
+	VPADDD(a.Get(), b.Consume(), o.Get())
 	return o
 }
 
@@ -180,16 +256,7 @@ func adds(alloc *Alloc, as, bs []*Value) {
 
 func xor(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
-
-	switch {
-	case a.Spilled() && !b.Spilled():
-		VPXOR(a.GetOp(), b.Consume(), o.Get())
-	case b.Spilled() && !a.Spilled():
-		VPXOR(b.ConsumeOp(), a.Get(), o.Get())
-	default: // TODO: spill inefficiency
-		VPXOR(a.GetOp(), b.Consume(), o.Get())
-	}
-
+	VPXOR(a.Get(), b.Consume(), o.Get())
 	return o
 }
 
@@ -213,14 +280,23 @@ func rotNs(alloc *Alloc, n int, as []*Value) {
 	}
 }
 
-func rotT(alloc *Alloc, tab Mem, a *Value) *Value {
+func rotTv(alloc *Alloc, tab, a *Value) *Value {
+	o := alloc.Value()
+	VPSHUFB(tab.GetOp(), a.Consume(), o.Get())
+	return o
+}
+
+func rotTm(alloc *Alloc, tab Mem, a *Value) *Value {
 	o := alloc.Value()
 	VPSHUFB(tab, a.Consume(), o.Get())
 	return o
 }
 
 func rotTs(alloc *Alloc, tab Mem, as []*Value) {
+	tabv := alloc.ValueFrom(tab)
+	defer tabv.Free()
+
 	for i, a := range as {
-		as[i] = rotT(alloc, tab, a)
+		as[i] = rotTv(alloc, tabv, a)
 	}
 }

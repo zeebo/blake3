@@ -5,6 +5,8 @@ import (
 	. "github.com/mmcloughlin/avo/operand"
 )
 
+const roundSize = 32
+
 var msgSched = [7][16]int{
 	{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 	{2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8},
@@ -106,7 +108,13 @@ func main() {
 
 	HashF(c)
 	HashP(c)
-	Rotate(c)
+	Movc(c)
+
+	TEXT("round_avx", 0, `func(m *byte)`)
+	m := Mem{Base: Load(Param("m"), GP64())}
+	alloc := NewAlloc(AllocLocal(roundSize))
+	round(c, alloc, alloc.Values(16), 0, func(n int) Mem { return m.Offset(32 * n) })
+	RET()
 
 	Generate()
 }

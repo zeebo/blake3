@@ -1,5 +1,3 @@
-github.com/mmcloughlin/avo v0.0.0-20200121061929-a27b7434c5a9 h1:pGC6a2TViEyZpevW5kAHNuYGBqRJhFu3CIBb3XitzuQ=
-github.com/mmcloughlin/avo v0.0.0-20200121061929-a27b7434c5a9/go.mod h1:L0u9qfRMLNBO97u6pPukRp6ncoQz0Q25W69fvtht3vA=
 github.com/mmcloughlin/avo v0.0.0-20200123065040-f40d60217016 h1:WSYKkSPLPfoV6EKpYG7IbBNiSNnSyu3+n9kkwDicKMk=
 github.com/mmcloughlin/avo v0.0.0-20200123065040-f40d60217016/go.mod h1:L0u9qfRMLNBO97u6pPukRp6ncoQz0Q25W69fvtht3vA=
 golang.org/x/arch v0.0.0-20190909030613-46d78d1859ac/go.mod h1:flIaEI6LNU6xOCD5PaJvn9wGP0agmIOqjrtsKGRguv4=

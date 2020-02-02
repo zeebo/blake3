@@ -5,10 +5,16 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/zeebo/assert"
 )
+
+//go:noescape
+func round_avx(x *byte)
+
+var foo = round_avx
 
 func TestVectors(t *testing.T) {
 	for _, tv := range vectors {
@@ -23,10 +29,10 @@ func TestVectors(t *testing.T) {
 }
 
 func TestHashF(t *testing.T) {
-	for n := 0; n <= 8192; n++ {
+	for n := 64; n <= 8192; n++ {
 		var input [8192]byte
 		for i := 0; i < n; i++ {
-			input[i] = byte(i) % 251
+			input[i] = byte(i+1) % 251
 		}
 
 		var out [256]byte
@@ -49,6 +55,7 @@ func TestHashF(t *testing.T) {
 				got[j] = binary.LittleEndian.Uint32(out[32*j+4*i:])
 			}
 
+			t.Log(n, i)
 			assert.Equal(t, exp, got)
 		}
 	}
@@ -98,23 +105,31 @@ func TestHashP(t *testing.T) {
 		"4b162634638c59e9058342fc5daa95c0036ada22e606dc0020f7a5ee1ad08c57")
 }
 
-func TestRotate(t *testing.T) {
+func TestMovc(t *testing.T) {
+	patterns := []uint32{
+		0x11111111, 0x22222222, 0x33333333, 0x44444444,
+		0x55555555, 0x66666666, 0x77777777, 0x88888888,
+	}
+
 	var buf [256]byte
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 8; j++ {
-			binary.LittleEndian.PutUint32(buf[32*i+4*j:], uint32(j))
+			binary.LittleEndian.PutUint32(buf[32*i+4*j:], patterns[j])
 		}
 	}
 
-	for n := 0; n < 4; n++ {
-		rotate_avx(&buf)
+	for icol := 0; icol < 8; icol++ {
+		for ocol := 0; ocol < 8; ocol++ {
+			var out [256]byte
+			movc_avx(&buf, uint64(icol), &out, uint64(ocol))
 
-		for i := 0; i < 8; i++ {
-			for j := 0; j < 8; j++ {
-				got := binary.LittleEndian.Uint32(buf[32*i+4*j:])
-				exp := uint32((j+3-n)%4 + (j / 4 * 4))
-				assert.Equal(t, exp, got)
+			var exp [256]byte
+			for i := 0; i < 8; i++ {
+				binary.LittleEndian.PutUint32(exp[32*i+4*ocol:], patterns[icol])
 			}
+
+			assert.Equal(t, out, exp)
+			runtime.KeepAlive(foo)
 		}
 	}
 }
@@ -156,6 +171,18 @@ func BenchmarkHashP(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		hashP_avx(&left, &right, 0, &out)
+	}
+}
+
+func BenchmarkMovc(b *testing.B) {
+	var input [256]byte
+	var out [256]byte
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		movc_avx(&input, uint64(i)%8, &out, uint64(i+1)%8)
 	}
 }
 
