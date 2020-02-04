@@ -1,20 +1,12 @@
 package blake3
 
 import (
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"runtime"
 	"testing"
 
 	"github.com/zeebo/assert"
 )
-
-//go:noescape
-func round_avx(x *byte)
-
-var foo = round_avx
 
 func TestVectors(t *testing.T) {
 	for _, tv := range vectors {
@@ -35,7 +27,7 @@ func TestHashF(t *testing.T) {
 			input[i] = byte(i+1) % 251
 		}
 
-		var out [256]byte
+		var out cv
 		hashF_avx(&input, uint64(n), 0, 0, &out)
 
 		for i := 0; i < 8 && i*1024 < n; i++ {
@@ -51,11 +43,10 @@ func TestHashF(t *testing.T) {
 			exp := output.compress()
 
 			var got [8]uint32
-			for j := range got {
-				got[j] = binary.LittleEndian.Uint32(out[32*j+4*i:])
+			for j := 0; j < 8; j++ {
+				got[j] = out[8*j+i]
 			}
 
-			t.Log(n, i)
 			assert.Equal(t, exp, got)
 		}
 	}
@@ -69,13 +60,13 @@ func TestHashP(t *testing.T) {
 		}
 	}
 
-	var left, right, out [256]byte
+	var left, right, out cv
 	for i, ents := range data {
 		for j, val := range ents {
 			if j < 8 {
-				binary.LittleEndian.PutUint32(left[32*i+4*j:], val)
+				left[8*i+j] = val
 			} else {
-				binary.LittleEndian.PutUint32(right[32*i+4*(j-8):], val)
+				right[8*i+(j-8)] = val
 			}
 		}
 	}
@@ -84,7 +75,7 @@ func TestHashP(t *testing.T) {
 	var got [8][8]uint32
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 8; j++ {
-			got[i][j] = binary.LittleEndian.Uint32(out[32*i+4*j:])
+			got[i][j] = out[8*i+j]
 		}
 	}
 
@@ -99,44 +90,53 @@ func TestHashP(t *testing.T) {
 			assert.Equal(t, exp[j], got[j][i])
 		}
 	}
-
-	sum := sha256.Sum256(out[:])
-	assert.Equal(t, hex.EncodeToString(sum[:]),
-		"4b162634638c59e9058342fc5daa95c0036ada22e606dc0020f7a5ee1ad08c57")
 }
 
-func TestMovc(t *testing.T) {
+func TestMovcol(t *testing.T) {
 	patterns := []uint32{
 		0x11111111, 0x22222222, 0x33333333, 0x44444444,
 		0x55555555, 0x66666666, 0x77777777, 0x88888888,
 	}
 
-	var buf [256]byte
+	var buf cv
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 8; j++ {
-			binary.LittleEndian.PutUint32(buf[32*i+4*j:], patterns[j])
+			buf[8*i+j] = patterns[j]
 		}
 	}
 
 	for icol := 0; icol < 8; icol++ {
 		for ocol := 0; ocol < 8; ocol++ {
-			var out [256]byte
-			movc_avx(&buf, uint64(icol), &out, uint64(ocol))
+			var out cv
+			movcol(&buf, uint64(icol), &out, uint64(ocol))
 
-			var exp [256]byte
+			var exp cv
 			for i := 0; i < 8; i++ {
-				binary.LittleEndian.PutUint32(exp[32*i+4*ocol:], patterns[icol])
+				exp[8*i+ocol] = patterns[icol]
 			}
 
 			assert.Equal(t, out, exp)
-			runtime.KeepAlive(foo)
+		}
+	}
+}
+
+func TestVectorsAVX2(t *testing.T) {
+	t.SkipNow()
+
+	for _, tv := range vectors {
+		var h avxHasher
+		h.update(tv.input())
+		for j := 0; j < len(tv.hash)/2; j++ {
+			buf := make([]byte, j)
+			h.finalize(buf)
+			assert.Equal(t, tv.hash[:2*j], hex.EncodeToString(buf))
 		}
 	}
 }
 
 func BenchmarkHashF_1(b *testing.B) {
 	var input [8192]byte
-	var out [256]byte
+	var out cv
 
 	b.SetBytes(1)
 	b.ReportAllocs()
@@ -149,7 +149,7 @@ func BenchmarkHashF_1(b *testing.B) {
 
 func BenchmarkHashF_8K(b *testing.B) {
 	var input [8192]byte
-	var out [256]byte
+	var out cv
 
 	b.SetBytes(8192)
 	b.ReportAllocs()
@@ -161,9 +161,9 @@ func BenchmarkHashF_8K(b *testing.B) {
 }
 
 func BenchmarkHashP(b *testing.B) {
-	var left [256]byte
-	var right [256]byte
-	var out [256]byte
+	var left cv
+	var right cv
+	var out cv
 
 	b.SetBytes(512)
 	b.ReportAllocs()
@@ -174,15 +174,15 @@ func BenchmarkHashP(b *testing.B) {
 	}
 }
 
-func BenchmarkMovc(b *testing.B) {
-	var input [256]byte
-	var out [256]byte
+func BenchmarkMovcol(b *testing.B) {
+	var input cv
+	var out cv
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		movc_avx(&input, uint64(i)%8, &out, uint64(i+1)%8)
+		movcol(&input, uint64(i)%8, &out, uint64(i+1)%8)
 	}
 }
 
@@ -231,18 +231,11 @@ func BenchmarkBasic_AVX2(b *testing.B) {
 			b.SetBytes(size)
 
 			for i := 0; i < b.N; i++ {
+				var buf [32]byte
 				var h avxHasher
 				h.update(input)
-				h.finalize()
+				h.finalize(buf[:])
 			}
 		})
 	}
-}
-
-func flatten(x *[8][32]byte) *[256]byte {
-	var o [256]byte
-	for i := 0; i < 8; i++ {
-		copy(o[32*i:], x[i][:])
-	}
-	return &o
 }

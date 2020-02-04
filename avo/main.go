@@ -108,13 +108,6 @@ func main() {
 
 	HashF(c)
 	HashP(c)
-	Movc(c)
-
-	TEXT("round_avx", 0, `func(m *byte)`)
-	m := Mem{Base: Load(Param("m"), GP64())}
-	alloc := NewAlloc(AllocLocal(roundSize))
-	round(c, alloc, alloc.Values(16), 0, func(n int) Mem { return m.Offset(32 * n) })
-	RET()
 
 	Generate()
 }

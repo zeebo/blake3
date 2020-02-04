@@ -1,26 +1,23 @@
 package blake3
 
-import "unsafe"
-
-type avxStackEntry struct {
-	data   *[256]byte
-	normed bool
-}
+import (
+	"unsafe"
+)
 
 type avxHasher struct {
 	buf    [8192]byte
 	len    uint64
-	stack  []avxStackEntry
+	stack  []*cv
 	chunks uint64
 	flags  uint32
 }
 
-func (a *avxHasher) getOutputBuffer() (out avxStackEntry) {
+func (a *avxHasher) getOutputBuffer() (out *cv) {
 	if cap(a.stack) > len(a.stack) {
 		out = a.stack[:len(a.stack)+1][len(a.stack)]
 	}
-	if out.data == nil {
-		out.data = new([256]byte)
+	if out == nil {
+		out = new(cv)
 	}
 	return out
 }
@@ -49,8 +46,7 @@ func (a *avxHasher) update(buf []byte) {
 
 		// allocate or reuse an output buffer
 		out := a.getOutputBuffer()
-		hashF_avx(input, 8192, a.chunks, a.flags, out.data)
-		out.normed = false
+		hashF_avx(input, 8192, a.chunks, a.flags, out)
 
 		// update our state
 		a.stack = append(a.stack, out)
@@ -59,54 +55,16 @@ func (a *avxHasher) update(buf []byte) {
 
 		// greedily combine parents
 		for chunks := a.chunks; chunks&15 == 0; chunks >>= 1 {
-			hashP_avx(
-				a.stack[len(a.stack)-1].data,
-				a.stack[len(a.stack)-2].data,
-				a.flags,
-				a.stack[len(a.stack)-1].data,
-			)
+			top0 := a.stack[len(a.stack)-1]
+			top1 := a.stack[len(a.stack)-2]
+			hashP_avx(top0, top1, a.flags, top1)
 			a.stack = a.stack[:len(a.stack)-1]
 		}
 	}
 }
 
-var scrap [256]byte
+var scrap cv
 
-func (a *avxHasher) finalize() {
-	stack := make([][32]byte, len(a.stack))
-	for i := range a.stack {
-		entry := &a.stack[i]
+func (a *avxHasher) finalize(out []byte) {
 
-		if !entry.normed {
-			a.normalize(entry.data)
-			entry.normed = true
-		}
-
-		type ptr = unsafe.Pointer
-		*(*uint32)(ptr(&stack[i][0*4])) = *(*uint32)(ptr(&entry.data[0*32]))
-		*(*uint32)(ptr(&stack[i][1*4])) = *(*uint32)(ptr(&entry.data[1*32]))
-		*(*uint32)(ptr(&stack[i][2*4])) = *(*uint32)(ptr(&entry.data[2*32]))
-		*(*uint32)(ptr(&stack[i][3*4])) = *(*uint32)(ptr(&entry.data[3*32]))
-		*(*uint32)(ptr(&stack[i][4*4])) = *(*uint32)(ptr(&entry.data[4*32]))
-		*(*uint32)(ptr(&stack[i][5*4])) = *(*uint32)(ptr(&entry.data[5*32]))
-		*(*uint32)(ptr(&stack[i][6*4])) = *(*uint32)(ptr(&entry.data[6*32]))
-		*(*uint32)(ptr(&stack[i][7*4])) = *(*uint32)(ptr(&entry.data[7*32]))
-	}
-
-	trailing := a.len / 1024
-	chunks := a.chunks + trailing + 1
-
-	var final [256]byte
-	hashF_avx(&a.buf, a.len, a.chunks, a.flags, &final)
-
-	// compress the final one? it's tricky. need at worst 3 copies i think.
-	// maybe we can append in to the stack backwards?
-
-	_ = chunks
-}
-
-func (a *avxHasher) normalize(in *[256]byte) {
-	hashP_avx(in, &scrap, a.flags, in)
-	hashP_avx(in, &scrap, a.flags, in)
-	hashP_avx(in, &scrap, a.flags, in)
 }

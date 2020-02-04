@@ -257,7 +257,6 @@ type Value struct {
 	id    int
 	age   int
 	stack string
-	free  bool
 	reg   int // currently allocated register (sometimes dup'd in state)
 
 	state valueState
@@ -350,9 +349,13 @@ func (v *Value) allocReg() int {
 	return v.a.allocReg(v)
 }
 
-func (v *Value) GetOp() Op {
+func (v *Value) Touch() {
 	v.a.ctr++
 	v.age = v.a.ctr
+}
+
+func (v *Value) GetOp() Op {
+	v.Touch()
 
 	switch state := v.state.(type) {
 	case stateLive:
@@ -374,8 +377,7 @@ func (v *Value) GetOp() Op {
 }
 
 func (v *Value) Get() VecPhysical {
-	v.a.ctr++
-	v.age = v.a.ctr
+	v.Touch()
 
 	switch state := v.state.(type) {
 	case stateLive:

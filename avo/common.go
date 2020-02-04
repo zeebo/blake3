@@ -104,10 +104,7 @@ finalize:
 		free := alloc.FreeReg()
 		for i, reg := range h_regs {
 			if reg == free && !finalized[i] {
-				tmp := alloc.Value()
-				_ = tmp.Reg()
-				VPXOR(vs[i].ConsumeOp(), vs[8+i].ConsumeOp(), tmp.Get())
-				h_vecs[i] = tmp
+				h_vecs[i] = xorb(alloc, vs[i], vs[8+i])
 				finalized[i] = true
 				continue finalize
 			}
@@ -115,9 +112,7 @@ finalize:
 
 		for i, f := range finalized[:] {
 			if !f {
-				tmp := alloc.Value()
-				VPXOR(vs[i].ConsumeOp(), vs[8+i].ConsumeOp(), tmp.Get())
-				h_vecs[i] = tmp
+				h_vecs[i] = xorb(alloc, vs[i], vs[8+i])
 				finalized[i] = true
 				continue finalize
 			}
@@ -133,101 +128,46 @@ func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 		return o
 	}
 
-	// {
-	// 	rot16 := alloc.ValueFrom(c.rot16)
-	// 	addms(alloc, ms(0, 2, 4, 6), vs[0:4])
-	// 	for i := 0; i < 4; i++ {
-	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
-	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
-	// 		vs[12+i] = rotTv(alloc, rot16, vs[12+i])
-	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
-	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
-	// 	}
-	// 	rot16.Free()
-	// 	rotNs(alloc, 12, vs[4:8])
-	// }
+	partials := []struct {
+		ms  []Mem
+		tab Mem
+		rot int
+	}{
+		{ms(0, 2, 4, 6), c.rot16, 12},
+		{ms(1, 3, 5, 7), c.rot8, 7},
+		{ms(8, 10, 12, 14), c.rot16, 12},
+		{ms(9, 11, 13, 15), c.rot8, 7},
+	}
 
-	// {
-	// 	rot8 := alloc.ValueFrom(c.rot8)
-	// 	addms(alloc, ms(1, 3, 5, 7), vs[0:4])
-	// 	for i := 0; i < 4; i++ {
-	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
-	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
-	// 		vs[12+i] = rotTv(alloc, rot8, vs[12+i])
-	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
-	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
-	// 	}
-	// 	rot8.Free()
-	// 	rotNs(alloc, 7, vs[4:8])
-	// }
+	for i, p := range partials {
+		addms(alloc, p.ms, vs[0:4])
 
-	addms(alloc, ms(0, 2, 4, 6), vs[0:4])
-	adds(alloc, vs[4:8], vs[0:4])
-	xors(alloc, vs[0:4], vs[12:16])
-	rotTs(alloc, c.rot16, vs[12:16])
-	adds(alloc, vs[12:16], vs[8:12])
-	xors(alloc, vs[8:12], vs[4:8])
-	rotNs(alloc, 12, vs[4:8])
-	addms(alloc, ms(1, 3, 5, 7), vs[0:4])
-	adds(alloc, vs[4:8], vs[0:4])
-	xors(alloc, vs[0:4], vs[12:16])
-	rotTs(alloc, c.rot8, vs[12:16])
-	adds(alloc, vs[12:16], vs[8:12])
-	xors(alloc, vs[8:12], vs[4:8])
-	rotNs(alloc, 7, vs[4:8])
+		tab := alloc.ValueFrom(p.tab)
+		for j := 0; j < 4; j++ {
+			vs[0+j] = add(alloc, vs[4+j], vs[0+j])
+			vs[12+j] = xor(alloc, vs[0+j], vs[12+j])
+			vs[12+j] = rotTv(alloc, tab, vs[12+j])
+		}
+		tab.Free()
 
-	// roll the blocks
-	vs[4], vs[5], vs[6], vs[7] = vs[5], vs[6], vs[7], vs[4]
-	vs[8], vs[9], vs[10], vs[11] = vs[10], vs[11], vs[8], vs[9]
-	vs[12], vs[13], vs[14], vs[15] = vs[15], vs[12], vs[13], vs[14]
+		for j := 0; j < 4; j++ {
+			vs[8+j] = add(alloc, vs[12+j], vs[8+j])
+			vs[4+j] = xor(alloc, vs[8+j], vs[4+j])
+		}
 
-	// {
-	// 	rot16 := alloc.ValueFrom(c.rot16)
-	// 	addms(alloc, ms(8, 10, 12, 14), vs[0:4])
-	// 	for i := 0; i < 4; i++ {
-	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
-	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
-	// 		vs[12+i] = rotTv(alloc, rot16, vs[12+i])
-	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
-	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
-	// 	}
-	// 	rot16.Free()
-	// 	rotNs(alloc, 12, vs[4:8])
-	// }
+		rotNs(alloc, p.rot, vs[4:8])
 
-	// {
-	// 	rot8 := alloc.ValueFrom(c.rot8)
-	// 	addms(alloc, ms(9, 11, 13, 15), vs[0:4])
-	// 	for i := 0; i < 4; i++ {
-	// 		vs[0+i] = add(alloc, vs[4+i], vs[0+i])
-	// 		vs[12+i] = xor(alloc, vs[0+i], vs[12+i])
-	// 		vs[12+i] = rotTv(alloc, rot8, vs[12+i])
-	// 		vs[8+i] = add(alloc, vs[12+i], vs[8+i])
-	// 		vs[4+i] = xor(alloc, vs[8+i], vs[4+i])
-	// 	}
-	// 	rot8.Free()
-	// 	rotNs(alloc, 7, vs[4:8])
-	// }
-
-	addms(alloc, ms(8, 10, 12, 14), vs[0:4])
-	adds(alloc, vs[4:8], vs[0:4])
-	xors(alloc, vs[0:4], vs[12:16])
-	rotTs(alloc, c.rot16, vs[12:16])
-	adds(alloc, vs[12:16], vs[8:12])
-	xors(alloc, vs[8:12], vs[4:8])
-	rotNs(alloc, 12, vs[4:8])
-	addms(alloc, ms(9, 11, 13, 15), vs[0:4])
-	adds(alloc, vs[4:8], vs[0:4])
-	xors(alloc, vs[0:4], vs[12:16])
-	rotTs(alloc, c.rot8, vs[12:16])
-	adds(alloc, vs[12:16], vs[8:12])
-	xors(alloc, vs[8:12], vs[4:8])
-	rotNs(alloc, 7, vs[4:8])
-
-	// roll the blocks
-	vs[4], vs[5], vs[6], vs[7] = vs[7], vs[4], vs[5], vs[6]
-	vs[8], vs[9], vs[10], vs[11] = vs[10], vs[11], vs[8], vs[9]
-	vs[12], vs[13], vs[14], vs[15] = vs[13], vs[14], vs[15], vs[12]
+		// roll the blocks
+		if i == 1 {
+			vs[4], vs[5], vs[6], vs[7] = vs[5], vs[6], vs[7], vs[4]
+			vs[8], vs[9], vs[10], vs[11] = vs[10], vs[11], vs[8], vs[9]
+			vs[12], vs[13], vs[14], vs[15] = vs[15], vs[12], vs[13], vs[14]
+		} else if i == 3 {
+			vs[4], vs[5], vs[6], vs[7] = vs[7], vs[4], vs[5], vs[6]
+			vs[8], vs[9], vs[10], vs[11] = vs[10], vs[11], vs[8], vs[9]
+			vs[12], vs[13], vs[14], vs[15] = vs[13], vs[14], vs[15], vs[12]
+		}
+	}
 }
 
 func addm(alloc *Alloc, mp Mem, a *Value) *Value {
@@ -260,6 +200,19 @@ func xor(alloc *Alloc, a, b *Value) *Value {
 	return o
 }
 
+func xorb(alloc *Alloc, a, b *Value) *Value {
+	o := alloc.Value()
+	switch {
+	case a.reg >= 0:
+		VPXOR(b.ConsumeOp(), a.Consume(), o.Get())
+	case b.reg >= 0:
+		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())
+	default:
+		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())
+	}
+	return o
+}
+
 func xors(alloc *Alloc, as, bs []*Value) {
 	for i, b := range bs {
 		bs[i] = xor(alloc, as[i], b)
@@ -286,17 +239,20 @@ func rotTv(alloc *Alloc, tab, a *Value) *Value {
 	return o
 }
 
+func rotTvs(alloc *Alloc, tabv *Value, as []*Value) {
+	for i, a := range as {
+		as[i] = rotTv(alloc, tabv, a)
+	}
+}
+
 func rotTm(alloc *Alloc, tab Mem, a *Value) *Value {
 	o := alloc.Value()
 	VPSHUFB(tab, a.Consume(), o.Get())
 	return o
 }
 
-func rotTs(alloc *Alloc, tab Mem, as []*Value) {
-	tabv := alloc.ValueFrom(tab)
-	defer tabv.Free()
-
+func rotTms(alloc *Alloc, tab Mem, as []*Value) {
 	for i, a := range as {
-		as[i] = rotTv(alloc, tabv, a)
+		as[i] = rotTm(alloc, tab, a)
 	}
 }

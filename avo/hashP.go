@@ -8,10 +8,10 @@ import (
 
 func HashP(c ctx) {
 	TEXT("hashP_avx", 0, `func(
-		left *[256]byte,
-		right *[256]byte,
+		left *[32]uint32,
+		right *[32]uint32,
 		flags uint8,
-		out *[256]byte,
+		out *[32]uint32,
 	)`)
 
 	var (
