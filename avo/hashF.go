@@ -218,11 +218,3 @@ func roundF(c ctx, alloc *Alloc, vs []*Value, r int, mp Mem) {
 		return mp.Offset(n * 32)
 	})
 }
-
-func extractMask(c ctx, alloc *Alloc, vs []*Value, mask, mp Mem) {
-	tmp := alloc.ValueFrom(mask)
-	for i, v := range vs {
-		VPMASKMOVD(v.Get(), tmp.Get(), mp.Offset(32*i))
-	}
-	tmp.Free()
-}

@@ -10,10 +10,6 @@ const (
 	flag_chunkStart = 1 << 0
 	flag_chunkEnd   = 1 << 1
 	flag_parent     = 1 << 2
-	flag_root       = 1 << 3
-	flag_keyed      = 1 << 4
-	flag_keyCtx     = 1 << 5
-	flag_keyMat     = 1 << 6
 )
 
 func transpose(c ctx, alloc *Alloc, vs []*Value) {
@@ -188,12 +184,6 @@ func add(alloc *Alloc, a, b *Value) *Value {
 	return o
 }
 
-func adds(alloc *Alloc, as, bs []*Value) {
-	for i, b := range bs {
-		bs[i] = add(alloc, as[i], b)
-	}
-}
-
 func xor(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
 	VPXOR(a.Get(), b.Consume(), o.Get())
@@ -211,12 +201,6 @@ func xorb(alloc *Alloc, a, b *Value) *Value {
 		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())
 	}
 	return o
-}
-
-func xors(alloc *Alloc, as, bs []*Value) {
-	for i, b := range bs {
-		bs[i] = xor(alloc, as[i], b)
-	}
 }
 
 func rotN(alloc *Alloc, n int, a *Value) *Value {
@@ -237,22 +221,4 @@ func rotTv(alloc *Alloc, tab, a *Value) *Value {
 	o := alloc.Value()
 	VPSHUFB(tab.GetOp(), a.Consume(), o.Get())
 	return o
-}
-
-func rotTvs(alloc *Alloc, tabv *Value, as []*Value) {
-	for i, a := range as {
-		as[i] = rotTv(alloc, tabv, a)
-	}
-}
-
-func rotTm(alloc *Alloc, tab Mem, a *Value) *Value {
-	o := alloc.Value()
-	VPSHUFB(tab, a.Consume(), o.Get())
-	return o
-}
-
-func rotTms(alloc *Alloc, tab Mem, as []*Value) {
-	for i, a := range as {
-		as[i] = rotTm(alloc, tab, a)
-	}
 }

@@ -16,13 +16,6 @@ var ymmRegs = [...]VecPhysical{
 	Y12, Y13, Y14, Y15,
 }
 
-var xmmRegs = [...]VecPhysical{
-	X0, X1, X2, X3,
-	X4, X5, X6, X7,
-	X8, X9, X10, X11,
-	X12, X13, X14, X15,
-}
-
 //
 // used set
 //
@@ -79,20 +72,6 @@ func NewAlloc(m Mem) *Alloc {
 		mslot:  -1,
 		phys:   ymmRegs[:],
 		span:   32,
-	}
-}
-
-func NewAllocXMM(m Mem) *Alloc {
-	return &Alloc{
-		m:      m,
-		regs:   make(used),
-		stack:  make(used),
-		values: make(map[int]*Value),
-		ctr:    0,
-		spills: 0,
-		mslot:  -1,
-		phys:   xmmRegs[:],
-		span:   16,
 	}
 }
 
