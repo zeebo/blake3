@@ -1,0 +1,87 @@
+package ref
+
+import (
+	"unsafe"
+)
+
+func HashF(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
+	var tmp [16]uint32
+
+	for i := uint64(0); chunkLen*(i+1) <= length && i < 8; i++ {
+		bchain := iv
+		bflags := flags | flag_chunkStart
+
+		for n := uint64(0); n < 16; n++ {
+			if n == 15 {
+				bflags |= flag_chunkEnd
+			}
+
+			var blockPtr *[16]uint32
+			if isLittleEndian {
+				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[chunkLen*i+blockLen*n]))
+			} else {
+				var block [16]uint32
+				bytesToWords((*[64]uint8)(unsafe.Pointer(&input[chunkLen*i+blockLen*n])), &block)
+				blockPtr = &block
+			}
+
+			Compress(&bchain, blockPtr, counter, blockLen, bflags, &tmp)
+
+			bchain[0] = tmp[0]
+			bchain[1] = tmp[1]
+			bchain[2] = tmp[2]
+			bchain[3] = tmp[3]
+			bchain[4] = tmp[4]
+			bchain[5] = tmp[5]
+			bchain[6] = tmp[6]
+			bchain[7] = tmp[7]
+			bflags = flags
+		}
+
+		out[i+0] = bchain[0]
+		out[i+8] = bchain[1]
+		out[i+16] = bchain[2]
+		out[i+24] = bchain[3]
+		out[i+32] = bchain[4]
+		out[i+40] = bchain[5]
+		out[i+48] = bchain[6]
+		out[i+56] = bchain[7]
+
+		counter++
+	}
+
+	if start := length &^ 1023; start < length {
+		bchain := iv
+		bflags := flags | flag_chunkStart
+
+		for n := uint64(0); n < 16; n++ {
+			end := start + blockLen + blockLen*n
+			if end >= length {
+				break
+			}
+
+			var blockPtr *[16]uint32
+			if isLittleEndian {
+				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[start+blockLen*n]))
+			} else {
+				var block [16]uint32
+				bytesToWords((*[64]uint8)(unsafe.Pointer(&input[start+blockLen*n])), &block)
+				blockPtr = &block
+			}
+
+			Compress(&bchain, blockPtr, counter, blockLen, bflags, &tmp)
+
+			bchain[0] = tmp[0]
+			bchain[1] = tmp[1]
+			bchain[2] = tmp[2]
+			bchain[3] = tmp[3]
+			bchain[4] = tmp[4]
+			bchain[5] = tmp[5]
+			bchain[6] = tmp[6]
+			bchain[7] = tmp[7]
+			bflags = flags
+		}
+
+		*chain = bchain
+	}
+}

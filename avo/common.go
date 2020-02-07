@@ -51,21 +51,26 @@ func transpose(c ctx, alloc *Alloc, vs []*Value) {
 }
 
 func transposeMsg(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
+	for j := 0; j < 2; j++ {
+		vs := alloc.Values(8)
+		for i, v := range vs {
+			VMOVDQU(input.Offset(1024*i+32*j).Idx(block, 1), v.Get())
+		}
+		transpose(c, alloc, vs)
+		for i, v := range vs {
+			VMOVDQU(v.Consume(), msg.Offset(32*i+256*j))
+		}
+	}
+}
+
+func transposeMsgN(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem, j int) {
 	vs := alloc.Values(8)
 	for i, v := range vs {
-		VMOVDQU(input.Offset(1024*i).Idx(block, 1), v.Get())
+		VMOVDQU(input.Offset(1024*i+32*j).Idx(block, 1), v.Get())
 	}
 	transpose(c, alloc, vs)
 	for i, v := range vs {
-		VMOVDQU(v.Get(), msg.Offset(32*i))
-	}
-
-	for i, v := range vs {
-		VMOVDQU(input.Offset(1024*i+32).Idx(block, 1), v.Get())
-	}
-	transpose(c, alloc, vs)
-	for i, v := range vs {
-		VMOVDQU(v.Consume(), msg.Offset(32*i+256))
+		VMOVDQU(v.Consume(), msg.Offset(32*i+256*j))
 	}
 }
 

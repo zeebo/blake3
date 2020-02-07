@@ -76,5 +76,9 @@ func main() {
 	HashP(c)
 	Compress(c)
 
+	if false {
+		MCA(c)
+	}
+
 	Generate()
 }

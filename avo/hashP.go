@@ -7,7 +7,7 @@ import (
 )
 
 func HashP(c ctx) {
-	TEXT("hashP_avx", 0, `func(
+	TEXT("hashP_avx", NOSPLIT, `func(
 		left *[32]uint32,
 		right *[32]uint32,
 		flags uint8,

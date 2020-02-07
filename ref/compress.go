@@ -1,8 +1,27 @@
-package blake3
+package ref
 
 import (
 	"math/bits"
 )
+
+func Compress(
+	chain *[8]uint32,
+	block *[16]uint32,
+	counter uint64,
+	blen uint32,
+	flags uint32,
+	out *[16]uint32,
+) {
+
+	*out = [16]uint32{
+		chain[0], chain[1], chain[2], chain[3],
+		chain[4], chain[5], chain[6], chain[7],
+		iv0, iv1, iv2, iv3,
+		uint32(counter), uint32(counter >> 32), blen, flags,
+	}
+
+	rcompress(out, block)
+}
 
 func g(a, b, c, d, mx, my uint32) (uint32, uint32, uint32, uint32) {
 	a += b + mx
@@ -14,27 +33,6 @@ func g(a, b, c, d, mx, my uint32) (uint32, uint32, uint32, uint32) {
 	c += d
 	b = bits.RotateLeft32(b^c, -7)
 	return a, b, c, d
-}
-
-func compress(
-	chain *[8]uint32,
-	block *[16]uint32,
-	counter uint64,
-	blen uint32,
-	flags uint32,
-	out *[16]uint32,
-) {
-
-	// *out = [16]uint32{
-	// 	chain[0], chain[1], chain[2], chain[3],
-	// 	chain[4], chain[5], chain[6], chain[7],
-	// 	iv0, iv1, iv2, iv3,
-	// 	uint32(counter), uint32(counter >> 32), blen, flags,
-	// }
-
-	// rcompress(out, block)
-
-	compress_sse41(chain, block, counter, blen, flags, out)
 }
 
 func rcompress(s *[16]uint32, m *[16]uint32) {
