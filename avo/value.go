@@ -16,6 +16,13 @@ var ymmRegs = [...]VecPhysical{
 	Y12, Y13, Y14, Y15,
 }
 
+var xmmRegs = [...]VecPhysical{
+	X0, X1, X2, X3,
+	X4, X5, X6, X7,
+	X8, X9, X10, X11,
+	X12, X13, X14, X15,
+}
+
 //
 // used set
 //
@@ -57,6 +64,8 @@ type Alloc struct {
 	ctr    int
 	spills int
 	mslot  int
+	phys   []VecPhysical
+	span   int
 }
 
 func NewAlloc(m Mem) *Alloc {
@@ -68,12 +77,36 @@ func NewAlloc(m Mem) *Alloc {
 		ctr:    0,
 		spills: 0,
 		mslot:  -1,
+		phys:   ymmRegs[:],
+		span:   32,
+	}
+}
+
+func NewAllocXMM(m Mem) *Alloc {
+	return &Alloc{
+		m:      m,
+		regs:   make(used),
+		stack:  make(used),
+		values: make(map[int]*Value),
+		ctr:    0,
+		spills: 0,
+		mslot:  -1,
+		phys:   xmmRegs[:],
+		span:   16,
 	}
 }
 
 func (a *Alloc) stats(name, when string) {
 	fmt.Printf("// [%s] %s: %d/16 free (%d total + %d spills + %d slots)\n",
 		name, when, 16-len(a.regs), len(a.values), a.spills, a.mslot+1)
+}
+
+func (a *Alloc) newStateLive(reg int) stateLive {
+	return stateLive{Reg: reg, phys: a.phys}
+}
+
+func (a *Alloc) newStateSpilled(slot int) stateSpilled {
+	return stateSpilled{Slot: slot, mem: a.m, span: a.span}
 }
 
 func (a *Alloc) Debug(name string) func() {
@@ -112,14 +145,14 @@ func (a *Alloc) findOldestLive(except *Value) *Value {
 func (a *Alloc) allocSpot() valueState {
 	reg, ok := a.regs.alloc(16)
 	if ok {
-		return stateLive{Reg: reg}
+		return a.newStateLive(reg)
 	}
 	slot := a.stack.mustAlloc()
 	a.spills++
 	if slot > a.mslot {
 		a.mslot = slot
 	}
-	return stateSpilled{mem: a.m, Slot: slot}
+	return a.newStateSpilled(slot)
 }
 
 func (a *Alloc) allocReg(except *Value) int {
@@ -170,7 +203,7 @@ func (a *Alloc) ValueFrom(m Mem) *Value {
 func (a *Alloc) ValuesFrom(n int, m Mem) []*Value {
 	out := make([]*Value, n)
 	for i := range out {
-		out[i] = a.ValueFrom(m.Offset(32 * i))
+		out[i] = a.ValueFrom(m.Offset(a.span * i))
 	}
 	return out
 }
@@ -218,26 +251,28 @@ func (stateEmpty) String() string { return "Empty" }
 type stateLive struct {
 	stateBase
 
-	Reg int
+	Reg  int
+	phys []VecPhysical
 }
 
 func (s stateLive) Op() Op         { return s.Register() }
 func (s stateLive) Live() bool     { return true }
 func (s stateLive) String() string { return fmt.Sprintf("Live(%d)", s.Reg) }
 
-func (s stateLive) Register() VecPhysical { return ymmRegs[s.Reg] }
+func (s stateLive) Register() VecPhysical { return s.phys[s.Reg] }
 
 type stateSpilled struct {
 	stateBase
 
 	mem  Mem
 	Slot int
+	span int
 }
 
 func (s stateSpilled) Op() Op         { return s.GetMem() }
 func (s stateSpilled) String() string { return fmt.Sprintf("Spilled(%d)", s.Slot) }
 
-func (s stateSpilled) GetMem() Mem { return s.mem.Offset(32 * s.Slot) }
+func (s stateSpilled) GetMem() Mem { return s.mem.Offset(s.span * s.Slot) }
 
 type stateLazy struct {
 	stateBase
@@ -284,7 +319,7 @@ func (v *Value) Become(reg int) {
 	// if it's free: displace to it.
 	if _, ok := v.a.regs[reg]; !ok {
 		v.a.regs[reg] = struct{}{}
-		v.displaceTo(stateLive{Reg: reg})
+		v.displaceTo(v.a.newStateLive(reg))
 		return
 	}
 
@@ -367,10 +402,10 @@ func (v *Value) GetOp() Op {
 		}
 		reg := v.allocReg()
 		VPBROADCASTD(state.Mem, ymmRegs[reg])
-		v.setState(stateLive{Reg: reg})
+		v.setState(v.a.newStateLive(reg))
 	case stateEmpty:
 		reg := v.allocReg()
-		v.setState(stateLive{Reg: reg})
+		v.setState(v.a.newStateLive(reg))
 	}
 
 	return v.state.(stateLive).Register()
@@ -383,11 +418,11 @@ func (v *Value) Get() VecPhysical {
 	case stateLive:
 	case stateSpilled:
 		reg := v.allocReg()
-		VMOVDQU(state.GetMem(), ymmRegs[reg])
-		v.setState(stateLive{Reg: reg})
+		VMOVDQU(state.GetMem(), v.a.phys[reg])
+		v.setState(v.a.newStateLive(reg))
 	case stateLazy:
 		reg := v.allocReg()
-		v.setState(stateLive{Reg: reg})
+		v.setState(v.a.newStateLive(reg))
 		if !state.Broadcast {
 			VMOVDQU(state.Mem, v.state.(stateLive).Register())
 		} else {
@@ -395,7 +430,7 @@ func (v *Value) Get() VecPhysical {
 		}
 	case stateEmpty:
 		reg := v.allocReg()
-		v.setState(stateLive{Reg: reg})
+		v.setState(v.a.newStateLive(reg))
 	}
 
 	return v.state.(stateLive).Register()

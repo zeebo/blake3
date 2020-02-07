@@ -13,6 +13,7 @@ func HashF(c ctx) {
 		counter uint64,
 		flags uint32,
 		out *[32]uint32,
+		chain *[8]uint32,
 	)`)
 
 	var (
@@ -21,22 +22,20 @@ func HashF(c ctx) {
 		counter = Load(Param("counter"), GP64()).(GPVirtual)
 		flags   = Load(Param("flags"), GP32()).(GPVirtual)
 		out     = Mem{Base: Load(Param("out"), GP64())}
+		chain   = Mem{Base: Load(Param("chain"), GP64())}
 	)
 
 	loop := GP64()
-	maskO := Mem{Base: GP64()}
-	maskP := Mem{Base: GP64()}
 	chunks := GP64()
 	blocks := GP64()
-	blen := GP64()
 
 	alloc := NewAlloc(AllocLocal(roundSize))
 	defer alloc.Free()
 
 	flags_mem := AllocLocal(8)
 	counter_mem := AllocLocal(8)
-	blen_mem := AllocLocal(8)
 
+	tmp := AllocLocal(32)
 	ctr_lo_mem := AllocLocal(32)
 	ctr_hi_mem := AllocLocal(32)
 	msg := AllocLocal(32 * 16)
@@ -61,42 +60,31 @@ func HashF(c ctx) {
 
 	{
 		Comment("Skip if the length is zero")
+		XORQ(chunks, chunks)
+		XORQ(blocks, blocks)
 		TESTQ(length, length)
-		JZ(LabelRef("return"))
+		JZ(LabelRef("skip_compute"))
 	}
 
 	{
-		Comment("Compute complete chunks, blocks and blen")
+		Comment("Compute complete chunks and blocks")
 
-		// chunks = (length / 1024) * 32
+		// chunks = (length - 1) / 1024
+		SUBQ(U8(1), length)
 		MOVQ(length, chunks)
 		SHRQ(U8(10), chunks)
-		SHLQ(U8(5), chunks)
 
 		// blocks = (length - 1) % 1024 / 64 * 64
-		SUBQ(U8(1), length)
 		MOVQ(length, blocks)
 		ANDQ(U32(960), blocks)
-
-		// blen = (length - 1) % 64 + 1
-		MOVQ(length, blen)
-		ANDQ(U8(63), blen)
-		ADDQ(U8(1), blen)
 	}
+
+	Label("skip_compute")
 
 	{
 		Comment("Load some params into the stack (avo improvment?)")
 		MOVL(flags, flags_mem)
 		MOVQ(counter, counter_mem)
-		MOVQ(blen, blen_mem)
-	}
-
-	{
-		Comment("Set up masks for block flags and stores")
-		LEAQ(c.maskO, maskO.Base)
-		LEAQ(maskO.Idx(chunks, 1), maskO.Base)
-		LEAQ(c.maskP, maskP.Base)
-		LEAQ(maskP.Idx(chunks, 1), maskP.Base)
 	}
 
 	{
@@ -122,11 +110,6 @@ func HashF(c ctx) {
 	Label("loop")
 
 	{
-		CMPQ(loop, U32(16*64))
-		JEQ(LabelRef("finalize"))
-	}
-
-	{
 		Comment("Include end flags if last block")
 		CMPQ(loop, U32(15*64))
 		JNE(LabelRef("round_setup"))
@@ -142,6 +125,9 @@ func HashF(c ctx) {
 
 	{
 		Comment("Load constants for the round")
+		for _, v := range h_vecs {
+			_ = v.Get()
+		}
 		_ = blen_vec.Get()
 		_ = flags_vec.Get()
 		for _, v := range iv {
@@ -152,24 +138,16 @@ func HashF(c ctx) {
 	}
 
 	{
-		Comment("Insert flag and length if last block in partial chunk")
+		Comment("Save state for partial chunk if necessary")
 		CMPQ(loop, blocks)
 		JNE(LabelRef("begin_rounds"))
 
-		// or in the chunk end flag
-		tmp := alloc.ValueWith(c.chunkEnd)
-		VPAND(maskO, tmp.Get(), tmp.Get())
-		VPOR(tmp.Consume(), flags_vec.Get(), flags_vec.Get())
-
-		// clear out the block len
-		tmp = alloc.ValueFrom(maskO)
-		VPXOR(c.all, tmp.Get(), tmp.Get())
-		VPAND(tmp.Consume(), blen_vec.Get(), blen_vec.Get())
-
-		// or in the appropriate block len
-		tmp = alloc.ValueWith(blen_mem)
-		VPAND(maskO, tmp.Get(), tmp.Get())
-		VPOR(tmp.Consume(), blen_vec.Get(), blen_vec.Get())
+		for i, v := range h_vecs {
+			tmp32 := GP32()
+			VMOVDQU(v.Get(), tmp)
+			MOVL(tmp.Idx(chunks, 4), tmp32)
+			MOVL(tmp32, chain.Offset(4*i))
+		}
 	}
 
 	Label("begin_rounds")
@@ -196,24 +174,6 @@ func HashF(c ctx) {
 	}
 
 	{
-		Comment("Save state for partial chunk if necessary")
-		CMPQ(loop, blocks)
-		JNE(LabelRef("loop_tail"))
-
-		extractMask(c, alloc, h_vecs, maskO, out)
-	}
-
-	{
-		Comment("If we have zero complete chunks, we're done")
-		CMPQ(chunks, U8(0))
-		JNE(LabelRef("loop_tail"))
-
-		RET()
-	}
-
-	Label("loop_tail")
-
-	{
 		Comment("Fix up registers for next iteration")
 		for i := 7; i >= 0; i-- {
 			h_vecs[i].Become(h_regs[i])
@@ -221,7 +181,20 @@ func HashF(c ctx) {
 	}
 
 	{
+		Comment("If we have zero complete chunks, we're done")
+		CMPQ(chunks, U8(0))
+		JNE(LabelRef("loop_trailer"))
+		CMPQ(blocks, loop)
+		JEQ(LabelRef("finalize"))
+	}
+
+	Label("loop_trailer")
+
+	{
 		Comment("Increment, reset flags, and loop")
+		CMPQ(loop, U32(15*64))
+		JEQ(LabelRef("finalize"))
+
 		ADDQ(Imm(64), loop)
 		MOVL(flags, flags_mem)
 		JMP(LabelRef("loop"))
@@ -230,10 +203,9 @@ func HashF(c ctx) {
 	Label("finalize")
 
 	{
-		Comment("Store prefix of full chunks into output")
-		extractMask(c, alloc, h_vecs, maskP, out)
-		for _, v := range h_vecs {
-			v.Free()
+		Comment("Store result into out")
+		for i, v := range h_vecs {
+			VMOVDQU(v.Consume(), out.Offset(32*i))
 		}
 	}
 

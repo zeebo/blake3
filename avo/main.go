@@ -24,10 +24,6 @@ type ctx struct {
 	blockLen Mem
 	zero     Mem
 	counter  Mem
-	maskO    Mem
-	maskP    Mem
-	all      Mem
-	chunkEnd Mem
 }
 
 func main() {
@@ -76,38 +72,9 @@ func main() {
 		DATA(8*i, U64(i))
 	}
 
-	c.maskO = GLOBL("maskO", RODATA|NOPTR)
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 8; j++ {
-			if i == j {
-				DATA(32*i+4*j, ^U32(0))
-			} else {
-				DATA(32*i+4*j, U32(0))
-			}
-		}
-	}
-
-	c.maskP = GLOBL("maskP", RODATA|NOPTR)
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 8; j++ {
-			if i > j {
-				DATA(32*i+4*j, ^U32(0))
-			} else {
-				DATA(32*i+4*j, U32(0))
-			}
-		}
-	}
-
-	c.all = GLOBL("all", RODATA|NOPTR)
-	for i := 0; i < 8; i++ {
-		DATA(4*i, ^U32(0))
-	}
-
-	c.chunkEnd = GLOBL("chunk_end", RODATA|NOPTR)
-	DATA(0, U32(flag_chunkEnd))
-
 	HashF(c)
 	HashP(c)
+	Compress(c)
 
 	Generate()
 }

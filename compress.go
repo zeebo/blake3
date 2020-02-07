@@ -22,19 +22,22 @@ func compress(
 	counter uint64,
 	blen uint32,
 	flags uint32,
-) [16]uint32 {
+	out *[16]uint32,
+) {
 
-	s := [16]uint32{
-		chain[0], chain[1], chain[2], chain[3],
-		chain[4], chain[5], chain[6], chain[7],
-		iv0, iv1, iv2, iv3,
-		uint32(counter), uint32(counter >> 32), blen, flags,
-	}
+	// *out = [16]uint32{
+	// 	chain[0], chain[1], chain[2], chain[3],
+	// 	chain[4], chain[5], chain[6], chain[7],
+	// 	iv0, iv1, iv2, iv3,
+	// 	uint32(counter), uint32(counter >> 32), blen, flags,
+	// }
 
-	return rcompress(&s, block)
+	// rcompress(out, block)
+
+	compress_sse41(chain, block, counter, blen, flags, out)
 }
 
-func rcompress(s, m *[16]uint32) [16]uint32 {
+func rcompress(s *[16]uint32, m *[16]uint32) {
 	const (
 		a = 10
 		b = 11
@@ -44,10 +47,15 @@ func rcompress(s, m *[16]uint32) [16]uint32 {
 		f = 15
 	)
 
-	s0, s4, s8, sc := g(s[0], s[4], s[8], s[c], m[0], m[1])
-	s1, s5, s9, sd := g(s[1], s[5], s[9], s[d], m[2], m[3])
-	s2, s6, sa, se := g(s[2], s[6], s[a], s[e], m[4], m[5])
-	s3, s7, sb, sf := g(s[3], s[7], s[b], s[f], m[6], m[7])
+	s0, s1, s2, s3 := s[0], s[1], s[2], s[3]
+	s4, s5, s6, s7 := s[4], s[5], s[6], s[7]
+	s8, s9, sa, sb := s[8+0], s[8+1], s[8+2], s[8+3]
+	sc, sd, se, sf := s[8+4], s[8+5], s[8+6], s[8+7]
+
+	s0, s4, s8, sc = g(s0, s4, s8, sc, m[0], m[1])
+	s1, s5, s9, sd = g(s1, s5, s9, sd, m[2], m[3])
+	s2, s6, sa, se = g(s2, s6, sa, se, m[4], m[5])
+	s3, s7, sb, sf = g(s3, s7, sb, sf, m[6], m[7])
 	s0, s5, sa, sf = g(s0, s5, sa, sf, m[8], m[9])
 	s1, s6, sb, sc = g(s1, s6, sb, sc, m[a], m[b])
 	s2, s7, s8, sd = g(s2, s7, s8, sd, m[c], m[d])
@@ -107,10 +115,21 @@ func rcompress(s, m *[16]uint32) [16]uint32 {
 	s2, s7, s8, sd = g(s2, s7, s8, sd, m[3], m[4])
 	s3, s4, s9, se = g(s3, s4, s9, se, m[7], m[d])
 
-	return [16]uint32{
-		s0 ^ s8, s1 ^ s9, s2 ^ sa, s3 ^ sb,
-		s4 ^ sc, s5 ^ sd, s6 ^ se, s7 ^ sf,
-		s8 ^ s[0], s9 ^ s[1], sa ^ s[2], sb ^ s[3],
-		sc ^ s[4], sd ^ s[5], se ^ s[6], sf ^ s[7],
-	}
+	s[8+0] = s8 ^ s[0]
+	s[8+1] = s9 ^ s[1]
+	s[8+2] = sa ^ s[2]
+	s[8+3] = sb ^ s[3]
+	s[8+4] = sc ^ s[4]
+	s[8+5] = sd ^ s[5]
+	s[8+6] = se ^ s[6]
+	s[8+7] = sf ^ s[7]
+
+	s[0] = s0 ^ s8
+	s[1] = s1 ^ s9
+	s[2] = s2 ^ sa
+	s[3] = s3 ^ sb
+	s[4] = s4 ^ sc
+	s[5] = s5 ^ sd
+	s[6] = s6 ^ se
+	s[7] = s7 ^ sf
 }

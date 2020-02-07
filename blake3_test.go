@@ -4,9 +4,26 @@ import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+	"unsafe"
 
 	"github.com/zeebo/assert"
 )
+
+func TestBytesToWords(t *testing.T) {
+	if !isLittleEndian {
+		t.SkipNow()
+	}
+
+	var bytes [64]uint8
+	for i := range bytes {
+		bytes[i] = byte(i)
+	}
+
+	var words [16]uint32
+	bytesToWords(&bytes, &words)
+
+	assert.Equal(t, *(*[16]uint32)(unsafe.Pointer(&bytes[0])), words)
+}
 
 func TestVectors(t *testing.T) {
 	for _, tv := range vectors {
@@ -21,33 +38,40 @@ func TestVectors(t *testing.T) {
 }
 
 func TestHashF(t *testing.T) {
-	for n := 64; n <= 8192; n++ {
+	for n := 0; n <= 8192; n++ {
 		var input [8192]byte
 		for i := 0; i < n; i++ {
 			input[i] = byte(i+1) % 251
 		}
 
-		var out cv
-		hashF_avx(&input, uint64(n), 0, 0, &out)
+		var chain [8]uint32
+		var out chainVector
+		hashF_avx(&input, uint64(n), 0, 0, &out, &chain)
 
-		for i := 0; i < 8 && i*1024 < n; i++ {
+		for i := 0; i < 8 && (i*1024 < n || (i == 0 && n == 0)); i++ {
 			high := 1024 * (i + 1)
-			if high > n {
+			if high <= n {
+				chain := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+				chunk := newChunkState(chain, uint64(i), 0)
+				chunk.update(input[1024*i : high])
+				op := chunk.output()
+				exp := op.compress()
+
+				var got [8]uint32
+				for j := 0; j < 8; j++ {
+					got[j] = out[8*j+i]
+				}
+
+				assert.Equal(t, exp, got)
+			} else {
 				high = n
+
+				chunk := newChunkState([8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}, uint64(i), 0)
+				chunk.update(input[1024*i : high])
+				op := chunk.output()
+
+				assert.Equal(t, *op.chain, chain)
 			}
-
-			chain := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
-			chunk := newChunkState(chain, uint64(i), 0)
-			chunk.update(input[1024*i : high])
-			output := chunk.output()
-			exp := output.compress()
-
-			var got [8]uint32
-			for j := 0; j < 8; j++ {
-				got[j] = out[8*j+i]
-			}
-
-			assert.Equal(t, exp, got)
 		}
 	}
 }
@@ -60,7 +84,7 @@ func TestHashP(t *testing.T) {
 		}
 	}
 
-	var left, right, out cv
+	var left, right, out chainVector
 	for i, ents := range data {
 		for j, val := range ents {
 			if j < 8 {
@@ -92,37 +116,24 @@ func TestHashP(t *testing.T) {
 	}
 }
 
-func TestMovcol(t *testing.T) {
-	patterns := []uint32{
-		0x11111111, 0x22222222, 0x33333333, 0x44444444,
-		0x55555555, 0x66666666, 0x77777777, 0x88888888,
-	}
+func TestHashP_One(t *testing.T) {
+	a := [8]uint32{1, 1, 1, 1, 1, 1, 1, 1}
+	b := [8]uint32{2, 2, 2, 2, 2, 2, 2, 2}
 
-	var buf cv
-	for i := 0; i < 8; i++ {
-		for j := 0; j < 8; j++ {
-			buf[8*i+j] = patterns[j]
-		}
-	}
+	var left, right, out chainVector
+	writeChain(&a, &left, 0)
+	writeChain(&b, &right, 0)
+	hashP_avx(&left, &right, 0, &out)
 
-	for icol := 0; icol < 8; icol++ {
-		for ocol := 0; ocol < 8; ocol++ {
-			var out cv
-			movcol(&buf, uint64(icol), &out, uint64(ocol))
+	key := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+	exp := parentChain(a, b, key, 0)
 
-			var exp cv
-			for i := 0; i < 8; i++ {
-				exp[8*i+ocol] = patterns[icol]
-			}
-
-			assert.Equal(t, out, exp)
-		}
-	}
+	var got [8]uint32
+	readChain(&out, 0, &got)
+	assert.Equal(t, exp, got)
 }
 
 func TestVectorsAVX2(t *testing.T) {
-	t.SkipNow()
-
 	for _, tv := range vectors {
 		var h avxHasher
 		h.update(tv.input())
@@ -136,34 +147,36 @@ func TestVectorsAVX2(t *testing.T) {
 
 func BenchmarkHashF_1(b *testing.B) {
 	var input [8192]byte
-	var out cv
+	var chain [8]uint32
+	var out chainVector
 
 	b.SetBytes(1)
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF_avx(&input, 1, 0, 0, &out)
+		hashF_avx(&input, 1, 0, 0, &out, &chain)
 	}
 }
 
 func BenchmarkHashF_8K(b *testing.B) {
 	var input [8192]byte
-	var out cv
+	var chain [8]uint32
+	var out chainVector
 
 	b.SetBytes(8192)
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF_avx(&input, 8192, 0, 0, &out)
+		hashF_avx(&input, 8192, 0, 0, &out, &chain)
 	}
 }
 
 func BenchmarkHashP(b *testing.B) {
-	var left cv
-	var right cv
-	var out cv
+	var left chainVector
+	var right chainVector
+	var out chainVector
 
 	b.SetBytes(512)
 	b.ReportAllocs()
@@ -174,27 +187,48 @@ func BenchmarkHashP(b *testing.B) {
 	}
 }
 
-func BenchmarkMovcol(b *testing.B) {
-	var input cv
-	var out cv
+func TestCompressSSE41(t *testing.T) {
+	var chain0, chain1 [8]uint32
+	var block [16]uint32
 
-	b.ReportAllocs()
-	b.ResetTimer()
+	for j := range block {
+		block[j] = uint32(j | j<<8 | j<<16 | j<<24)
+	}
 
-	for i := 0; i < b.N; i++ {
-		movcol(&input, uint64(i)%8, &out, uint64(i+1)%8)
+	for i := 0; i <= 64; i++ {
+		var exp, got [16]uint32
+
+		compress(&chain0, &block, 1, 2, 3, &exp)
+		compress_sse41(&chain1, &block, 1, 2, 3, &got)
+
+		assert.Equal(t, exp, got)
 	}
 }
 
 func BenchmarkCompress(b *testing.B) {
-	var s, m [16]uint32
+	var c [8]uint32
+	var m, o [16]uint32
 
 	b.SetBytes(64)
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		rcompress(&s, &m)
+		compress(&c, &m, 0, 0, 0, &o)
+	}
+}
+
+func BenchmarkCompress_SSE41(b *testing.B) {
+	var chain [8]uint32
+	var block [16]uint32
+	var buf [16]uint32
+
+	b.SetBytes(64)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		compress_sse41(&chain, &block, 0, 0, 0, &buf)
 	}
 }
 
@@ -220,7 +254,11 @@ func BenchmarkBasic(b *testing.B) {
 }
 
 func BenchmarkBasic_AVX2(b *testing.B) {
-	sizes := []int64{8*1024 - 1, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024}
+	sizes := []int64{
+		0, 16, 32, 64, 128, 256, 512, 1024, 4 * 1024,
+		8*1024 - 1, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024,
+		1024 * 1024 * 10,
+	}
 
 	for _, size := range sizes {
 		size := size
