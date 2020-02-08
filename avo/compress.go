@@ -7,7 +7,7 @@ import (
 )
 
 func Compress(c ctx) {
-	TEXT("compress_sse41", NOSPLIT, `func(
+	TEXT("Compress", NOSPLIT, `func(
 		chain *[8]uint32,
 		block *[16]uint32,
 		counter uint64,

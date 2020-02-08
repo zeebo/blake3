@@ -28,8 +28,6 @@ func (a *hasher) reset() {
 
 func (a *hasher) update(buf []byte) {
 	var input *[8192]byte
-	var chain [8]uint32
-	var out chainVector
 
 	for len(buf) > 0 {
 		if a.len == 0 && len(buf) > 8192 {
@@ -44,11 +42,17 @@ func (a *hasher) update(buf []byte) {
 			input = &a.buf
 		}
 
-		hashF(input, 8192, a.chunks, a.flags, &out, &chain)
-		a.stack.pushN(0, &out, 8)
+		a.consume(input)
 		a.len = 0
 		a.chunks += 8
 	}
+}
+
+func (a *hasher) consume(input *[8192]byte) {
+	var out chainVector
+	var chain [8]uint32
+	hashF(input, 8192, a.chunks, a.flags, &out, &chain)
+	a.stack.pushN(0, &out, 8)
 }
 
 func (a *hasher) finalize(out []byte) {
@@ -62,7 +66,11 @@ func (a *hasher) finalize(out []byte) {
 
 	if a.len > 64 {
 		var buf chainVector
-		hashF(&a.buf, a.len, a.chunks, a.flags, &buf, chain)
+		if a.len <= 2*chunkLen {
+			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &buf, chain)
+		} else {
+			hashF(&a.buf, a.len, a.chunks, a.flags, &buf, chain)
+		}
 
 		if a.len > chunkLen {
 			complete := (a.len - 1) / chunkLen
@@ -136,7 +144,7 @@ type cvstack struct {
 func (a *cvstack) pushN(l uint8, cv *chainVector, n int) {
 	for i := 0; i < n; i++ {
 		a.pushL(l, cv, i)
-		if a.bufn == 8 {
+		for a.bufn == 8 {
 			a.flush()
 		}
 	}
@@ -159,17 +167,17 @@ func (a *cvstack) pushL(l uint8, cv *chainVector, n int) {
 
 func (a *cvstack) flush() {
 	var out chainVector
-	hashP(&a.buf[0], &a.buf[1], 0, &out, a.bufn)
+	if a.bufn < 2 {
+		hashPSmall(&a.buf[0], &a.buf[1], flag_parent, &out, a.bufn)
+	} else {
+		hashP(&a.buf[0], &a.buf[1], flag_parent, &out, a.bufn)
+	}
 
 	bufn, lvls := a.bufn, a.lvls
 	a.bufn, a.lvls = 0, [8]uint8{}
 
 	for i := 0; i < bufn; i++ {
 		a.pushL(lvls[i]+1, &out, i)
-	}
-
-	if a.bufn == 8 {
-		a.flush()
 	}
 }
 
@@ -236,31 +244,49 @@ func writeChain(in *[8]uint32, out *chainVector, col int) {
 func compressAll(in, out []byte) {
 	chain := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
 
-	var compressed [16]uint32
-	var block [16]uint32
-	var blockPtr *[16]uint32
 	flags := flag_chunkStart
 
 	for len(in) > 64 {
 		buf := (*[64]byte)(unsafe.Pointer(&in[0]))
 
+		var blockPtr *[16]uint32
 		if !isLittleEndian {
+			var block [16]uint32
 			blockPtr = &block
 			bytesToWords(buf, blockPtr)
 		} else {
 			blockPtr = (*[16]uint32)(unsafe.Pointer(buf))
 		}
 
+		var compressed [16]uint32
 		compress(&chain, blockPtr, 0, blockLen, flags, &compressed)
+
 		chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
 		in = in[64:]
 		flags = 0
 	}
 
 	var fblock [16]uint32
-	copy((*[64]byte)(unsafe.Pointer(&fblock[0]))[:], in)
+	blockPtr := &fblock
 
-	writeOutput(out, &chain, &fblock, uint32(len(in)), flags|flag_chunkEnd|flag_root)
+	if isLittleEndian {
+		copy((*[64]byte)(unsafe.Pointer(&fblock[0]))[:], in)
+	} else {
+		in := in
+		for i := 0; i < 16; i++ {
+			if len(in) > 4 {
+				fblock[i] = binary.LittleEndian.Uint32(in[0:4])
+				in = in[4:]
+				continue
+			}
+			var tmp [4]byte
+			copy(tmp[:], in)
+			fblock[i] = binary.LittleEndian.Uint32(tmp[0:4])
+			break
+		}
+	}
+
+	writeOutput(out, &chain, blockPtr, uint32(len(in)), flags|flag_chunkEnd|flag_root)
 }
 
 //

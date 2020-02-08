@@ -7,7 +7,7 @@ import (
 )
 
 func HashF(c ctx) {
-	TEXT("hashF_avx", 0, `func(
+	TEXT("HashF", 0, `func(
 		input *[8192]byte,
 		length uint64,
 		counter uint64,
@@ -28,8 +28,20 @@ func HashF(c ctx) {
 	loop := GP64()
 	chunks := GP64()
 	blocks := GP64()
+	stash := GP64()
 
-	alloc := NewAlloc(AllocLocal(roundSize))
+	{
+		Comment("Allocate local space and align it")
+		local := AllocLocal(roundSize + 32)
+		LEAQ(local.Offset(31), stash)
+		// TODO: avo improvement
+		tmp := GP64()
+		MOVQ(U64(31), tmp)
+		NOTQ(tmp)
+		ANDQ(tmp, stash)
+	}
+
+	alloc := NewAlloc(Mem{Base: stash})
 	defer alloc.Free()
 
 	flags_mem := AllocLocal(8)

@@ -4,8 +4,6 @@ func HashP(left, right *[64]uint32, flags uint32, out *[64]uint32, n int) {
 	var tmp [16]uint32
 	var block [16]uint32
 
-	flags |= flag_parent
-
 	for i := 0; i < n && i < 8; i++ {
 		block[0] = left[i+0]
 		block[1] = left[i+8]

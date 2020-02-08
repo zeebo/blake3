@@ -7,11 +7,12 @@ import (
 )
 
 func HashP(c ctx) {
-	TEXT("hashP_avx", NOSPLIT, `func(
+	TEXT("HashP", NOSPLIT, `func(
 		left *[32]uint32,
 		right *[32]uint32,
 		flags uint8,
 		out *[32]uint32,
+		n int,
 	)`)
 
 	var (
@@ -21,7 +22,20 @@ func HashP(c ctx) {
 		out   = Mem{Base: Load(Param("out"), GP64())}
 	)
 
-	alloc := NewAlloc(AllocLocal(roundSize))
+	stash := GP64()
+
+	{
+		Comment("Allocate local space and align it")
+		local := AllocLocal(roundSize + 32)
+		LEAQ(local.Offset(31), stash)
+		// TODO: avo improvement
+		tmp := GP64()
+		MOVQ(U64(31), tmp)
+		NOTQ(tmp)
+		ANDQ(tmp, stash)
+	}
+
+	alloc := NewAlloc(Mem{Base: stash})
 	defer alloc.Free()
 
 	flags_mem := AllocLocal(8)
@@ -38,7 +52,6 @@ func HashP(c ctx) {
 
 	{
 		Comment("Set up flags value")
-		ORL(U8(flag_parent), flags)
 		MOVL(flags, flags_mem)
 	}
 
