@@ -5,9 +5,8 @@ import (
 	"testing"
 )
 
-func BenchmarkIncremental(b *testing.B) {
-	run := func(b *testing.B, size int) {
-		h := new(hasher)
+func BenchmarkBlake3(b *testing.B) {
+	runIncr := func(b *testing.B, size int) {
 		out := make([]byte, 32)
 		buf := make([]byte, size)
 
@@ -16,27 +15,77 @@ func BenchmarkIncremental(b *testing.B) {
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			h.update(buf)
+			h := new(hasher)
+			t := buf
+			for len(t) >= 1024 {
+				h.update(t[:1024])
+				t = t[1024:]
+			}
+			if len(t) > 0 {
+				h.update(t)
+			}
 			h.finalize(out)
-			h.reset()
 		}
 	}
 
-	for _, n := range []int{
-		1, 4, 8, 12, 16,
-	} {
-		b.Run(fmt.Sprintf("%04d_block", n), func(b *testing.B) { run(b, n*64) })
+	runEntire := func(b *testing.B, size int) {
+		out := make([]byte, 32)
+		buf := make([]byte, size)
+
+		b.ReportAllocs()
+		b.SetBytes(int64(len(buf)))
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			h := new(hasher)
+			h.update(buf)
+			h.finalize(out)
+		}
 	}
 
-	for _, n := range []int{
-		1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
-	} {
-		b.Run(fmt.Sprintf("%04d_kib", n), func(b *testing.B) { run(b, n*1024) })
+	runReset := func(b *testing.B, size int) {
+		out := make([]byte, 32)
+		buf := make([]byte, size)
+		h := new(hasher)
+
+		b.ReportAllocs()
+		b.SetBytes(int64(len(buf)))
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			h.reset()
+			h.update(buf)
+			h.finalize(out)
+		}
 	}
-	for _, n := range []int{
-		1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
+
+	for _, kind := range []struct {
+		name string
+		run  func(b *testing.B, size int)
+	}{
+		{"Incremental", runIncr},
+		{"Entire", runEntire},
+		{"Reset", runReset},
 	} {
-		b.Run(fmt.Sprintf("%04d_kib+512", n), func(b *testing.B) { run(b, n*1024+512) })
+		b.Run(kind.name, func(b *testing.B) {
+			run := kind.run
+
+			for _, n := range []int{
+				1, 4, 8, 12, 16,
+			} {
+				b.Run(fmt.Sprintf("%04d_block", n), func(b *testing.B) { run(b, n*64) })
+			}
+			for _, n := range []int{
+				1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
+			} {
+				b.Run(fmt.Sprintf("%04d_kib", n), func(b *testing.B) { run(b, n*1024) })
+			}
+			for _, n := range []int{
+				1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
+			} {
+				b.Run(fmt.Sprintf("%04d_kib+512", n), func(b *testing.B) { run(b, n*1024+512) })
+			}
+		})
 	}
 }
 

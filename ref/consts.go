@@ -21,7 +21,6 @@ var iv = [...]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
 const (
 	flag_chunkStart uint32 = 1 << 0
 	flag_chunkEnd   uint32 = 1 << 1
-	flag_parent     uint32 = 1 << 2
 )
 
 const (

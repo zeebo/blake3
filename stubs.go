@@ -4,10 +4,38 @@ import (
 	"unsafe"
 
 	"github.com/zeebo/blake3/avx2"
+	"github.com/zeebo/blake3/ref"
+	"github.com/zeebo/blake3/sse41"
+	"golang.org/x/sys/cpu"
 )
 
-func hashF(input *[8192]byte, length, counter uint64, flags uint32, out *chainVector, chain *[8]uint32) {
-	avx2.HashF(input, length, counter, flags, out, chain)
+var (
+	hasAVX2  = cpu.X86.HasAVX2
+	hasSSE41 = cpu.X86.HasSSE41
+)
+
+func hashF(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
+	if hasAVX2 {
+		avx2.HashF(input, length, counter, flags, out, chain)
+	} else {
+		ref.HashF(input, length, counter, flags, out, chain)
+	}
+}
+
+func hashP(left, right *[64]uint32, flags uint32, out *[64]uint32, n int) {
+	if hasAVX2 {
+		avx2.HashP(left, right, flags, out, n)
+	} else {
+		ref.HashP(left, right, flags, out, n)
+	}
+}
+
+func compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, flags uint32, out *[16]uint32) {
+	if hasSSE41 {
+		sse41.Compress(chain, block, counter, blen, flags, out)
+	} else {
+		ref.Compress(chain, block, counter, blen, flags, out)
+	}
 }
 
 func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
@@ -38,7 +66,7 @@ func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, out *[6
 				blockPtr = &block
 			}
 
-			avx2.Compress(&bchain, blockPtr, counter, blockLen, bflags, &tmp)
+			compress(&bchain, blockPtr, counter, blockLen, bflags, &tmp)
 
 			bchain = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
 			bflags = flags
@@ -55,10 +83,6 @@ func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, out *[6
 
 		counter++
 	}
-}
-
-func hashP(left, right *chainVector, flags uint32, out *chainVector, n int) {
-	avx2.HashP(left, right, flags, out, n)
 }
 
 func hashPSmall(left, right *chainVector, flags uint32, out *chainVector, n int) {
@@ -83,7 +107,7 @@ func hashPSmall(left, right *chainVector, flags uint32, out *chainVector, n int)
 		block[14] = right[i+48]
 		block[15] = right[i+56]
 
-		avx2.Compress(&iv, &block, 0, 64, flags, &tmp)
+		compress(&iv, &block, 0, 64, flags, &tmp)
 
 		out[i+0] = tmp[0]
 		out[i+8] = tmp[1]
@@ -94,8 +118,4 @@ func hashPSmall(left, right *chainVector, flags uint32, out *chainVector, n int)
 		out[i+48] = tmp[6]
 		out[i+56] = tmp[7]
 	}
-}
-
-func compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, flags uint32, out *[16]uint32) {
-	avx2.Compress(chain, block, counter, blen, flags, out)
 }

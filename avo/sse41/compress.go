@@ -6,7 +6,35 @@ import (
 	. "github.com/mmcloughlin/avo/reg"
 )
 
-func Compress(c ctx) {
+func main() {
+	ivMem := GLOBL("iv", RODATA|NOPTR)
+	for n, v := range []U32{
+		0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
+		0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
+	} {
+		DATA(4*n, v)
+	}
+
+	rot16Mem := GLOBL("rot16_shuf", RODATA|NOPTR)
+	for n, v := range []U8{
+		0x02, 0x03, 0x00, 0x01, 0x06, 0x07, 0x04, 0x05,
+		0x0A, 0x0B, 0x08, 0x09, 0x0E, 0x0F, 0x0C, 0x0D,
+		0x12, 0x13, 0x10, 0x11, 0x16, 0x17, 0x14, 0x15,
+		0x1A, 0x1B, 0x18, 0x19, 0x1E, 0x1F, 0x1C, 0x1D,
+	} {
+		DATA(n, v)
+	}
+
+	rot8Mem := GLOBL("rot8_shuf", RODATA|NOPTR)
+	for n, v := range []U8{
+		0x01, 0x02, 0x03, 0x00, 0x05, 0x06, 0x07, 0x04,
+		0x09, 0x0A, 0x0B, 0x08, 0x0D, 0x0E, 0x0F, 0x0C,
+		0x11, 0x12, 0x13, 0x10, 0x15, 0x16, 0x17, 0x14,
+		0x19, 0x1A, 0x1B, 0x18, 0x1D, 0x1E, 0x1F, 0x1C,
+	} {
+		DATA(n, v)
+	}
+
 	TEXT("Compress", NOSPLIT, `func(
 		chain *[8]uint32,
 		block *[16]uint32,
@@ -29,7 +57,7 @@ func Compress(c ctx) {
 
 	MOVUPS(chain.Offset(0*16), rows[0])
 	MOVUPS(chain.Offset(1*16), rows[1])
-	MOVUPS(c.iv, rows[2])
+	MOVUPS(ivMem, rows[2])
 
 	PINSRD(U8(0), counter.As32(), rows[3])
 	SHRQ(U8(32), counter)
@@ -45,8 +73,8 @@ func Compress(c ctx) {
 	MOVUPS(block.Offset(3*16), ms[3])
 
 	rot16, rot8 := XMM(), XMM()
-	MOVUPS(c.rot16, rot16)
-	MOVUPS(c.rot8, rot8)
+	MOVUPS(rot16Mem, rot16)
+	MOVUPS(rot8Mem, rot8)
 
 	{
 		Comment("round 1")
@@ -143,6 +171,8 @@ func Compress(c ctx) {
 	MOVUPS(rows[3], out.Offset(3*16))
 
 	RET()
+
+	Generate()
 }
 
 func g(rows []VecVirtual, m VecVirtual, tab VecVirtual, n int) {

@@ -1,4 +1,4 @@
-package main
+package avo
 
 import (
 	"fmt"
@@ -359,6 +359,10 @@ func (v *Value) ConsumeOp() Op {
 	op := v.GetOp()
 	v.Free()
 	return op
+}
+
+func (v *Value) HasReg() bool {
+	return v.reg >= 0
 }
 
 func (v *Value) allocReg() int {

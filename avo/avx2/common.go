@@ -4,7 +4,20 @@ import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
+	. "github.com/zeebo/blake3/avo"
 )
+
+var msgSched = [7][16]int{
+	{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	{2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8},
+	{3, 4, 10, 12, 13, 2, 7, 14, 6, 5, 9, 0, 11, 15, 8, 1},
+	{10, 7, 12, 9, 14, 3, 13, 15, 4, 0, 11, 2, 5, 8, 1, 6},
+	{12, 13, 9, 11, 15, 10, 14, 8, 7, 2, 5, 3, 0, 1, 6, 4},
+	{9, 14, 11, 5, 8, 12, 15, 1, 13, 3, 0, 10, 2, 6, 4, 7},
+	{11, 15, 5, 0, 1, 9, 8, 6, 14, 10, 2, 12, 3, 4, 7, 13},
+}
+
+const roundSize = 32
 
 const (
 	flag_chunkStart = 1 << 0
@@ -12,7 +25,7 @@ const (
 	flag_parent     = 1 << 2
 )
 
-func transpose(c ctx, alloc *Alloc, vs []*Value) {
+func transpose(c Ctx, alloc *Alloc, vs []*Value) {
 	L01, H01, L23, H23 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 	L45, H45, L67, H67 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
@@ -50,7 +63,7 @@ func transpose(c ctx, alloc *Alloc, vs []*Value) {
 	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), vs[7].Get())
 }
 
-func transposeMsg(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
+func transposeMsg(c Ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
 	for j := 0; j < 2; j++ {
 		vs := alloc.Values(8)
 		for i, v := range vs {
@@ -63,7 +76,7 @@ func transposeMsg(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
 	}
 }
 
-func transposeMsgN(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem, j int) {
+func transposeMsgN(c Ctx, alloc *Alloc, block GPVirtual, input, msg Mem, j int) {
 	vs := alloc.Values(8)
 	for i, v := range vs {
 		VMOVDQU(input.Offset(1024*i+32*j).Idx(block, 1), v.Get())
@@ -74,12 +87,12 @@ func transposeMsgN(c ctx, alloc *Alloc, block GPVirtual, input, msg Mem, j int) 
 	}
 }
 
-func loadCounter(c ctx, alloc *Alloc, mem, lo_mem, hi_mem Mem) {
+func loadCounter(c Ctx, alloc *Alloc, mem, lo_mem, hi_mem Mem) {
 	ctr0, ctr1 := alloc.Value(), alloc.Value()
 	VPBROADCASTQ(mem, ctr0.Get())
-	VPADDQ(c.counter, ctr0.Get(), ctr0.Get())
+	VPADDQ(c.Counter, ctr0.Get(), ctr0.Get())
 	VPBROADCASTQ(mem, ctr1.Get())
-	VPADDQ(c.counter.Offset(32), ctr1.Get(), ctr1.Get())
+	VPADDQ(c.Counter.Offset(32), ctr1.Get(), ctr1.Get())
 
 	L, H := alloc.Value(), alloc.Value()
 	VPUNPCKLDQ(ctr1.GetOp(), ctr0.Get(), L.Get())
@@ -121,7 +134,7 @@ finalize:
 	}
 }
 
-func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
+func round(c Ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 	ms := func(ns ...int) (o []Mem) {
 		for _, n := range ns {
 			o = append(o, m(msgSched[r][n]))
@@ -134,10 +147,10 @@ func round(c ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 		tab Mem
 		rot int
 	}{
-		{ms(0, 2, 4, 6), c.rot16, 12},
-		{ms(1, 3, 5, 7), c.rot8, 7},
-		{ms(8, 10, 12, 14), c.rot16, 12},
-		{ms(9, 11, 13, 15), c.rot8, 7},
+		{ms(0, 2, 4, 6), c.Rot16, 12},
+		{ms(1, 3, 5, 7), c.Rot8, 7},
+		{ms(8, 10, 12, 14), c.Rot16, 12},
+		{ms(9, 11, 13, 15), c.Rot8, 7},
 	}
 
 	for i, p := range partials {
@@ -198,9 +211,9 @@ func xor(alloc *Alloc, a, b *Value) *Value {
 func xorb(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
 	switch {
-	case a.reg >= 0:
+	case a.HasReg():
 		VPXOR(b.ConsumeOp(), a.Consume(), o.Get())
-	case b.reg >= 0:
+	case b.HasReg():
 		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())
 	default:
 		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())

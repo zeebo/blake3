@@ -4,9 +4,10 @@ import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
+	. "github.com/zeebo/blake3/avo"
 )
 
-func HashF(c ctx) {
+func HashF(c Ctx) {
 	TEXT("HashF", 0, `func(
 		input *[8192]byte,
 		length uint64,
@@ -63,10 +64,10 @@ func HashF(c ctx) {
 		flags_vec *Value
 	)
 
-	h_vecs = alloc.ValuesWith(8, c.iv)
-	blen_vec = alloc.ValueFrom(c.blockLen)
+	h_vecs = alloc.ValuesWith(8, c.IV)
+	blen_vec = alloc.ValueFrom(c.BlockLen)
 	flags_vec = alloc.ValueWith(flags_mem)
-	iv = alloc.ValuesWith(4, c.iv)
+	iv = alloc.ValuesWith(4, c.IV)
 	ctr_low = alloc.ValueFrom(ctr_lo_mem)
 	ctr_hi = alloc.ValueFrom(ctr_hi_mem)
 
@@ -225,7 +226,7 @@ func HashF(c ctx) {
 	RET()
 }
 
-func roundF(c ctx, alloc *Alloc, vs []*Value, r int, mp Mem) {
+func roundF(c Ctx, alloc *Alloc, vs []*Value, r int, mp Mem) {
 	round(c, alloc, vs, r, func(n int) Mem {
 		return mp.Offset(n * 32)
 	})

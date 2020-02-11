@@ -4,9 +4,10 @@ import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
+	. "github.com/zeebo/blake3/avo"
 )
 
-func HashP(c ctx) {
+func HashP(c Ctx) {
 	TEXT("HashP", NOSPLIT, `func(
 		left *[32]uint32,
 		right *[32]uint32,
@@ -55,11 +56,11 @@ func HashP(c ctx) {
 		MOVL(flags, flags_mem)
 	}
 
-	h_vecs = alloc.ValuesWith(8, c.iv)
-	iv = alloc.ValuesWith(4, c.iv)
-	ctr_low = alloc.ValueFrom(c.zero)
-	ctr_hi = alloc.ValueFrom(c.zero)
-	blen_vec = alloc.ValueFrom(c.blockLen)
+	h_vecs = alloc.ValuesWith(8, c.IV)
+	iv = alloc.ValuesWith(4, c.IV)
+	ctr_low = alloc.ValueFrom(c.Zero)
+	ctr_hi = alloc.ValueFrom(c.Zero)
+	blen_vec = alloc.ValueFrom(c.BlockLen)
 	flags_vec = alloc.ValueWith(flags_mem)
 
 	{
@@ -93,7 +94,7 @@ func HashP(c ctx) {
 	RET()
 }
 
-func roundP(c ctx, alloc *Alloc, vs []*Value, r int, left, right Mem) {
+func roundP(c Ctx, alloc *Alloc, vs []*Value, r int, left, right Mem) {
 	round(c, alloc, vs, r, func(n int) Mem {
 		if n < 8 {
 			return left.Offset(n * 32)
