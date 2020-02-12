@@ -9,16 +9,21 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 
 # Benchmarks
 
-- All benchmarks run on my i7-6700K, with no control for noise or throttling or anything. So take these results with a bunch of salt.
+- All benchmarks run on my i7-6700K, with no control for noise or throttling or anything.
 - Incremental means writes of 1 kilobyte. A new hash object is created each time (worst case).
 - Entire means writing the entire buffer in a single update. A new hash object is created each time (likely case).
 - Reset means writing the entire buffer in a single update. Hash state is reused through a `sync.Pool` and reset (best case).
 
-## AVX2+SSE41
-
-### Graphs with Rust comparison
+## Rust Comparison
 
 ![barchart](/assets/barchart.png)
+
+- An attempt was made to get Go as close as possible to Rust for the benchmark. It probably failed.
+- Only single-threaded performance was tested, and this Go version is only single-threaded.
+- The Rust version does best when handed large buffers (8 kib or more). Be sure to hand it large buffers.
+- There is no Reset method on the Rust version.
+
+## AVX2 + SSE4.1
 
 ### Small
 
@@ -28,6 +33,8 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 | 256 b  |  `364 ns`  |   `250 ns`     | |  `703 MB/s`  |  `1.03 GB/s`        |
 | 512 b  |  `575 ns`  |   `468 ns`     | |  `892 MB/s`  |  `1.10 GB/s`        |
 | 768 b  |  `795 ns`  |   `682 ns`     | |  `967 MB/s`  |  `1.13 GB/s`        |
+
+- Very small writes are mostly dominated by initialization of the hash state, so if you care about having the best performance for small inputs, be sure to reuse hash state as much as possible. If you don't care, you probably don't care about ~100ns either.
 
 ### Large
 
@@ -44,6 +51,8 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 | 256 kib       |  `72.5 µs`  |  `65.7 µs`  |  `66.0 µs`     | |  `3.62 GB/s`     |  `3.99 GB/s`  |  `3.97 GB/s`        |
 | 512 kib       |   `145 µs`  |   `131 µs`  |   `132 µs`     | |  `3.60 GB/s`     |  `4.00 GB/s`  |  `3.97 GB/s`        |
 | 1024 kib      |   `290 µs`  |   `262 µs`  |   `262 µs`     | |  `3.62 GB/s`     |  `4.00 GB/s`  |  `4.00 GB/s`        |
+
+- Benchmarks of 1.5kib, 2.5kib, etc. have slightly slower rates, so have been omitted.
 
 ## No ASM
 
