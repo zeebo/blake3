@@ -27,43 +27,43 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 
 ### Small
 
-| Size   | Entire     | Entire + Reset | | Entire Rate  | Entire + Reset Rate |
-|--------|------------|----------------|-|--------------|---------------------|
-| 64 b   |  `205 ns`  |  `86.5 ns`     | |  `312 MB/s`  |   `740 MB/s`        |
-| 256 b  |  `364 ns`  |   `250 ns`     | |  `703 MB/s`  |  `1.03 GB/s`        |
-| 512 b  |  `575 ns`  |   `468 ns`     | |  `892 MB/s`  |  `1.10 GB/s`        |
-| 768 b  |  `795 ns`  |   `682 ns`     | |  `967 MB/s`  |  `1.13 GB/s`        |
+| Size   | Full Buffer |  Reset     | | Full Buffer Rate | Reset Rate   |
+|--------|-------------|------------|-|------------------|--------------|
+| 64 b   |  `205ns`    |  `86.5ns`  | |  `312MB/s`       |   `740MB/s`  |
+| 256 b  |  `364ns`    |   `250ns`  | |  `703MB/s`       |  `1.03GB/s`  |
+| 512 b  |  `575ns`    |   `468ns`  | |  `892MB/s`       |  `1.10GB/s`  |
+| 768 b  |  `795ns`    |   `682ns`  | |  `967MB/s`       |  `1.13GB/s`  |
 
 - Very small writes are mostly dominated by initialization of the hash state, so if you care about having the best performance for small inputs, be sure to reuse hash state as much as possible. If you don't care, you probably don't care about ~100ns either.
 
 ### Large
 
-| Size          | Incremental | Entire      | Entire + Reset | | Incremental Rate | Entire Rate   | Entire + Reset Rate |
-|---------------|-------------|-------------|----------------|-|------------------|---------------|---------------------|
-| 1 kib         |  `1.02 µs`  |  `1.01 µs`  |   `891 ns`     | |  `1.00 GB/s`     |  `1.01 GB/s`  |  `1.15 GB/s`        |
-| 2 kib         |  `2.11 µs`  |  `2.07 µs`  |  `1.95 µs`     | |   `968 MB/s`     |   `990 MB/s`  |  `1.05 GB/s`        |
-| 4 kib         |  `2.28 µs`  |  `2.15 µs`  |  `2.05 µs`     | |  `1.80 GB/s`     |  `1.90 GB/s`  |  `2.00 GB/s`        |
-| 8 kib         |  `2.64 µs`  |  `2.52 µs`  |  `2.44 µs`     | |  `3.11 GB/s`     |  `3.25 GB/s`  |  `3.36 GB/s`        |
-| 16 kib        |  `4.93 µs`  |  `4.54 µs`  |  `4.48 µs`     | |  `3.33 GB/s`     |  `3.61 GB/s`  |  `3.66 GB/s`        |
-| 32 kib        |  `9.41 µs`  |  `8.62 µs`  |  `8.54 µs`     | |  `3.48 GB/s`     |  `3.80 GB/s`  |  `3.84 GB/s`        |
-| 64 kib        |  `18.2 µs`  |  `16.7 µs`  |  `16.6 µs`     | |  `3.59 GB/s`     |  `3.91 GB/s`  |  `3.94 GB/s`        |
-| 128 kib       |  `36.3 µs`  |  `32.9 µs`  |  `33.1 µs`     | |  `3.61 GB/s`     |  `3.99 GB/s`  |  `3.96 GB/s`        |
-| 256 kib       |  `72.5 µs`  |  `65.7 µs`  |  `66.0 µs`     | |  `3.62 GB/s`     |  `3.99 GB/s`  |  `3.97 GB/s`        |
-| 512 kib       |   `145 µs`  |   `131 µs`  |   `132 µs`     | |  `3.60 GB/s`     |  `4.00 GB/s`  |  `3.97 GB/s`        |
-| 1024 kib      |   `290 µs`  |   `262 µs`  |   `262 µs`     | |  `3.62 GB/s`     |  `4.00 GB/s`  |  `4.00 GB/s`        |
+| Size     | Incremental | Full Buffer | Reset      | | Incremental Rate | Full Buffer Rate | Reset Rate   |
+|----------|-------------|-------------|------------|-|------------------|------------------|--------------|
+| 1 kib    |  `1.02µs`   |  `1.01µs`   |   `891ns`  | |  `1.00GB/s`      |  `1.01GB/ s`     |  `1.15GB/s`  |
+| 2 kib    |  `2.11µs`   |  `2.07µs`   |  `1.95µs`  | |   `968MB/s`      |   `990MB/ s`     |  `1.05GB/s`  |
+| 4 kib    |  `2.28µs`   |  `2.15µs`   |  `2.05µs`  | |  `1.80GB/s`      |  `1.90GB/ s`     |  `2.00GB/s`  |
+| 8 kib    |  `2.64µs`   |  `2.52µs`   |  `2.44µs`  | |  `3.11GB/s`      |  `3.25GB/ s`     |  `3.36GB/s`  |
+| 16 kib   |  `4.93µs`   |  `4.54µs`   |  `4.48µs`  | |  `3.33GB/s`      |  `3.61GB/ s`     |  `3.66GB/s`  |
+| 32 kib   |  `9.41µs`   |  `8.62µs`   |  `8.54µs`  | |  `3.48GB/s`      |  `3.80GB/ s`     |  `3.84GB/s`  |
+| 64 kib   |  `18.2µs`   |  `16.7µs`   |  `16.6µs`  | |  `3.59GB/s`      |  `3.91GB/ s`     |  `3.94GB/s`  |
+| 128 kib  |  `36.3µs`   |  `32.9µs`   |  `33.1µs`  | |  `3.61GB/s`      |  `3.99GB/ s`     |  `3.96GB/s`  |
+| 256 kib  |  `72.5µs`   |  `65.7µs`   |  `66.0µs`  | |  `3.62GB/s`      |  `3.99GB/ s`     |  `3.97GB/s`  |
+| 512 kib  |   `145µs`   |   `131µs`   |   `132µs`  | |  `3.60GB/s`      |  `4.00GB/ s`     |  `3.97GB/s`  |
+| 1024 kib |   `290µs`   |   `262µs`   |   `262µs`  | |  `3.62GB/s`      |  `4.00GB/ s`     |  `4.00GB/s`  |
 
 - Benchmarks of 1.5kib, 2.5kib, etc. have slightly slower rates, so have been omitted.
 
 ## No ASM
 
-| Size          | Incremental | Entire      | Entire + Reset | | Incremental Rate | Entire Rate  | Entire + Reset Rate |
-|---------------|-------------|-------------|----------------|-|------------------|--------------|---------------------|
-| 64 b          |   `253 ns`  |   `254 ns`  |   `134 ns`     | |  `253 MB/s`      |  `252 MB/s`  |  `478 MB/s`         |
-| 256 b         |   `553 ns`  |   `557 ns`  |   `441 ns`     | |  `463 MB/s`      |  `459 MB/s`  |  `580 MB/s`         |
-| 512 b         |   `948 ns`  |   `953 ns`  |   `841 ns`     | |  `540 MB/s`      |  `538 MB/s`  |  `609 MB/s`         |
-| 768 b         |  `1.38 µs`  |  `1.40 µs`  |  `1.35 µs`     | |  `558 MB/s`      |  `547 MB/s`  |  `570 MB/s`         |
-| 1 kib         |  `1.77 µs`  |  `1.77 µs`  |  `1.70 µs`     | |  `577 MB/s`      |  `580 MB/s`  |  `602 MB/s`         |
-|               |             |             |                | |                  |              |                     |
-| 1024 kib      |   `880 µs`  |   `883 µs`  |   `878 µs`     | |  `596 MB/s`      |  `595 MB/s`  |  `598 MB/s`         |
+| Size     | Incremental | Full Buffer | Reset      | | Incremental Rate | Full Buffer Rate | Reset Rate  |
+|----------|-------------|-------------|------------|-|------------------|------------------|-------------|
+| 64 b     |   `253ns`   |   `254ns`   |   `134ns`  | |  `253MB/s`       |  `252MB/s`       |  `478MB/s`  |
+| 256 b    |   `553ns`   |   `557ns`   |   `441ns`  | |  `463MB/s`       |  `459MB/s`       |  `580MB/s`  |
+| 512 b    |   `948ns`   |   `953ns`   |   `841ns`  | |  `540MB/s`       |  `538MB/s`       |  `609MB/s`  |
+| 768 b    |  `1.38µs`   |  `1.40µs`   |  `1.35µs`  | |  `558MB/s`       |  `547MB/s`       |  `570MB/s`  |
+| 1 kib    |  `1.77µs`   |  `1.77µs`   |  `1.70µs`  | |  `577MB/s`       |  `580MB/s`       |  `602MB/s`  |
+|          |             |             |            | |                  |                  |             |
+| 1024 kib |   `880µs`   |   `883µs`   |   `878µs`  | |  `596MB/s`       |  `595MB/s`       |  `598MB/s`  |
 
 - Rows elided from the no asm version as they all stabilize around the same rate.
