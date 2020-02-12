@@ -2,13 +2,19 @@ package blake3
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 )
 
 func BenchmarkBlake3(b *testing.B) {
+	out := make([]byte, 32)
+	buf := make([]byte, 1024*1024+512)
+	pool := sync.Pool{
+		New: func() interface{} { return new(hasher) },
+	}
+
 	runIncr := func(b *testing.B, size int) {
-		out := make([]byte, 32)
-		buf := make([]byte, size)
+		buf := buf[:size]
 
 		b.ReportAllocs()
 		b.SetBytes(int64(len(buf)))
@@ -29,8 +35,7 @@ func BenchmarkBlake3(b *testing.B) {
 	}
 
 	runEntire := func(b *testing.B, size int) {
-		out := make([]byte, 32)
-		buf := make([]byte, size)
+		buf := buf[:size]
 
 		b.ReportAllocs()
 		b.SetBytes(int64(len(buf)))
@@ -44,18 +49,18 @@ func BenchmarkBlake3(b *testing.B) {
 	}
 
 	runReset := func(b *testing.B, size int) {
-		out := make([]byte, 32)
-		buf := make([]byte, size)
-		h := new(hasher)
+		buf := buf[:size]
 
 		b.ReportAllocs()
 		b.SetBytes(int64(len(buf)))
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
+			h := pool.Get().(*hasher)
 			h.reset()
 			h.update(buf)
 			h.finalize(out)
+			pool.Put(h)
 		}
 	}
 

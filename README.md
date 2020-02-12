@@ -1,68 +1,59 @@
+# Blake3
+<!-- [![GoDoc](https://godoc.org/github.com/zeebo/blake3?status.svg)](https://godoc.org/github.com/zeebo/blake3)
+[![Sourcegraph](https://sourcegraph.com/github.com/zeebo/blake3/-/badge.svg)](https://sourcegraph.com/github.com/zeebo/blake3?badge)
+[![Go Report Card](https://goreportcard.com/badge/github.com/zeebo/blake3)](https://goreportcard.com/report/github.com/zeebo/blake3) -->
 
-## Benchmarks
+Pure Go implementation of [Blake3](https://blake3.io) with AVX2 and SSE4.1 acceleration.
 
-Usually within ~10% of the rust version on my machine. Worse at smaller sizes, but total nanoseconds.
+Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making writing vectorized version much easier.
 
-```
-RUST 0001_block                56 ns/op    1142 MB/s
-RUST 0004_block               202 ns/op    1267 MB/s
-RUST 0008_block               399 ns/op    1283 MB/s
-RUST 0012_block               602 ns/op    1275 MB/s
+# Benchmarks
 
-GO   0001_block                75 ns/op     856 MB/s  +34%
-GO   0004_block               231 ns/op    1106 MB/s  +14%
-GO   0008_block               435 ns/op    1176 MB/s  +9%
-GO   0012_block               697 ns/op    1102 MB/s  +16%
+- All benchmarks run on my i7-6700K, with no control for noise or throttling or anything. So take these results with a bunch of salt.
+- Incr means incremental writes of 1 kilobyte. A new hash object is created each time (worst case).
+- Entire means writing the entire buffer in a single update. A new hash object is created each time (likely case).
+- Reset means writing the entire buffer in a single update. Hash state is reused through a `sync.Pool` and reset (best case).
+- Rows elided from the no asm version as they all stabilize around the same rate.
 
-///////////////////////
+## AVX2+SSE41
 
-RUST 0001_kib                 799 ns/op    1281 MB/s
-RUST 0002_kib                1703 ns/op    1202 MB/s
-RUST 0004_kib                2078 ns/op    1971 MB/s
-RUST 0008_kib                2111 ns/op    3880 MB/s
-RUST 0016_kib                4036 ns/op    4059 MB/s
-RUST 0032_kib                7991 ns/op    4100 MB/s
-RUST 0064_kib               15946 ns/op    4109 MB/s
-RUST 0128_kib               31823 ns/op    4118 MB/s
-RUST 0256_kib               63866 ns/op    4104 MB/s
-RUST 0512_kib              128632 ns/op    4075 MB/s
-RUST 1024_kib              257244 ns/op    4076 MB/s
+### Graphs with Rust comparison
 
-GO   0001_kib                 845 ns/op    1211 MB/s  +6%
-GO   0002_kib                1863 ns/op    1099 MB/s  +9%
-GO   0004_kib                2108 ns/op    1943 MB/s  +1%
-GO   0008_kib                2380 ns/op    3441 MB/s  +9%
-GO   0016_kib                4298 ns/op    3812 MB/s  +6%
-GO   0032_kib                8228 ns/op    3983 MB/s  +3%
-GO   0064_kib               16011 ns/op    4093 MB/s  ---
-GO   0128_kib               31610 ns/op    4147 MB/s  -1%
-GO   0256_kib               63397 ns/op    4134 MB/s  -1%
-GO   0512_kib              127181 ns/op    4122 MB/s  -1%
-GO   1024_kib              252222 ns/op    4157 MB/s  -2%
+![barchart](/assets/barchart.png)
 
-///////////////////////
+### Small
 
-RUST 0001_kib+512            1260 ns/op    1219 MB/s
-RUST 0002_kib+512            2168 ns/op    1180 MB/s
-RUST 0004_kib+512            2579 ns/op    1786 MB/s
-RUST 0008_kib+512            2581 ns/op    3372 MB/s
-RUST 0016_kib+512            4504 ns/op    3751 MB/s
-RUST 0032_kib+512            8497 ns/op    3916 MB/s
-RUST 0064_kib+512           16378 ns/op    4032 MB/s
-RUST 0128_kib+512           32240 ns/op    4081 MB/s
-RUST 0256_kib+512           64220 ns/op    4089 MB/s
-RUST 0512_kib+512          128536 ns/op    4082 MB/s
-RUST 1024_kib+512          256453 ns/op    4090 MB/s
+| Size          | Incremental | Entire      | Entire + Reset | | Incremental Rate | Entire Rate   | Entire + Reset Rate |
+|---------------|-------------|-------------|----------------|-|------------------|---------------|---------------------|
+| 64 b          |   `205 ns`  |   `205 ns`  |  `86.5 ns`     | |   `313 MB/s`     |   `312 MB/s`  |   `740 MB/s`        |
+| 256 b         |   `368 ns`  |   `364 ns`  |   `250 ns`     | |   `697 MB/s`     |   `703 MB/s`  |  `1.03 GB/s`        |
+| 512 b         |   `582 ns`  |   `575 ns`  |   `468 ns`     | |   `879 MB/s`     |   `892 MB/s`  |  `1.10 GB/s`        |
+| 768 b         |   `804 ns`  |   `795 ns`  |   `682 ns`     | |   `955 MB/s`     |   `967 MB/s`  |  `1.13 GB/s`        |
 
-GO   0001_kib+512            1449 ns/op    1060 MB/s  +15%
-GO   0002_kib+512            2006 ns/op    1276 MB/s  -8%
-GO   0004_kib+512            2161 ns/op    2133 MB/s  -19%
-GO   0008_kib+512            2688 ns/op    3238 MB/s  +4%
-GO   0016_kib+512            4597 ns/op    3675 MB/s  +2%
-GO   0032_kib+512            8544 ns/op    3895 MB/s  +1%
-GO   0064_kib+512           16370 ns/op    4035 MB/s  ---
-GO   0128_kib+512           31997 ns/op    4112 MB/s  -1%
-GO   0256_kib+512           63918 ns/op    4109 MB/s  -1%
-GO   0512_kib+512          128344 ns/op    4089 MB/s  ---
-GO   1024_kib+512          252815 ns/op    4150 MB/s  -1%
-```
+### Large
+
+| Size          | Incremental | Entire      | Entire + Reset | | Incremental Rate | Entire Rate   | Entire + Reset Rate |
+|---------------|-------------|-------------|----------------|-|------------------|---------------|---------------------|
+| 1 kib         |  `1.02 µs`  |  `1.01 µs`  |   `891 ns`     | |  `1.00 GB/s`     |  `1.01 GB/s`  |  `1.15 GB/s`        |
+| 2 kib         |  `2.11 µs`  |  `2.07 µs`  |  `1.95 µs`     | |   `968 MB/s`     |   `990 MB/s`  |  `1.05 GB/s`        |
+| 4 kib         |  `2.28 µs`  |  `2.15 µs`  |  `2.05 µs`     | |  `1.80 GB/s`     |  `1.90 GB/s`  |  `2.00 GB/s`        |
+| 8 kib         |  `2.64 µs`  |  `2.52 µs`  |  `2.44 µs`     | |  `3.11 GB/s`     |  `3.25 GB/s`  |  `3.36 GB/s`        |
+| 16 kib        |  `4.93 µs`  |  `4.54 µs`  |  `4.48 µs`     | |  `3.33 GB/s`     |  `3.61 GB/s`  |  `3.66 GB/s`        |
+| 32 kib        |  `9.41 µs`  |  `8.62 µs`  |  `8.54 µs`     | |  `3.48 GB/s`     |  `3.80 GB/s`  |  `3.84 GB/s`        |
+| 64 kib        |  `18.2 µs`  |  `16.7 µs`  |  `16.6 µs`     | |  `3.59 GB/s`     |  `3.91 GB/s`  |  `3.94 GB/s`        |
+| 128 kib       |  `36.3 µs`  |  `32.9 µs`  |  `33.1 µs`     | |  `3.61 GB/s`     |  `3.99 GB/s`  |  `3.96 GB/s`        |
+| 256 kib       |  `72.5 µs`  |  `65.7 µs`  |  `66.0 µs`     | |  `3.62 GB/s`     |  `3.99 GB/s`  |  `3.97 GB/s`        |
+| 512 kib       |   `145 µs`  |   `131 µs`  |   `132 µs`     | |  `3.60 GB/s`     |  `4.00 GB/s`  |  `3.97 GB/s`        |
+| 1024 kib      |   `290 µs`  |   `262 µs`  |   `262 µs`     | |  `3.62 GB/s`     |  `4.00 GB/s`  |  `4.00 GB/s`        |
+
+## No ASM
+
+| Size          | Incremental | Entire      | Entire + Reset | | Incremental Rate | Entire Rate  | Entire + Reset Rate |
+|---------------|-------------|-------------|----------------|-|------------------|--------------|---------------------|
+| 64 b          |   `253 ns`  |   `254 ns`  |   `134 ns`     | |  `253 MB/s`      |  `252 MB/s`  |  `478 MB/s`         |
+| 256 b         |   `553 ns`  |   `557 ns`  |   `441 ns`     | |  `463 MB/s`      |  `459 MB/s`  |  `580 MB/s`         |
+| 512 b         |   `948 ns`  |   `953 ns`  |   `841 ns`     | |  `540 MB/s`      |  `538 MB/s`  |  `609 MB/s`         |
+| 768 b         |  `1.38 µs`  |  `1.40 µs`  |  `1.35 µs`     | |  `558 MB/s`      |  `547 MB/s`  |  `570 MB/s`         |
+| 1 kib         |  `1.77 µs`  |  `1.77 µs`  |  `1.70 µs`     | |  `577 MB/s`      |  `580 MB/s`  |  `602 MB/s`         |
+|               |             |             |                | |                  |              |                     |
+| 1024 kib      |   `880 µs`  |   `883 µs`  |   `878 µs`     | |  `596 MB/s`      |  `595 MB/s`  |  `598 MB/s`         |

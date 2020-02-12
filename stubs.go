@@ -10,8 +10,11 @@ import (
 )
 
 var (
-	hasAVX2  = cpu.X86.HasAVX2
-	hasSSE41 = cpu.X86.HasSSE41
+	hasAVX2 = cpu.X86.HasAVX2
+
+	// Note: some instructions don't seem available in the go assembler or avo. Until this
+	// has been fixed, we also require AVX when we require SSE41
+	hasSSE41 = cpu.X86.HasSSE41 && cpu.X86.HasAVX
 )
 
 func hashF(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
