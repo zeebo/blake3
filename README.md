@@ -12,22 +12,30 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 
 # Benchmarks
 
-- All benchmarks run on my i7-6700K, with no control for noise or throttling or anything.
+## Caveats
 
-## Rust Comparison
+This library makes some different design decisions than the upstream Rust crate around internal buffering. Specifically, because it does not target the embedded system space, nor does it support multithreading, it elects to do its own internal buffering. This means that a user does not have to worry about providing large enough buffers to get the best possible performance, but it does worse on smaller input sizes. So some notes:
 
-- An attempt was made to get Go as close as possible to Rust for the benchmark. It probably failed. :smile:
-- Only single-threaded performance was tested, and this Go version is only single-threaded.
-- Incremental writes are of 1 kib. This is to demonstrate a design tradeoff between internal buffering and speed on small inputs.
-- The Rust version does best when handed large buffers (8 kib or more) as their documentation states.
+- The Rust benchmarks below are all single-threaded to match this Go implementation.
+- I make no attempt to get precise measurements (cpu throttling, noisy environment, etc.) so please benchmark on your own systems.
+- These benchmarks are run on an i7-6700K which does not support AVX-512, so Rust is limited to use AVX2 at sizes above 8 kib.
+- I tried my best to make them benchmark the same thing, but who knows? :smile:
 
-![barchart](/assets/barchart.png)
+## Charts
 
-## AVX2 + SSE4.1
+In this case, both libraries are able to avoid a lot of data copying and will use vectorized instructions to hash as fast as possible, and perform similarly.
 
-- Incremental means writes of 1 kilobyte. A new hash object is created each time (worst case).
-- Full Buffer means writing the entire buffer in a single update. A new hash object is created each time (likely case).
-- Reset means writing the entire buffer in a single update. Hash state is reused through a `sync.Pool` and reset (best case).
+![Large Full Buffer](/assets/large-full-buffer.svg)
+
+For incremental writes, you must provide the Rust version large enough buffers so that it can use vectorized instructions. This Go library performs consistently regardless of the size being sent into the update function.
+
+![Incremental](/assets/incremental.svg)
+
+The downside of internal buffering is most apparent with small sizes as most time is spent initializing the hasher state. In terms of hashing rate, the difference is 3-4x, but in an absolute sense it's ~100ns (see tables below). If you wish to hash a large number of very small strings and you care about those nanoseconds, be sure to use the Reset method to avoid re-initializing the state.
+
+![Small Full Buffer](/assets/small-full-buffer.svg)
+
+## Timing Tables
 
 ### Small
 
@@ -37,8 +45,6 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 | 256 b  |  `364ns`    |   `250ns`  | |  `703MB/s`       |  `1.03GB/s`  |
 | 512 b  |  `575ns`    |   `468ns`  | |  `892MB/s`       |  `1.10GB/s`  |
 | 768 b  |  `795ns`    |   `682ns`  | |  `967MB/s`       |  `1.13GB/s`  |
-
-- Very small writes are mostly dominated by initialization of the hash state, so if you care about having the best performance for small inputs, be sure to reuse hash state as much as possible. If you don't care, you probably don't care about ~100ns either.
 
 ### Large
 
@@ -56,9 +62,7 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 | 512 kib  |   `145µs`   |   `131µs`   |   `132µs`  | |  `3.60GB/s`      |  `4.00GB/s`      |  `3.97GB/s`  |
 | 1024 kib |   `290µs`   |   `262µs`   |   `262µs`  | |  `3.62GB/s`      |  `4.00GB/s`      |  `4.00GB/s`  |
 
-- Benchmarks of 1.5kib, 2.5kib, etc. have consistently slightly slower rates, so have been omitted. Estimate based on the nearest size.
-
-## No ASM
+### No ASM
 
 | Size     | Incremental | Full Buffer | Reset      | | Incremental Rate | Full Buffer Rate | Reset Rate  |
 |----------|-------------|-------------|------------|-|------------------|------------------|-------------|
@@ -70,4 +74,4 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 |          |             |             |            | |                  |                  |             |
 | 1024 kib |   `880µs`   |   `883µs`   |   `878µs`  | |  `596MB/s`       |  `595MB/s`       |  `598MB/s`  |
 
-- Rows elided from the no asm version as they all stabilize around the same rate.
+The speed caps out at around 1 kib, so most rows have been elided from the presentation.
