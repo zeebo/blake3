@@ -13,20 +13,21 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 # Benchmarks
 
 - All benchmarks run on my i7-6700K, with no control for noise or throttling or anything.
-- Incremental means writes of 1 kilobyte. A new hash object is created each time (worst case).
-- Entire means writing the entire buffer in a single update. A new hash object is created each time (likely case).
-- Reset means writing the entire buffer in a single update. Hash state is reused through a `sync.Pool` and reset (best case).
 
 ## Rust Comparison
 
+- An attempt was made to get Go as close as possible to Rust for the benchmark. It probably failed. :smile:
+- Only single-threaded performance was tested, and this Go version is only single-threaded.
+- Incremental writes are of 1 kib. This is to demonstrate a design tradeoff between internal buffering and speed on small inputs.
+- The Rust version does best when handed large buffers (8 kib or more) as their documentation states.
+
 ![barchart](/assets/barchart.png)
 
-- An attempt was made to get Go as close as possible to Rust for the benchmark. It probably failed.
-- Only single-threaded performance was tested, and this Go version is only single-threaded.
-- The Rust version does best when handed large buffers (8 kib or more). Be sure to hand it large buffers.
-- There is no Reset method on the Rust version.
-
 ## AVX2 + SSE4.1
+
+- Incremental means writes of 1 kilobyte. A new hash object is created each time (worst case).
+- Full Buffer means writing the entire buffer in a single update. A new hash object is created each time (likely case).
+- Reset means writing the entire buffer in a single update. Hash state is reused through a `sync.Pool` and reset (best case).
 
 ### Small
 
@@ -55,7 +56,7 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 | 512 kib  |   `145µs`   |   `131µs`   |   `132µs`  | |  `3.60GB/s`      |  `4.00GB/s`      |  `3.97GB/s`  |
 | 1024 kib |   `290µs`   |   `262µs`   |   `262µs`  | |  `3.62GB/s`      |  `4.00GB/s`      |  `4.00GB/s`  |
 
-- Benchmarks of 1.5kib, 2.5kib, etc. have slightly slower rates, so have been omitted.
+- Benchmarks of 1.5kib, 2.5kib, etc. have consistently slightly slower rates, so have been omitted. Estimate based on the nearest size.
 
 ## No ASM
 
