@@ -1,7 +1,7 @@
 # BLAKE3
-<!-- [![GoDoc](https://godoc.org/github.com/zeebo/blake3?status.svg)](https://godoc.org/github.com/zeebo/blake3)
+[![GoDoc](https://godoc.org/github.com/zeebo/blake3?status.svg)](https://godoc.org/github.com/zeebo/blake3)
 [![Sourcegraph](https://sourcegraph.com/github.com/zeebo/blake3/-/badge.svg)](https://sourcegraph.com/github.com/zeebo/blake3?badge)
-[![Go Report Card](https://goreportcard.com/badge/github.com/zeebo/blake3)](https://goreportcard.com/report/github.com/zeebo/blake3) -->
+[![Go Report Card](https://goreportcard.com/badge/github.com/zeebo/blake3)](https://goreportcard.com/report/github.com/zeebo/blake3)
 
 Pure Go implementation of [BLAKE3](https://blake3.io) with AVX2 and SSE4.1 acceleration.
 
