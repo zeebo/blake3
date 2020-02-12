@@ -1,19 +1,18 @@
-# Blake3
+# BLAKE3
 <!-- [![GoDoc](https://godoc.org/github.com/zeebo/blake3?status.svg)](https://godoc.org/github.com/zeebo/blake3)
 [![Sourcegraph](https://sourcegraph.com/github.com/zeebo/blake3/-/badge.svg)](https://sourcegraph.com/github.com/zeebo/blake3?badge)
 [![Go Report Card](https://goreportcard.com/badge/github.com/zeebo/blake3)](https://goreportcard.com/report/github.com/zeebo/blake3) -->
 
-Pure Go implementation of [Blake3](https://blake3.io) with AVX2 and SSE4.1 acceleration.
+Pure Go implementation of [BLAKE3](https://blake3.io) with AVX2 and SSE4.1 acceleration.
 
 Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making writing vectorized version much easier.
 
 # Benchmarks
 
 - All benchmarks run on my i7-6700K, with no control for noise or throttling or anything. So take these results with a bunch of salt.
-- Incr means incremental writes of 1 kilobyte. A new hash object is created each time (worst case).
+- Incremental means writes of 1 kilobyte. A new hash object is created each time (worst case).
 - Entire means writing the entire buffer in a single update. A new hash object is created each time (likely case).
 - Reset means writing the entire buffer in a single update. Hash state is reused through a `sync.Pool` and reset (best case).
-- Rows elided from the no asm version as they all stabilize around the same rate.
 
 ## AVX2+SSE41
 
@@ -23,12 +22,12 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 
 ### Small
 
-| Size          | Incremental | Entire      | Entire + Reset | | Incremental Rate | Entire Rate   | Entire + Reset Rate |
-|---------------|-------------|-------------|----------------|-|------------------|---------------|---------------------|
-| 64 b          |   `205 ns`  |   `205 ns`  |  `86.5 ns`     | |   `313 MB/s`     |   `312 MB/s`  |   `740 MB/s`        |
-| 256 b         |   `368 ns`  |   `364 ns`  |   `250 ns`     | |   `697 MB/s`     |   `703 MB/s`  |  `1.03 GB/s`        |
-| 512 b         |   `582 ns`  |   `575 ns`  |   `468 ns`     | |   `879 MB/s`     |   `892 MB/s`  |  `1.10 GB/s`        |
-| 768 b         |   `804 ns`  |   `795 ns`  |   `682 ns`     | |   `955 MB/s`     |   `967 MB/s`  |  `1.13 GB/s`        |
+| Size   | Entire     | Entire + Reset | | Entire Rate  | Entire + Reset Rate |
+|--------|------------|----------------|-|--------------|---------------------|
+| 64 b   |  `205 ns`  |  `86.5 ns`     | |  `312 MB/s`  |   `740 MB/s`        |
+| 256 b  |  `364 ns`  |   `250 ns`     | |  `703 MB/s`  |  `1.03 GB/s`        |
+| 512 b  |  `575 ns`  |   `468 ns`     | |  `892 MB/s`  |  `1.10 GB/s`        |
+| 768 b  |  `795 ns`  |   `682 ns`     | |  `967 MB/s`  |  `1.13 GB/s`        |
 
 ### Large
 
@@ -57,3 +56,5 @@ Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making
 | 1 kib         |  `1.77 µs`  |  `1.77 µs`  |  `1.70 µs`     | |  `577 MB/s`      |  `580 MB/s`  |  `602 MB/s`         |
 |               |             |             |                | |                  |              |                     |
 | 1024 kib      |   `880 µs`  |   `883 µs`  |   `878 µs`     | |  `596 MB/s`      |  `595 MB/s`  |  `598 MB/s`         |
+
+- Rows elided from the no asm version as they all stabilize around the same rate.

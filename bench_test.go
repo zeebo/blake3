@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func BenchmarkBlake3(b *testing.B) {
+func BenchmarkBLAKE3(b *testing.B) {
 	out := make([]byte, 32)
 	buf := make([]byte, 1024*1024+512)
 	pool := sync.Pool{
