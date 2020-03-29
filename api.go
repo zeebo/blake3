@@ -1,5 +1,9 @@
 package blake3
 
+import (
+	"errors"
+)
+
 // Hasher is a hash.Hash for BLAKE3.
 type Hasher struct {
 	size int
@@ -7,15 +11,43 @@ type Hasher struct {
 }
 
 // New returns a new Hasher with the default output size (32 bytes).
-func New() *Hasher { return &Hasher{size: 32} }
+func New() *Hasher {
+	return &Hasher{
+		size: 32,
+		h: hasher{
+			key: iv,
+		},
+	}
+}
 
 // NewSized returns a new Hasher with the given output size.
 func NewSized(size int) *Hasher {
 	if size < 0 {
 		panic("must specify non-negative size")
 	}
-	return &Hasher{size: size}
+	return &Hasher{
+		size: size,
+		h: hasher{
+			key: iv,
+		},
+	}
 }
+
+func NewKeyed(key []byte) (*Hasher, error) {
+	if len(key) != 32 {
+		return nil, errors.New("invalid key size")
+	}
+	h := &Hasher{
+		size: 32,
+		h: hasher{
+			flags: flag_keyed,
+		},
+	}
+	keyFromBytes(key, &h.h.key)
+	return h, nil
+}
+
+// TODO NewKeyedSized
 
 // Write implements part of the hash.Hash interface. It never returns an error.
 func (h *Hasher) Write(p []byte) (int, error) {

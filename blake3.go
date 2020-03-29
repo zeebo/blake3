@@ -6,6 +6,17 @@ import (
 	"unsafe"
 )
 
+func keyFromBytes(key []byte, out *[8]uint32) {
+	out[0] = binary.LittleEndian.Uint32(key[0:])
+	out[1] = binary.LittleEndian.Uint32(key[4:])
+	out[2] = binary.LittleEndian.Uint32(key[8:])
+	out[3] = binary.LittleEndian.Uint32(key[12:])
+	out[4] = binary.LittleEndian.Uint32(key[16:])
+	out[5] = binary.LittleEndian.Uint32(key[20:])
+	out[6] = binary.LittleEndian.Uint32(key[24:])
+	out[7] = binary.LittleEndian.Uint32(key[28:])
+}
+
 //
 // hasher contains state for a blake3 hash
 //
@@ -14,6 +25,7 @@ type hasher struct {
 	len    uint64
 	chunks uint64
 	flags  uint32
+	key    [8]uint32
 	stack  cvstack
 	buf    [8192]byte
 }
@@ -51,30 +63,31 @@ func (a *hasher) update(buf []byte) {
 func (a *hasher) consume(input *[8192]byte) {
 	var out chainVector
 	var chain [8]uint32
-	hashF(input, 8192, a.chunks, a.flags, &out, &chain)
-	a.stack.pushN(0, &out, 8)
+	hashF(input, 8192, a.chunks, a.flags, &a.key, &out, &chain)
+	a.stack.pushN(0, &out, 8, a.flags, &a.key)
 }
 
 func (a *hasher) finalize(out []byte) {
 	if a.chunks == 0 && a.len <= chunkLen {
-		compressAll(a.buf[:a.len], out)
+		compressAll(a.buf[:a.len], a.flags, &a.key, out)
 		return
 	}
 
-	chain := &[8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+	tmpChain := a.key
+	chain := &tmpChain
 	flags := a.flags | flag_chunkEnd
 
 	if a.len > 64 {
 		var buf chainVector
 		if a.len <= 2*chunkLen {
-			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &buf, chain)
+			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, chain)
 		} else {
-			hashF(&a.buf, a.len, a.chunks, a.flags, &buf, chain)
+			hashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, chain)
 		}
 
 		if a.len > chunkLen {
 			complete := (a.len - 1) / chunkLen
-			a.stack.pushN(0, &buf, int(complete))
+			a.stack.pushN(0, &buf, int(complete), a.flags, &a.key)
 			a.chunks += complete
 			a.len = uint64(copy(a.buf[:], a.buf[complete*chunkLen:a.len]))
 		}
@@ -108,7 +121,7 @@ func (a *hasher) finalize(out []byte) {
 	}
 
 	for a.stack.bufn > 0 {
-		a.stack.flush()
+		a.stack.flush(a.flags, &a.key)
 	}
 
 	var tmp [16]uint32
@@ -120,10 +133,10 @@ func (a *hasher) finalize(out []byte) {
 		*(*[8]uint32)(unsafe.Pointer(&blockPtr[0])) = a.stack.stack[col&63]
 		*(*[8]uint32)(unsafe.Pointer(&blockPtr[8])) = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
 
-		chain = &iv
+		chain = &a.key
 		counter = 0
 		blen = blockLen
-		flags = flag_parent
+		flags = a.flags | flag_parent
 	}
 
 	writeOutput(out, chain, blockPtr, blen, flags|flag_root)
@@ -141,11 +154,11 @@ type cvstack struct {
 	stack [64][8]uint32
 }
 
-func (a *cvstack) pushN(l uint8, cv *chainVector, n int) {
+func (a *cvstack) pushN(l uint8, cv *chainVector, n int, flags uint32, key *[8]uint32) {
 	for i := 0; i < n; i++ {
 		a.pushL(l, cv, i)
 		for a.bufn == 8 {
-			a.flush()
+			a.flush(flags, key)
 		}
 	}
 }
@@ -165,12 +178,12 @@ func (a *cvstack) pushL(l uint8, cv *chainVector, n int) {
 	a.occ ^= bit
 }
 
-func (a *cvstack) flush() {
+func (a *cvstack) flush(flags uint32, key *[8]uint32) {
 	var out chainVector
 	if a.bufn < 2 {
-		hashPSmall(&a.buf[0], &a.buf[1], flag_parent, &out, a.bufn)
+		hashPSmall(&a.buf[0], &a.buf[1], flags|flag_parent, key, &out, a.bufn)
 	} else {
-		hashP(&a.buf[0], &a.buf[1], flag_parent, &out, a.bufn)
+		hashP(&a.buf[0], &a.buf[1], flags|flag_parent, key, &out, a.bufn)
 	}
 
 	bufn, lvls := a.bufn, a.lvls
@@ -241,10 +254,10 @@ func writeChain(in *[8]uint32, out *chainVector, col int) {
 // compress <= chunkLen bytes in one shot
 //
 
-func compressAll(in, out []byte) {
-	chain := [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+func compressAll(in []byte, flags uint32, key *[8]uint32, out []byte) {
+	chain := *key
 
-	flags := flag_chunkStart
+	flags |= flag_chunkStart
 
 	for len(in) > 64 {
 		buf := (*[64]byte)(unsafe.Pointer(&in[0]))
@@ -263,7 +276,7 @@ func compressAll(in, out []byte) {
 
 		chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
 		in = in[64:]
-		flags = 0
+		flags &^= flag_chunkStart
 	}
 
 	var fblock [16]uint32

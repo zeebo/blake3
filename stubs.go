@@ -10,26 +10,26 @@ import (
 )
 
 var (
-	hasAVX2 = cpu.X86.HasAVX2
+	hasAVX2 = false && cpu.X86.HasAVX2
 
 	// Note: some instructions don't seem available in the go assembler or avo. Until this
 	// has been fixed, we also require AVX when we require SSE41
-	hasSSE41 = cpu.X86.HasSSE41 && cpu.X86.HasAVX
+	hasSSE41 = false && cpu.X86.HasSSE41 && cpu.X86.HasAVX
 )
 
-func hashF(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
+func hashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	if hasAVX2 {
 		avx2.HashF(input, length, counter, flags, out, chain)
 	} else {
-		ref.HashF(input, length, counter, flags, out, chain)
+		ref.HashF(input, length, counter, flags, key, out, chain)
 	}
 }
 
-func hashP(left, right *[64]uint32, flags uint32, out *[64]uint32, n int) {
+func hashP(left, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int) {
 	if hasAVX2 {
 		avx2.HashP(left, right, flags, out, n)
 	} else {
-		ref.HashP(left, right, flags, out, n)
+		ref.HashP(left, right, flags, key, out, n)
 	}
 }
 
@@ -41,11 +41,11 @@ func compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, 
 	}
 }
 
-func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
+func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	var tmp [16]uint32
 
 	for i := uint64(0); chunkLen*i < length && i < 8; i++ {
-		bchain := iv
+		bchain := *key
 		bflags := flags | flag_chunkStart
 		start := chunkLen * i
 
@@ -88,7 +88,7 @@ func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, out *[6
 	}
 }
 
-func hashPSmall(left, right *chainVector, flags uint32, out *chainVector, n int) {
+func hashPSmall(left, right *chainVector, flags uint32, key *[8]uint32, out *chainVector, n int) {
 	var tmp [16]uint32
 	var block [16]uint32
 
@@ -110,7 +110,7 @@ func hashPSmall(left, right *chainVector, flags uint32, out *chainVector, n int)
 		block[14] = right[i+48]
 		block[15] = right[i+56]
 
-		compress(&iv, &block, 0, 64, flags, &tmp)
+		compress(key, &block, 0, 64, flags, &tmp)
 
 		out[i+0] = tmp[0]
 		out[i+8] = tmp[1]

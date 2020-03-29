@@ -20,7 +20,19 @@ func TestHashF(t *testing.T) {
 		var o1, o2 [64]uint32
 
 		HashF(&input, uint64(n), ctr, flags, &o1, &c1)
-		ref.HashF(&input, uint64(n), ctr, flags, &o2, &c2)
+		// TODO
+		const (
+			iv0 = 0x6A09E667
+			iv1 = 0xBB67AE85
+			iv2 = 0x3C6EF372
+			iv3 = 0xA54FF53A
+			iv4 = 0x510E527F
+			iv5 = 0x9B05688C
+			iv6 = 0x1F83D9AB
+			iv7 = 0x5BE0CD19
+		)
+		var iv = [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+		ref.HashF(&input, uint64(n), ctr, flags, &iv, &o2, &c2)
 
 		for i := 0; (i+1)*1024 <= n; i++ {
 			for j := 0; j < 8; j++ {
@@ -44,7 +56,19 @@ func TestHashP(t *testing.T) {
 
 	for n := 1; n <= 8; n++ {
 		HashP(&left, &right, 0, &o1, n)
-		ref.HashP(&left, &right, 0, &o2, n)
+		// TODO
+		const (
+			iv0 = 0x6A09E667
+			iv1 = 0xBB67AE85
+			iv2 = 0x3C6EF372
+			iv3 = 0xA54FF53A
+			iv4 = 0x510E527F
+			iv5 = 0x9B05688C
+			iv6 = 0x1F83D9AB
+			iv7 = 0x5BE0CD19
+		)
+		var iv = [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
+		ref.HashP(&left, &right, 0, &iv, &o2, n)
 
 		for i := 0; i < n; i++ {
 			for j := 0; j < 8; j++ {

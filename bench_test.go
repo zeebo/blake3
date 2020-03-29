@@ -104,7 +104,7 @@ func BenchmarkHashF_1(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF(&input, 1, 0, 0, &out, &chain)
+		hashF(&input, 1, 0, 0, &iv, &out, &chain)
 	}
 }
 
@@ -118,7 +118,7 @@ func BenchmarkHashF_1536(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF(&input, 1536, 0, 0, &out, &chain)
+		hashF(&input, 1536, 0, 0, &iv, &out, &chain)
 	}
 }
 
@@ -132,7 +132,7 @@ func BenchmarkHashF_8K(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF(&input, 8192, 0, 0, &out, &chain)
+		hashF(&input, 8192, 0, 0, &iv, &out, &chain)
 	}
 }
 
@@ -148,7 +148,7 @@ func BenchmarkHashP(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				hashP(&left, &right, 0, &out, n)
+				hashP(&left, &right, 0, &iv, &out, n)
 			}
 		})
 	}

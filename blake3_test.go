@@ -26,7 +26,7 @@ func TestBytesToWords(t *testing.T) {
 
 func TestVectors(t *testing.T) {
 	for _, tv := range vectors {
-		var h hasher
+		h := hasher{key: iv}
 		h.update(tv.input())
 		for j := 0; j < len(tv.hash)/2; j++ {
 			buf := make([]byte, j)
@@ -36,10 +36,25 @@ func TestVectors(t *testing.T) {
 	}
 }
 
+func TestVectorsKeyed(t *testing.T) {
+	for _, tv := range vectors {
+		h := hasher{
+			flags: flag_keyed,
+		}
+		keyFromBytes([]byte(testVectorKey), &h.key)
+		h.update(tv.input())
+		for j := 0; j < len(tv.hash)/2; j++ {
+			buf := make([]byte, j)
+			h.finalize(buf)
+			assert.Equal(t, tv.keyedHash[:2*j], hex.EncodeToString(buf))
+		}
+	}
+}
+
 func TestVectors_Finalize(t *testing.T) {
 	var buf [32]byte
 	for _, tv := range vectors {
-		var h hasher
+		h := hasher{key: iv}
 		for i, v := range tv.input() {
 			h.update([]byte{v})
 			if i%11 == 0 {
