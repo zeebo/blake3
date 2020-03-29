@@ -4,11 +4,11 @@ import (
 	"unsafe"
 )
 
-func HashF(input *[8192]byte, length, counter uint64, flags uint32, out *[64]uint32, chain *[8]uint32) {
+func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	var tmp [16]uint32
 
 	for i := uint64(0); chunkLen*i < length && i < 8; i++ {
-		bchain := iv
+		bchain := *key
 		bflags := flags | flag_chunkStart
 		start := chunkLen * i
 

@@ -27,7 +27,7 @@ const (
 	flag_chunkEnd   uint32 = 1 << 1
 	flag_parent     uint32 = 1 << 2
 	flag_root       uint32 = 1 << 3
-	// flag_keyed      uint32 = 1 << 4
+	flag_keyed      uint32 = 1 << 4
 	// flag_keyCtx     uint32 = 1 << 5
 	// flag_keyMat     uint32 = 1 << 6
 )
