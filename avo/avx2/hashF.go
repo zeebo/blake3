@@ -13,6 +13,7 @@ func HashF(c Ctx) {
 		length uint64,
 		counter uint64,
 		flags uint32,
+		key *[8]uint32,
 		out *[32]uint32,
 		chain *[8]uint32,
 	)`)
@@ -22,6 +23,7 @@ func HashF(c Ctx) {
 		length  = Load(Param("length"), GP64()).(GPVirtual)
 		counter = Load(Param("counter"), GP64()).(GPVirtual)
 		flags   = Load(Param("flags"), GP32()).(GPVirtual)
+		key     = Mem{Base: Load(Param("key"), GP64())}
 		out     = Mem{Base: Load(Param("out"), GP64())}
 		chain   = Mem{Base: Load(Param("chain"), GP64())}
 	)
@@ -64,7 +66,7 @@ func HashF(c Ctx) {
 		flags_vec *Value
 	)
 
-	h_vecs = alloc.ValuesWith(8, c.IV)
+	h_vecs = alloc.ValuesWith(8, key)
 	blen_vec = alloc.ValueFrom(c.BlockLen)
 	flags_vec = alloc.ValueWith(flags_mem)
 	iv = alloc.ValuesWith(4, c.IV)

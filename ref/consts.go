@@ -22,6 +22,8 @@ const (
 	chunkLen = 1024
 )
 
+// TODO: maybe this would be better if it was a const. then the compiler could
+// do dead code elimination.
 var isLittleEndian = *(*uint32)(unsafe.Pointer(&[4]byte{0, 0, 0, 1})) != 1
 
 func bytesToWords(bytes *[64]uint8, words *[16]uint32) {
