@@ -10,18 +10,11 @@ const (
 	iv1 = 0xBB67AE85
 	iv2 = 0x3C6EF372
 	iv3 = 0xA54FF53A
-	iv4 = 0x510E527F
-	iv5 = 0x9B05688C
-	iv6 = 0x1F83D9AB
-	iv7 = 0x5BE0CD19
 )
-
-var iv = [...]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
 
 const (
 	flag_chunkStart uint32 = 1 << 0
 	flag_chunkEnd   uint32 = 1 << 1
-	flag_keyed      uint32 = 1 << 4
 )
 
 const (
