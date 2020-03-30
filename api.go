@@ -21,22 +21,25 @@ func New() *Hasher {
 }
 
 // NewSized returns a new Hasher with the given output size.
-func NewSized(size int) *Hasher {
+func NewSized(size int) (*Hasher, error) {
 	if size < 0 {
-		panic("must specify non-negative size")
+		return nil, errors.New("invalid output size")
 	}
+
 	return &Hasher{
 		size: size,
 		h: hasher{
 			key: iv,
 		},
-	}
+	}, nil
 }
 
+// NewKeyed returns a new Hasher that uses the 32 byte input key and default output size (32 bytes).
 func NewKeyed(key []byte) (*Hasher, error) {
 	if len(key) != 32 {
 		return nil, errors.New("invalid key size")
 	}
+
 	h := &Hasher{
 		size: 32,
 		h: hasher{
@@ -44,10 +47,29 @@ func NewKeyed(key []byte) (*Hasher, error) {
 		},
 	}
 	keyFromBytes(key, &h.h.key)
+
 	return h, nil
 }
 
-// TODO NewKeyedSized
+// NewKeyedSized returns a new Hasher that uses the 32 byte input key and given output size.
+func NewKeyedSized(key []byte, size int) (*Hasher, error) {
+	if size < 0 {
+		return nil, errors.New("invalid output size")
+	}
+	if len(key) != 32 {
+		return nil, errors.New("invalid key size")
+	}
+
+	h := &Hasher{
+		size: size,
+		h: hasher{
+			flags: flag_keyed,
+		},
+	}
+	keyFromBytes(key, &h.h.key)
+
+	return h, nil
+}
 
 // Write implements part of the hash.Hash interface. It never returns an error.
 func (h *Hasher) Write(p []byte) (int, error) {
