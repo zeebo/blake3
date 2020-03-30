@@ -7,6 +7,8 @@ import (
 
 type chainVector = [64]uint32
 
+// TODO: maybe this would be better if it was a const. then the compiler could
+// do dead code elimination.
 var isLittleEndian = *(*uint32)(unsafe.Pointer(&[4]byte{0, 0, 0, 1})) != 1
 
 var iv = [8]uint32{iv0, iv1, iv2, iv3, iv4, iv5, iv6, iv7}
@@ -54,4 +56,15 @@ func bytesToWords(bytes *[64]uint8, words *[16]uint32) {
 	words[13] = binary.LittleEndian.Uint32(bytes[13*4:])
 	words[14] = binary.LittleEndian.Uint32(bytes[14*4:])
 	words[15] = binary.LittleEndian.Uint32(bytes[15*4:])
+}
+
+func keyFromBytes(key []byte, out *[8]uint32) {
+	out[0] = binary.LittleEndian.Uint32(key[0:])
+	out[1] = binary.LittleEndian.Uint32(key[4:])
+	out[2] = binary.LittleEndian.Uint32(key[8:])
+	out[3] = binary.LittleEndian.Uint32(key[12:])
+	out[4] = binary.LittleEndian.Uint32(key[16:])
+	out[5] = binary.LittleEndian.Uint32(key[20:])
+	out[6] = binary.LittleEndian.Uint32(key[24:])
+	out[7] = binary.LittleEndian.Uint32(key[28:])
 }
