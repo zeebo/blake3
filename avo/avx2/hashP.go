@@ -12,6 +12,7 @@ func HashP(c Ctx) {
 		left *[32]uint32,
 		right *[32]uint32,
 		flags uint8,
+		key *[8]uint32,
 		out *[32]uint32,
 		n int,
 	)`)
@@ -20,6 +21,7 @@ func HashP(c Ctx) {
 		left  = Mem{Base: Load(Param("left"), GP64())}
 		right = Mem{Base: Load(Param("right"), GP64())}
 		flags = Load(Param("flags"), GP32()).(GPVirtual)
+		key   = Mem{Base: Load(Param("key"), GP64())}
 		out   = Mem{Base: Load(Param("out"), GP64())}
 	)
 
@@ -56,7 +58,7 @@ func HashP(c Ctx) {
 		MOVL(flags, flags_mem)
 	}
 
-	h_vecs = alloc.ValuesWith(8, c.IV)
+	h_vecs = alloc.ValuesWith(8, key)
 	iv = alloc.ValuesWith(4, c.IV)
 	ctr_low = alloc.ValueFrom(c.Zero)
 	ctr_hi = alloc.ValueFrom(c.Zero)
