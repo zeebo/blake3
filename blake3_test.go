@@ -3,30 +3,18 @@ package blake3
 import (
 	"encoding/hex"
 	"testing"
-	"unsafe"
 
 	"github.com/zeebo/assert"
+	"github.com/zeebo/blake3/internal/consts"
+	"github.com/zeebo/blake3/internal/utils"
 )
-
-func TestBytesToWords(t *testing.T) {
-	if !isLittleEndian {
-		t.SkipNow()
-	}
-
-	var bytes [64]uint8
-	for i := range bytes {
-		bytes[i] = byte(i)
-	}
-
-	var words [16]uint32
-	bytesToWords(&bytes, &words)
-
-	assert.Equal(t, *(*[16]uint32)(unsafe.Pointer(&bytes[0])), words)
-}
 
 func TestVectors(t *testing.T) {
 	for _, tv := range vectors {
-		h := hasher{key: iv}
+		h := hasher{
+			key: consts.IV,
+		}
+
 		h.update(tv.input())
 		for j := 0; j < len(tv.hash)/2; j++ {
 			buf := make([]byte, j)
@@ -39,9 +27,10 @@ func TestVectors(t *testing.T) {
 func TestVectorsKeyed(t *testing.T) {
 	for _, tv := range vectors {
 		h := hasher{
-			flags: flag_keyed,
+			flags: consts.Flag_Keyed,
 		}
-		keyFromBytes([]byte(testVectorKey), &h.key)
+		utils.KeyFromBytes([]byte(testVectorKey), &h.key)
+
 		h.update(tv.input())
 		for j := 0; j < len(tv.hash)/2; j++ {
 			buf := make([]byte, j)
@@ -54,7 +43,10 @@ func TestVectorsKeyed(t *testing.T) {
 func TestVectors_Finalize(t *testing.T) {
 	var buf [32]byte
 	for _, tv := range vectors {
-		h := hasher{key: iv}
+		h := hasher{
+			key: consts.IV,
+		}
+
 		for i, v := range tv.input() {
 			h.update([]byte{v})
 			if i%11 == 0 {

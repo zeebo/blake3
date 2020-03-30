@@ -4,11 +4,16 @@ import (
 	"testing"
 
 	"github.com/zeebo/assert"
+	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/ref"
 	"github.com/zeebo/pcg"
 )
 
 func TestHashF(t *testing.T) {
+	if !consts.HasAVX2 {
+		t.SkipNow()
+	}
+
 	var input [8192]byte
 	var key [8]uint32
 
@@ -39,6 +44,10 @@ func TestHashF(t *testing.T) {
 }
 
 func TestHashP(t *testing.T) {
+	if !consts.HasAVX2 {
+		t.SkipNow()
+	}
+
 	var key [8]uint32
 	var left, right [64]uint32
 

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+
+	"github.com/zeebo/blake3/internal/consts"
 )
 
 func BenchmarkBLAKE3(b *testing.B) {
@@ -104,7 +106,7 @@ func BenchmarkHashF_1(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF(&input, 1, 0, 0, &iv, &out, &chain)
+		hashF(&input, 1, 0, 0, &consts.IV, &out, &chain)
 	}
 }
 
@@ -118,7 +120,7 @@ func BenchmarkHashF_1536(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF(&input, 1536, 0, 0, &iv, &out, &chain)
+		hashF(&input, 1536, 0, 0, &consts.IV, &out, &chain)
 	}
 }
 
@@ -132,7 +134,7 @@ func BenchmarkHashF_8K(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		hashF(&input, 8192, 0, 0, &iv, &out, &chain)
+		hashF(&input, 8192, 0, 0, &consts.IV, &out, &chain)
 	}
 }
 
@@ -148,7 +150,7 @@ func BenchmarkHashP(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				hashP(&left, &right, 0, &iv, &out, n)
+				hashP(&left, &right, 0, &consts.IV, &out, n)
 			}
 		})
 	}

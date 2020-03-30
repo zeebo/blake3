@@ -2,6 +2,8 @@ package ref
 
 import (
 	"math/bits"
+
+	"github.com/zeebo/blake3/internal/consts"
 )
 
 func Compress(
@@ -16,7 +18,7 @@ func Compress(
 	*out = [16]uint32{
 		chain[0], chain[1], chain[2], chain[3],
 		chain[4], chain[5], chain[6], chain[7],
-		iv0, iv1, iv2, iv3,
+		consts.IV0, consts.IV1, consts.IV2, consts.IV3,
 		uint32(counter), uint32(counter >> 32), blen, flags,
 	}
 

@@ -4,11 +4,16 @@ import (
 	"testing"
 
 	"github.com/zeebo/assert"
+	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/ref"
 	"github.com/zeebo/pcg"
 )
 
 func TestCompress(t *testing.T) {
+	if !consts.HasSSE41 {
+		t.SkipNow()
+	}
+
 	var chain [8]uint32
 	var block [16]uint32
 
