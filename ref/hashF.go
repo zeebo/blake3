@@ -2,19 +2,22 @@ package ref
 
 import (
 	"unsafe"
+
+	"github.com/zeebo/blake3/internal/consts"
+	"github.com/zeebo/blake3/internal/utils"
 )
 
 func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	var tmp [16]uint32
 
-	for i := uint64(0); chunkLen*i < length && i < 8; i++ {
+	for i := uint64(0); consts.ChunkLen*i < length && i < 8; i++ {
 		bchain := *key
-		bflags := flags | flag_chunkStart
-		start := chunkLen * i
+		bflags := flags | consts.Flag_ChunkStart
+		start := consts.ChunkLen * i
 
 		for n := uint64(0); n < 16; n++ {
 			if n == 15 {
-				bflags |= flag_chunkEnd
+				bflags |= consts.Flag_ChunkEnd
 			}
 			if start+64*n >= length {
 				break
@@ -24,15 +27,15 @@ func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint
 			}
 
 			var blockPtr *[16]uint32
-			if isLittleEndian {
-				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[chunkLen*i+blockLen*n]))
+			if consts.IsLittleEndian {
+				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n]))
 			} else {
 				var block [16]uint32
-				bytesToWords((*[64]uint8)(unsafe.Pointer(&input[chunkLen*i+blockLen*n])), &block)
+				utils.BytesToWords((*[64]uint8)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n])), &block)
 				blockPtr = &block
 			}
 
-			Compress(&bchain, blockPtr, counter, blockLen, bflags, &tmp)
+			Compress(&bchain, blockPtr, counter, consts.BlockLen, bflags, &tmp)
 
 			bchain = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
 			bflags = flags

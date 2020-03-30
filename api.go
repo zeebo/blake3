@@ -2,6 +2,9 @@ package blake3
 
 import (
 	"errors"
+
+	"github.com/zeebo/blake3/internal/consts"
+	"github.com/zeebo/blake3/internal/utils"
 )
 
 // Hasher is a hash.Hash for BLAKE3.
@@ -15,7 +18,7 @@ func New() *Hasher {
 	return &Hasher{
 		size: 32,
 		h: hasher{
-			key: iv,
+			key: consts.IV,
 		},
 	}
 }
@@ -29,7 +32,7 @@ func NewSized(size int) (*Hasher, error) {
 	return &Hasher{
 		size: size,
 		h: hasher{
-			key: iv,
+			key: consts.IV,
 		},
 	}, nil
 }
@@ -43,10 +46,10 @@ func NewKeyed(key []byte) (*Hasher, error) {
 	h := &Hasher{
 		size: 32,
 		h: hasher{
-			flags: flag_keyed,
+			flags: consts.Flag_Keyed,
 		},
 	}
-	keyFromBytes(key, &h.h.key)
+	utils.KeyFromBytes(key, &h.h.key)
 
 	return h, nil
 }
@@ -63,10 +66,10 @@ func NewKeyedSized(key []byte, size int) (*Hasher, error) {
 	h := &Hasher{
 		size: size,
 		h: hasher{
-			flags: flag_keyed,
+			flags: consts.Flag_Keyed,
 		},
 	}
-	keyFromBytes(key, &h.h.key)
+	utils.KeyFromBytes(key, &h.h.key)
 
 	return h, nil
 }

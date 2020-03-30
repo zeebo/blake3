@@ -4,7 +4,12 @@ import (
 	"encoding/binary"
 	"math/bits"
 	"unsafe"
+
+	"github.com/zeebo/blake3/internal/consts"
+	"github.com/zeebo/blake3/internal/utils"
 )
+
+type chainVector = [64]uint32
 
 //
 // hasher contains state for a blake3 hash
@@ -57,33 +62,33 @@ func (a *hasher) consume(input *[8192]byte) {
 }
 
 func (a *hasher) finalize(out []byte) {
-	if a.chunks == 0 && a.len <= chunkLen {
+	if a.chunks == 0 && a.len <= consts.ChunkLen {
 		compressAll(a.buf[:a.len], a.flags, &a.key, out)
 		return
 	}
 
 	tmpChain := a.key
 	chain := &tmpChain
-	flags := a.flags | flag_chunkEnd
+	flags := a.flags | consts.Flag_ChunkEnd
 
 	if a.len > 64 {
 		var buf chainVector
-		if a.len <= 2*chunkLen {
+		if a.len <= 2*consts.ChunkLen {
 			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, chain)
 		} else {
 			hashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, chain)
 		}
 
-		if a.len > chunkLen {
-			complete := (a.len - 1) / chunkLen
+		if a.len > consts.ChunkLen {
+			complete := (a.len - 1) / consts.ChunkLen
 			a.stack.pushN(0, &buf, int(complete), a.flags, &a.key)
 			a.chunks += complete
-			a.len = uint64(copy(a.buf[:], a.buf[complete*chunkLen:a.len]))
+			a.len = uint64(copy(a.buf[:], a.buf[complete*consts.ChunkLen:a.len]))
 		}
 	}
 
 	if a.len <= 64 {
-		flags |= flag_chunkStart
+		flags |= consts.Flag_ChunkStart
 	}
 
 	var blockPtr *[16]uint32
@@ -100,11 +105,11 @@ func (a *hasher) finalize(out []byte) {
 		var tmp [64]byte
 		copy(tmp[:], a.buf[base:a.len])
 
-		if isLittleEndian {
+		if consts.IsLittleEndian {
 			blockPtr = (*[16]uint32)(unsafe.Pointer(&tmp[0]))
 		} else {
 			var block [16]uint32
-			bytesToWords(&tmp, &block)
+			utils.BytesToWords(&tmp, &block)
 			blockPtr = &block
 		}
 	}
@@ -124,11 +129,11 @@ func (a *hasher) finalize(out []byte) {
 
 		chain = &a.key
 		counter = 0
-		blen = blockLen
-		flags = a.flags | flag_parent
+		blen = consts.BlockLen
+		flags = a.flags | consts.Flag_Parent
 	}
 
-	writeOutput(out, chain, blockPtr, blen, flags|flag_root)
+	writeOutput(out, chain, blockPtr, blen, flags|consts.Flag_Root)
 }
 
 //
@@ -170,9 +175,9 @@ func (a *cvstack) pushL(l uint8, cv *chainVector, n int) {
 func (a *cvstack) flush(flags uint32, key *[8]uint32) {
 	var out chainVector
 	if a.bufn < 2 {
-		hashPSmall(&a.buf[0], &a.buf[1], flags|flag_parent, key, &out, a.bufn)
+		hashPSmall(&a.buf[0], &a.buf[1], flags|consts.Flag_Parent, key, &out, a.bufn)
 	} else {
-		hashP(&a.buf[0], &a.buf[1], flags|flag_parent, key, &out, a.bufn)
+		hashP(&a.buf[0], &a.buf[1], flags|consts.Flag_Parent, key, &out, a.bufn)
 	}
 
 	bufn, lvls := a.bufn, a.lvls
@@ -246,32 +251,32 @@ func writeChain(in *[8]uint32, out *chainVector, col int) {
 func compressAll(in []byte, flags uint32, key *[8]uint32, out []byte) {
 	chain := *key
 
-	flags |= flag_chunkStart
+	flags |= consts.Flag_ChunkStart
 
 	for len(in) > 64 {
 		buf := (*[64]byte)(unsafe.Pointer(&in[0]))
 
 		var blockPtr *[16]uint32
-		if !isLittleEndian {
+		if !consts.IsLittleEndian {
 			var block [16]uint32
 			blockPtr = &block
-			bytesToWords(buf, blockPtr)
+			utils.BytesToWords(buf, blockPtr)
 		} else {
 			blockPtr = (*[16]uint32)(unsafe.Pointer(buf))
 		}
 
 		var compressed [16]uint32
-		compress(&chain, blockPtr, 0, blockLen, flags, &compressed)
+		compress(&chain, blockPtr, 0, consts.BlockLen, flags, &compressed)
 
 		chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
 		in = in[64:]
-		flags &^= flag_chunkStart
+		flags &^= consts.Flag_ChunkStart
 	}
 
 	var fblock [16]uint32
 	blockPtr := &fblock
 
-	if isLittleEndian {
+	if consts.IsLittleEndian {
 		copy((*[64]byte)(unsafe.Pointer(&fblock[0]))[:], in)
 	} else {
 		in := in
@@ -288,7 +293,7 @@ func compressAll(in []byte, flags uint32, key *[8]uint32, out []byte) {
 		}
 	}
 
-	writeOutput(out, &chain, blockPtr, uint32(len(in)), flags|flag_chunkEnd|flag_root)
+	writeOutput(out, &chain, blockPtr, uint32(len(in)), flags|consts.Flag_ChunkEnd|consts.Flag_Root)
 }
 
 //
@@ -302,25 +307,10 @@ func writeOutput(out []byte, chain *[8]uint32, block *[16]uint32, blen uint32, f
 	for len(out) >= 64 {
 		compress(chain, block, counter, blen, flags, &buf)
 
-		if isLittleEndian {
+		if consts.IsLittleEndian {
 			*(*[64]byte)(unsafe.Pointer(&out[0])) = *(*[64]byte)(unsafe.Pointer(&buf[0]))
 		} else {
-			binary.LittleEndian.PutUint32(out[0*4:1*4], buf[0])
-			binary.LittleEndian.PutUint32(out[1*4:2*4], buf[1])
-			binary.LittleEndian.PutUint32(out[2*4:3*4], buf[2])
-			binary.LittleEndian.PutUint32(out[3*4:4*4], buf[3])
-			binary.LittleEndian.PutUint32(out[4*4:5*4], buf[4])
-			binary.LittleEndian.PutUint32(out[5*4:6*4], buf[5])
-			binary.LittleEndian.PutUint32(out[6*4:7*4], buf[6])
-			binary.LittleEndian.PutUint32(out[7*4:8*4], buf[7])
-			binary.LittleEndian.PutUint32(out[8*4:9*4], buf[8])
-			binary.LittleEndian.PutUint32(out[9*4:10*4], buf[9])
-			binary.LittleEndian.PutUint32(out[10*4:11*4], buf[10])
-			binary.LittleEndian.PutUint32(out[11*4:12*4], buf[11])
-			binary.LittleEndian.PutUint32(out[12*4:13*4], buf[12])
-			binary.LittleEndian.PutUint32(out[13*4:14*4], buf[13])
-			binary.LittleEndian.PutUint32(out[14*4:15*4], buf[14])
-			binary.LittleEndian.PutUint32(out[15*4:16*4], buf[15])
+			utils.WordsToBytes(&buf, out[:64])
 		}
 
 		counter++
@@ -333,7 +323,7 @@ func writeOutput(out []byte, chain *[8]uint32, block *[16]uint32, blen uint32, f
 
 	compress(chain, block, counter, blen, flags, &buf)
 
-	if isLittleEndian {
+	if consts.IsLittleEndian {
 		copy(out, (*[64]byte)(unsafe.Pointer(&buf[0]))[:])
 		return
 	}

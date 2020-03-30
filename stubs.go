@@ -4,21 +4,14 @@ import (
 	"unsafe"
 
 	"github.com/zeebo/blake3/avx2"
+	"github.com/zeebo/blake3/internal/consts"
+	"github.com/zeebo/blake3/internal/utils"
 	"github.com/zeebo/blake3/ref"
 	"github.com/zeebo/blake3/sse41"
-	"golang.org/x/sys/cpu"
-)
-
-var (
-	hasAVX2 = cpu.X86.HasAVX2
-
-	// Note: some instructions don't seem available in the go assembler or avo. Until this
-	// has been fixed, we also require AVX when we require SSE41
-	hasSSE41 = cpu.X86.HasSSE41 && cpu.X86.HasAVX
 )
 
 func hashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
-	if hasAVX2 {
+	if consts.HasAVX2 {
 		avx2.HashF(input, length, counter, flags, key, out, chain)
 	} else {
 		ref.HashF(input, length, counter, flags, key, out, chain)
@@ -26,7 +19,7 @@ func hashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint
 }
 
 func hashP(left, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int) {
-	if hasAVX2 {
+	if consts.HasAVX2 {
 		avx2.HashP(left, right, flags, key, out, n)
 	} else {
 		ref.HashP(left, right, flags, key, out, n)
@@ -34,7 +27,7 @@ func hashP(left, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint3
 }
 
 func compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, flags uint32, out *[16]uint32) {
-	if hasSSE41 {
+	if consts.HasSSE41 {
 		sse41.Compress(chain, block, counter, blen, flags, out)
 	} else {
 		ref.Compress(chain, block, counter, blen, flags, out)
@@ -44,14 +37,14 @@ func compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, 
 func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	var tmp [16]uint32
 
-	for i := uint64(0); chunkLen*i < length && i < 8; i++ {
+	for i := uint64(0); consts.ChunkLen*i < length && i < 8; i++ {
 		bchain := *key
-		bflags := flags | flag_chunkStart
-		start := chunkLen * i
+		bflags := flags | consts.Flag_ChunkStart
+		start := consts.ChunkLen * i
 
 		for n := uint64(0); n < 16; n++ {
 			if n == 15 {
-				bflags |= flag_chunkEnd
+				bflags |= consts.Flag_ChunkEnd
 			}
 			if start+64*n >= length {
 				break
@@ -61,15 +54,15 @@ func hashFSmall(input *[8192]byte, length, counter uint64, flags uint32, key *[8
 			}
 
 			var blockPtr *[16]uint32
-			if isLittleEndian {
-				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[chunkLen*i+blockLen*n]))
+			if consts.IsLittleEndian {
+				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n]))
 			} else {
 				var block [16]uint32
-				bytesToWords((*[64]uint8)(unsafe.Pointer(&input[chunkLen*i+blockLen*n])), &block)
+				utils.BytesToWords((*[64]uint8)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n])), &block)
 				blockPtr = &block
 			}
 
-			compress(&bchain, blockPtr, counter, blockLen, bflags, &tmp)
+			compress(&bchain, blockPtr, counter, consts.BlockLen, bflags, &tmp)
 
 			bchain = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
 			bflags = flags
