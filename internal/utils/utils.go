@@ -48,6 +48,7 @@ func WordsToBytes(words *[16]uint32, bytes []byte) {
 }
 
 func KeyFromBytes(key []byte, out *[8]uint32) {
+	key = key[:32]
 	out[0] = binary.LittleEndian.Uint32(key[0:])
 	out[1] = binary.LittleEndian.Uint32(key[4:])
 	out[2] = binary.LittleEndian.Uint32(key[8:])
