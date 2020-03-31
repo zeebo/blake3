@@ -9,25 +9,32 @@ import (
 	"github.com/zeebo/blake3/internal/utils"
 )
 
+func testHasher(t *testing.T, h hasher, input []byte, hash string) {
+	// ensure reset works
+	h.update(input[:len(input)/2])
+	h.reset()
+
+	// write and finalize a bunch
+	var buf [32]byte
+	for i := range input {
+		h.update(input[i : i+1])
+		if i%8193 == 0 {
+			h.finalize(buf[:])
+		}
+	}
+
+	// check every output length requested
+	for i := 0; i <= len(hash)/2; i++ {
+		buf := make([]byte, i)
+		h.finalize(buf)
+		assert.Equal(t, hash[:2*i], hex.EncodeToString(buf))
+	}
+}
+
 func TestVectors_Hash(t *testing.T) {
 	for _, tv := range vectors {
-		h := hasher{
-			key: consts.IV,
-		}
-
-		var buf [32]byte
-		for i, v := range tv.input() {
-			h.update([]byte{v})
-			if i%11 == 0 {
-				h.finalize(buf[:])
-			}
-		}
-
-		for j := 0; j < len(tv.hash)/2; j++ {
-			buf := make([]byte, j)
-			h.finalize(buf)
-			assert.Equal(t, tv.hash[:2*j], hex.EncodeToString(buf))
-		}
+		h := hasher{key: consts.IV}
+		testHasher(t, h, tv.input(), tv.hash)
 	}
 }
 
@@ -35,19 +42,6 @@ func TestVectors_KeyedHash(t *testing.T) {
 	for _, tv := range vectors {
 		h := hasher{flags: consts.Flag_Keyed}
 		utils.KeyFromBytes([]byte(testVectorKey), &h.key)
-
-		var buf [32]byte
-		for i, v := range tv.input() {
-			h.update([]byte{v})
-			if i%11 == 0 {
-				h.finalize(buf[:])
-			}
-		}
-
-		for j := 0; j < len(tv.hash)/2; j++ {
-			buf := make([]byte, j)
-			h.finalize(buf)
-			assert.Equal(t, tv.keyedHash[:2*j], hex.EncodeToString(buf))
-		}
+		testHasher(t, h, tv.input(), tv.keyedHash)
 	}
 }
