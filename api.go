@@ -2,6 +2,7 @@ package blake3
 
 import (
 	"errors"
+	"io"
 
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
@@ -110,4 +111,14 @@ func (h *Hasher) Sum(b []byte) []byte {
 	tmp := make([]byte, h.size)
 	h.h.finalize(tmp)
 	return append(b, tmp...)
+}
+
+// XOF returns an io.Reader containing 2^64 bytes of lazily generated hash output.
+//
+// It returns an io.ReadSeeker, but Seek is not implemented yet. This is to avoid
+// having to change the exported interface in the future.
+func (h *Hasher) XOF() io.ReadSeeker {
+	var x xof
+	h.h.finalizeOutput(&x)
+	return &x
 }
