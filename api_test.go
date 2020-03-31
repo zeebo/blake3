@@ -89,11 +89,9 @@ func TestAPI(t *testing.T) {
 				t.Fatal("invalid hash size:", got)
 			}
 
-			n, err := h.Write([]byte(c.data))
-			if err != nil {
+			if n, err := h.Write([]byte(c.data)); err != nil {
 				t.Fatal(err)
-			}
-			if n != len(c.data) {
+			} else if n != len(c.data) {
 				t.Fatal("short write")
 			}
 
@@ -103,6 +101,14 @@ func TestAPI(t *testing.T) {
 				assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, i)[:0])), c.result)
 			}
 			assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, 1))), "00"+c.result)
+
+			// ensure that reset works by issuing the write again
+			h.Reset()
+			if n, err := h.Write([]byte(c.data)); err != nil {
+				t.Fatal(err)
+			} else if n != len(c.data) {
+				t.Fatal("short write")
+			}
 
 			// check that XOF works as expected
 			for i := 0; i < len(c.result)/2; i++ {
@@ -128,4 +134,20 @@ func TestAPI(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAPI_Errors(t *testing.T) {
+	var err error
+
+	_, err = NewSized(-1)
+	assert.Error(t, err)
+
+	_, err = NewKeyed(make([]byte, 31))
+	assert.Error(t, err)
+
+	_, err = NewKeyedSized(make([]byte, 32), -1)
+	assert.Error(t, err)
+
+	_, err = NewKeyedSized(make([]byte, 31), 8)
+	assert.Error(t, err)
 }
