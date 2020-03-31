@@ -55,12 +55,13 @@ func (x *xof) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (x *xof) slowCopy(out []byte) (n int) {
+	off := uint(64-x.bufn) % 64
 	if consts.IsLittleEndian {
-		n = copy(out, (*[64]byte)(unsafe.Pointer(&x.buf[0]))[64-x.bufn:])
+		n = copy(out, (*[64]byte)(unsafe.Pointer(&x.buf[0]))[off:])
 	} else {
 		var tmp [64]byte
 		utils.WordsToBytes(&x.buf, tmp[:])
-		n = copy(out, tmp[64-x.bufn:])
+		n = copy(out, tmp[off:])
 	}
 	return n
 }
