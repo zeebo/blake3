@@ -2,6 +2,7 @@ package blake3
 
 import (
 	"encoding/hex"
+	"io"
 	"testing"
 
 	"github.com/zeebo/assert"
@@ -43,5 +44,35 @@ func TestVectors_KeyedHash(t *testing.T) {
 		h := hasher{flags: consts.Flag_Keyed}
 		utils.KeyFromBytes([]byte(testVectorKey), &h.key)
 		testHasher(t, h, tv.input(), tv.keyedHash)
+	}
+}
+
+func TestVectors_DeriveKey(t *testing.T) {
+	for _, tv := range vectors {
+		// DeriveKey is implemented quite differently from the other
+		// modes, it's basically a two-stage hash where the context is
+		// hashed into an IV for the "real" hash. At this point, we
+		// should have faith in the internal workings of hasher, so
+		// test key derivation through the API.
+		derived := make([]byte, hex.DecodedLen(len(tv.deriveKey)))
+		DeriveKey(testVectorContext, tv.input(), derived)
+		assert.Equal(t, hex.EncodeToString(derived), tv.deriveKey)
+	}
+}
+
+func TestVectors_NewDeriveKey(t *testing.T) {
+	for _, tv := range vectors {
+		h := NewDeriveKey(testVectorContext)
+		h.Write(tv.input())
+		derived := make([]byte, hex.DecodedLen(len(tv.deriveKey)))
+		xof := h.XOF()
+		n, err := io.ReadFull(xof, derived)
+		if g, e := n, len(derived); g != e {
+			t.Errorf("wrong read length: %v != %v", g, e)
+		}
+		if err != nil {
+			t.Errorf("error reading from hash: %v", err)
+		}
+		assert.Equal(t, hex.EncodeToString(derived), tv.deriveKey)
 	}
 }
