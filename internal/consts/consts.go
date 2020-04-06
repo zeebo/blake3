@@ -32,13 +32,13 @@ const (
 )
 
 const (
-	Flag_ChunkStart uint32 = 1 << 0
-	Flag_ChunkEnd   uint32 = 1 << 1
-	Flag_Parent     uint32 = 1 << 2
-	Flag_Root       uint32 = 1 << 3
-	Flag_Keyed      uint32 = 1 << 4
-	// flag_keyCtx     uint32 = 1 << 5
-	// flag_keyMat     uint32 = 1 << 6
+	Flag_ChunkStart        uint32 = 1 << 0
+	Flag_ChunkEnd          uint32 = 1 << 1
+	Flag_Parent            uint32 = 1 << 2
+	Flag_Root              uint32 = 1 << 3
+	Flag_Keyed             uint32 = 1 << 4
+	Flag_DeriveKeyContext  uint32 = 1 << 5
+	Flag_DeriveKeyMaterial uint32 = 1 << 6
 )
 
 const (

@@ -2,6 +2,7 @@ package blake3
 
 import (
 	"errors"
+	"io"
 
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
@@ -72,6 +73,43 @@ func NewKeyedSized(key []byte, size int) (*Hasher, error) {
 	utils.KeyFromBytes(key, &h.h.key)
 
 	return h, nil
+}
+
+// DeriveKey derives a key based on reusable key material of any
+// length, in the given context. The key will be stored in out, using
+// all of its current length.
+//
+// Context strings must be hardcoded
+// constants, and the recommended format is "[application] [commit
+// timestamp] [purpose]", e.g., "example.com 2019-12-25 16:18:03
+// session tokens v1".
+func DeriveKey(context string, material []byte, out []byte) {
+	h := NewDeriveKey(context)
+	_, _ = h.Write(material)
+	_, _ = io.ReadFull(h.XOF(), out)
+}
+
+// NewDeriveKey returns  from key material written to Hasher. See
+// DeriveKey.
+func NewDeriveKey(context string) *Hasher {
+	// hash the context string and use that instead of IV
+	c := hasher{
+		key:   consts.IV,
+		flags: consts.Flag_DeriveKeyContext,
+	}
+	c.update([]byte(context))
+	b := make([]byte, 32)
+	c.finalize(b)
+
+	h := &Hasher{
+		size: 32,
+		h: hasher{
+			key:   consts.IV,
+			flags: consts.Flag_DeriveKeyMaterial,
+		},
+	}
+	utils.KeyFromBytes(b, &h.h.key)
+	return h
 }
 
 // Write implements part of the hash.Hash interface. It never returns an error.
