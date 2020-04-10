@@ -59,12 +59,12 @@ func (a *hasher) consume(input *[8192]byte) {
 }
 
 func (a *hasher) finalize(out []byte) {
-	var x xof
+	var x XOF
 	a.finalizeOutput(&x)
 	_, _ = x.Read(out)
 }
 
-func (a *hasher) finalizeOutput(x *xof) {
+func (a *hasher) finalizeOutput(x *XOF) {
 	if a.chunks == 0 && a.len <= consts.ChunkLen {
 		compressAll(x, a.buf[:a.len], a.flags, a.key)
 		return
@@ -248,7 +248,7 @@ func writeChain(in *[8]uint32, out *chainVector, col int) {
 // compress <= chunkLen bytes in one shot
 //
 
-func compressAll(x *xof, in []byte, flags uint32, key [8]uint32) {
+func compressAll(x *XOF, in []byte, flags uint32, key [8]uint32) {
 	var compressed [16]uint32
 
 	x.chain = key
