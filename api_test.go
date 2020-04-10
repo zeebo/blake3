@@ -3,6 +3,7 @@ package blake3
 import (
 	"bytes"
 	"encoding/hex"
+	"io"
 	"strings"
 	"testing"
 
@@ -85,53 +86,97 @@ func TestAPI(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if got := h.Size(); got != c.size {
-				t.Fatal("invalid hash size:", got)
-			}
-
 			if n, err := h.Write([]byte(c.data)); err != nil {
 				t.Fatal(err)
 			} else if n != len(c.data) {
 				t.Fatal("short write")
 			}
+
+			t.Run("Size", func(t *testing.T) {
+				if got := h.Size(); got != c.size {
+					t.Fatal("invalid hash size:", got)
+				}
+			})
 
 			// check that we can sum mutliple times, and that it does an append
-			assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result)
-			for i := 0; i < 64; i++ {
-				assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, i)[:0])), c.result)
-			}
-			assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, 1))), "00"+c.result)
+			t.Run("Sum", func(t *testing.T) {
+				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result)
+				for i := 0; i < 64; i++ {
+					assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, i)[:0])), c.result)
+				}
+				assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, 1))), "00"+c.result)
+			})
 
 			// ensure that reset works by issuing the write again
-			h.Reset()
-			if n, err := h.Write([]byte(c.data)); err != nil {
-				t.Fatal(err)
-			} else if n != len(c.data) {
-				t.Fatal("short write")
-			}
-
-			// check that XOF works as expected
-			for i := 0; i < len(c.result)/2; i++ {
-				for j := 1; j < i; j++ {
-					buf, r := make([]byte, i), h.XOF()
-
-					// read up to i bytes of output in batches of at most size j
-					for rem := buf; len(rem) > 0; {
-						tmp := rem
-						if len(tmp) > j {
-							tmp = tmp[:j]
-						}
-
-						n, err := r.Read(tmp)
-						assert.NoError(t, err)
-						assert.Equal(t, n, len(tmp))
-
-						rem = rem[n:]
-					}
-
-					assert.Equal(t, hex.EncodeToString(buf), c.result[:2*i])
+			t.Run("Reset", func(t *testing.T) {
+				h.Reset()
+				if n, err := h.Write([]byte(c.data)); err != nil {
+					t.Fatal(err)
+				} else if n != len(c.data) {
+					t.Fatal("short write")
 				}
-			}
+				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result)
+			})
+
+			t.Run("XOF", func(t *testing.T) {
+				t.Run("Read", func(t *testing.T) {
+					// read up to i bytes of output in batches of at most size j
+					for i := 0; i < len(c.result)/2; i++ {
+						for j := 1; j < i; j++ {
+							buf, r := make([]byte, i), h.XOF()
+
+							for rem := buf; len(rem) > 0; {
+								tmp := rem
+								if len(tmp) > j {
+									tmp = tmp[:j]
+								}
+
+								n, err := r.Read(tmp)
+								assert.NoError(t, err)
+								assert.Equal(t, n, len(tmp))
+
+								rem = rem[n:]
+							}
+
+							assert.Equal(t, hex.EncodeToString(buf), c.result[:2*i])
+						}
+					}
+				})
+
+				t.Run("SeekStart", func(t *testing.T) {
+					// seek to position i and read the remainder
+					for i := 0; i < len(c.result)/2; i++ {
+						buf, r := make([]byte, len(c.result)/2-i), h.XOF()
+
+						n64, err := r.Seek(int64(i), io.SeekStart)
+						assert.NoError(t, err)
+						assert.Equal(t, n64, i)
+
+						n, err := r.Read(buf)
+						assert.NoError(t, err)
+						assert.Equal(t, n, len(buf))
+
+						assert.Equal(t, hex.EncodeToString(buf), c.result[2*i:])
+					}
+				})
+
+				t.Run("SeekCurrent", func(t *testing.T) {
+					buf, r := make([]byte, len(c.result)/2), h.XOF()
+
+					// read then seek backward the amount we just read
+					for i := 0; i < len(c.result)/2; i++ {
+						n, err := r.Read(buf)
+						assert.NoError(t, err)
+						assert.Equal(t, n, len(buf))
+
+						assert.Equal(t, hex.EncodeToString(buf[:len(c.result)/2-i]), c.result[2*i:])
+
+						n64, err := r.Seek(-int64(n)+1, io.SeekCurrent)
+						assert.NoError(t, err)
+						assert.Equal(t, n64, i+1)
+					}
+				})
+			})
 		})
 	}
 }
@@ -149,5 +194,19 @@ func TestAPI_Errors(t *testing.T) {
 	assert.Error(t, err)
 
 	_, err = NewKeyedSized(make([]byte, 31), 8)
+	assert.Error(t, err)
+
+	xof := New().XOF()
+
+	_, err = xof.Seek(-1, io.SeekStart)
+	assert.Error(t, err)
+
+	_, err = xof.Seek(-1, io.SeekCurrent)
+	assert.Error(t, err)
+
+	_, err = xof.Seek(0, io.SeekEnd)
+	assert.Error(t, err)
+
+	_, err = xof.Seek(0, 9999)
 	assert.Error(t, err)
 }
