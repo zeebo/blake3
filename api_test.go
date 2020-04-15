@@ -18,7 +18,7 @@ func TestAPI_Vectors(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, n, len(input))
 
-		n, err = h.Output().Read(buf)
+		n, err = h.Digest().Read(buf)
 		assert.NoError(t, err)
 		assert.Equal(t, n, len(buf))
 
@@ -143,12 +143,12 @@ func TestAPI(t *testing.T) {
 				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result[:64])
 			})
 
-			t.Run("Output", func(t *testing.T) {
+			t.Run("Digest", func(t *testing.T) {
 				t.Run("Read", func(t *testing.T) {
 					// read up to i bytes of output in batches of at most size j
 					for i := 0; i < len(c.result)/2; i++ {
 						for j := 1; j < i; j++ {
-							buf, r := make([]byte, i), h.Output()
+							buf, d := make([]byte, i), h.Digest()
 
 							for rem := buf; len(rem) > 0; {
 								tmp := rem
@@ -156,7 +156,7 @@ func TestAPI(t *testing.T) {
 									tmp = tmp[:j]
 								}
 
-								n, err := r.Read(tmp)
+								n, err := d.Read(tmp)
 								assert.NoError(t, err)
 								assert.Equal(t, n, len(tmp))
 
@@ -171,13 +171,13 @@ func TestAPI(t *testing.T) {
 				t.Run("SeekStart", func(t *testing.T) {
 					// seek to position i and read the remainder
 					for i := 0; i < len(c.result)/2; i++ {
-						buf, r := make([]byte, len(c.result)/2-i), h.Output()
+						buf, d := make([]byte, len(c.result)/2-i), h.Digest()
 
-						n64, err := r.Seek(int64(i), io.SeekStart)
+						n64, err := d.Seek(int64(i), io.SeekStart)
 						assert.NoError(t, err)
 						assert.Equal(t, n64, i)
 
-						n, err := r.Read(buf)
+						n, err := d.Read(buf)
 						assert.NoError(t, err)
 						assert.Equal(t, n, len(buf))
 
@@ -186,17 +186,17 @@ func TestAPI(t *testing.T) {
 				})
 
 				t.Run("SeekCurrent", func(t *testing.T) {
-					buf, r := make([]byte, len(c.result)/2), h.Output()
+					buf, d := make([]byte, len(c.result)/2), h.Digest()
 
 					// read then seek backward the amount we just read
 					for i := 0; i < len(c.result)/2; i++ {
-						n, err := r.Read(buf)
+						n, err := d.Read(buf)
 						assert.NoError(t, err)
 						assert.Equal(t, n, len(buf))
 
 						assert.Equal(t, hex.EncodeToString(buf[:len(c.result)/2-i]), c.result[2*i:])
 
-						n64, err := r.Seek(-int64(n)+1, io.SeekCurrent)
+						n64, err := d.Seek(-int64(n)+1, io.SeekCurrent)
 						assert.NoError(t, err)
 						assert.Equal(t, n64, i+1)
 					}
@@ -212,17 +212,17 @@ func TestAPI_Errors(t *testing.T) {
 	_, err = NewKeyed(make([]byte, 31))
 	assert.Error(t, err)
 
-	out := New().Output()
+	d := New().Digest()
 
-	_, err = out.Seek(-1, io.SeekStart)
+	_, err = d.Seek(-1, io.SeekStart)
 	assert.Error(t, err)
 
-	_, err = out.Seek(-1, io.SeekCurrent)
+	_, err = d.Seek(-1, io.SeekCurrent)
 	assert.Error(t, err)
 
-	_, err = out.Seek(0, io.SeekEnd)
+	_, err = d.Seek(0, io.SeekEnd)
 	assert.Error(t, err)
 
-	_, err = out.Seek(0, 9999)
+	_, err = d.Seek(0, 9999)
 	assert.Error(t, err)
 }
