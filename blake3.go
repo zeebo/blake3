@@ -30,11 +30,17 @@ func (a *hasher) reset() {
 }
 
 func (a *hasher) update(buf []byte) {
+	// relies on the first two words of a string being the same as a slice
+	a.updateString(*(*string)(unsafe.Pointer(&buf)))
+}
+
+func (a *hasher) updateString(buf string) {
 	var input *[8192]byte
 
 	for len(buf) > 0 {
 		if a.len == 0 && len(buf) > 8192 {
-			input = (*[8192]byte)(unsafe.Pointer(&buf[0]))
+			// relies on the data pointer being the first word in the string header
+			input = (*[8192]byte)(*(*unsafe.Pointer)(unsafe.Pointer(&buf)))
 			buf = buf[8192:]
 		} else if a.len < 8192 {
 			n := copy(a.buf[a.len:], buf)
@@ -58,27 +64,27 @@ func (a *hasher) consume(input *[8192]byte) {
 	a.stack.pushN(0, &out, 8, a.flags, &a.key)
 }
 
-func (a *hasher) finalize(out []byte) {
-	var x XOF
-	a.finalizeOutput(&x)
-	_, _ = x.Read(out)
+func (a *hasher) finalize(p []byte) {
+	var out Output
+	a.finalizeOutput(&out)
+	_, _ = out.Read(p)
 }
 
-func (a *hasher) finalizeOutput(x *XOF) {
+func (a *hasher) finalizeOutput(out *Output) {
 	if a.chunks == 0 && a.len <= consts.ChunkLen {
-		compressAll(x, a.buf[:a.len], a.flags, a.key)
+		compressAll(out, a.buf[:a.len], a.flags, a.key)
 		return
 	}
 
-	x.chain = a.key
-	x.flags = a.flags | consts.Flag_ChunkEnd
+	out.chain = a.key
+	out.flags = a.flags | consts.Flag_ChunkEnd
 
 	if a.len > 64 {
 		var buf chainVector
 		if a.len <= 2*consts.ChunkLen {
-			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &x.chain)
+			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &out.chain)
 		} else {
-			hashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &x.chain)
+			hashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &out.chain)
 		}
 
 		if a.len > consts.ChunkLen {
@@ -90,24 +96,24 @@ func (a *hasher) finalizeOutput(x *XOF) {
 	}
 
 	if a.len <= 64 {
-		x.flags |= consts.Flag_ChunkStart
+		out.flags |= consts.Flag_ChunkStart
 	}
 
-	x.counter = a.chunks
-	x.blen = uint32(a.len) % 64
+	out.counter = a.chunks
+	out.blen = uint32(a.len) % 64
 
 	base := a.len / 64 * 64
-	if a.len > 0 && x.blen == 0 {
-		x.blen = 64
+	if a.len > 0 && out.blen == 0 {
+		out.blen = 64
 		base -= 64
 	}
 
 	if consts.IsLittleEndian {
-		copy((*[64]byte)(unsafe.Pointer(&x.block[0]))[:], a.buf[base:a.len])
+		copy((*[64]byte)(unsafe.Pointer(&out.block[0]))[:], a.buf[base:a.len])
 	} else {
 		var tmp [64]byte
 		copy(tmp[:], a.buf[base:a.len])
-		utils.BytesToWords(&tmp, &x.block)
+		utils.BytesToWords(&tmp, &out.block)
 	}
 
 	for a.stack.bufn > 0 {
@@ -118,20 +124,20 @@ func (a *hasher) finalizeOutput(x *XOF) {
 	for occ := a.stack.occ; occ != 0; occ &= occ - 1 {
 		col := uint(bits.TrailingZeros64(occ)) % 64
 
-		compress(&x.chain, &x.block, x.counter, x.blen, x.flags, &tmp)
+		compress(&out.chain, &out.block, out.counter, out.blen, out.flags, &tmp)
 
-		*(*[8]uint32)(unsafe.Pointer(&x.block[0])) = a.stack.stack[col]
-		*(*[8]uint32)(unsafe.Pointer(&x.block[8])) = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
+		*(*[8]uint32)(unsafe.Pointer(&out.block[0])) = a.stack.stack[col]
+		*(*[8]uint32)(unsafe.Pointer(&out.block[8])) = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
 
 		if occ == a.stack.occ {
-			x.chain = a.key
-			x.counter = 0
-			x.blen = consts.BlockLen
-			x.flags = a.flags | consts.Flag_Parent
+			out.chain = a.key
+			out.counter = 0
+			out.blen = consts.BlockLen
+			out.flags = a.flags | consts.Flag_Parent
 		}
 	}
 
-	x.flags |= consts.Flag_Root
+	out.flags |= consts.Flag_Root
 }
 
 //
@@ -248,11 +254,11 @@ func writeChain(in *[8]uint32, out *chainVector, col int) {
 // compress <= chunkLen bytes in one shot
 //
 
-func compressAll(x *XOF, in []byte, flags uint32, key [8]uint32) {
+func compressAll(out *Output, in []byte, flags uint32, key [8]uint32) {
 	var compressed [16]uint32
 
-	x.chain = key
-	x.flags = flags | consts.Flag_ChunkStart
+	out.chain = key
+	out.flags = flags | consts.Flag_ChunkStart
 
 	for len(in) > 64 {
 		buf := (*[64]byte)(unsafe.Pointer(&in[0]))
@@ -261,26 +267,26 @@ func compressAll(x *XOF, in []byte, flags uint32, key [8]uint32) {
 		if consts.IsLittleEndian {
 			block = (*[16]uint32)(unsafe.Pointer(buf))
 		} else {
-			block = &x.block
+			block = &out.block
 			utils.BytesToWords(buf, block)
 		}
 
-		compress(&x.chain, block, 0, consts.BlockLen, x.flags, &compressed)
+		compress(&out.chain, block, 0, consts.BlockLen, out.flags, &compressed)
 
-		x.chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
-		x.flags &^= consts.Flag_ChunkStart
+		out.chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
+		out.flags &^= consts.Flag_ChunkStart
 
 		in = in[64:]
 	}
 
 	if consts.IsLittleEndian {
-		copy((*[64]byte)(unsafe.Pointer(&x.block[0]))[:], in)
+		copy((*[64]byte)(unsafe.Pointer(&out.block[0]))[:], in)
 	} else {
 		var tmp [64]byte
 		copy(tmp[:], in)
-		utils.BytesToWords(&tmp, &x.block)
+		utils.BytesToWords(&tmp, &out.block)
 	}
 
-	x.blen = uint32(len(in))
-	x.flags |= consts.Flag_ChunkEnd | consts.Flag_Root
+	out.blen = uint32(len(in))
+	out.flags |= consts.Flag_ChunkEnd | consts.Flag_Root
 }

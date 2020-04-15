@@ -10,8 +10,47 @@ import (
 	"github.com/zeebo/assert"
 )
 
+func TestAPI_Vectors(t *testing.T) {
+	check := func(t *testing.T, h *Hasher, input []byte, hash string) {
+		buf := make([]byte, len(hash)/2)
+
+		n, err := h.Write(input)
+		assert.NoError(t, err)
+		assert.Equal(t, n, len(input))
+
+		n, err = h.Output().Read(buf)
+		assert.NoError(t, err)
+		assert.Equal(t, n, len(buf))
+
+		assert.Equal(t, hash, hex.EncodeToString(buf))
+	}
+
+	t.Run("Basic", func(t *testing.T) {
+		for _, tv := range vectors {
+			h := New()
+			check(t, h, tv.input(), tv.hash)
+		}
+	})
+
+	t.Run("Keyed", func(t *testing.T) {
+		for _, tv := range vectors {
+			h, err := NewKeyed([]byte(testVectorKey))
+			assert.NoError(t, err)
+			check(t, h, tv.input(), tv.keyedHash)
+		}
+	})
+
+	t.Run("DeriveKey", func(t *testing.T) {
+		for _, tv := range vectors {
+			h := NewDeriveKey(testVectorContext)
+			check(t, h, tv.input(), tv.deriveKey)
+		}
+	})
+}
+
 func TestAPI(t *testing.T) {
 	key := bytes.Repeat([]byte("a"), 32)
+	context := strings.Repeat("c", 32)
 
 	cases := []struct {
 		name   string
@@ -28,13 +67,6 @@ func TestAPI(t *testing.T) {
 			result: "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
 		},
 		{
-			name:   "NewSized",
-			new:    func() (*Hasher, error) { return NewSized(8) },
-			data:   "",
-			size:   8,
-			result: "af1349b9f5f9a1a6",
-		},
-		{
 			name:   "NewKeyed",
 			new:    func() (*Hasher, error) { return NewKeyed(key) },
 			data:   "",
@@ -42,11 +74,11 @@ func TestAPI(t *testing.T) {
 			result: "cbf50f0463d68fd443cdb0826f387a6f57ba6dc4983ba2460fe822552d15d2f4",
 		},
 		{
-			name:   "NewKeyedSized",
-			new:    func() (*Hasher, error) { return NewKeyedSized(key, 8) },
+			name:   "NewDeriveKey",
+			new:    func() (*Hasher, error) { return NewDeriveKey(context), nil },
 			data:   "",
-			size:   8,
-			result: "cbf50f0463d68fd4",
+			size:   32,
+			result: "c5ce1763648ca67eecc8a471f8efccf19dd16178e91d33130d3ae67eadde71cc",
 		},
 		{
 			name:   "New+SmallInput",
@@ -63,8 +95,8 @@ func TestAPI(t *testing.T) {
 			result: "9afd0ba102b2cc68be10ba4d383b3139b97ed36d425b82631a7a1e2424088f7e",
 		},
 		{
-			name: "NewSized+LargeOutput",
-			new:  func() (*Hasher, error) { return NewSized(256) },
+			name: "New+LargeOutput",
+			new:  func() (*Hasher, error) { return New(), nil },
 			data: "",
 			size: 256,
 			result: "" +
@@ -82,48 +114,41 @@ func TestAPI(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			h, err := c.new()
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err)
 
-			if n, err := h.Write([]byte(c.data)); err != nil {
-				t.Fatal(err)
-			} else if n != len(c.data) {
-				t.Fatal("short write")
-			}
+			n, err := h.Write([]byte(c.data))
+			assert.NoError(t, err)
+			assert.Equal(t, n, len(c.data))
 
 			t.Run("Size", func(t *testing.T) {
-				if got := h.Size(); got != c.size {
-					t.Fatal("invalid hash size:", got)
-				}
+				assert.Equal(t, h.Size(), 32)
 			})
 
 			// check that we can sum mutliple times, and that it does an append
 			t.Run("Sum", func(t *testing.T) {
-				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result)
+				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result[:64])
 				for i := 0; i < 64; i++ {
-					assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, i)[:0])), c.result)
+					assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, i)[:0])), c.result[:64])
 				}
-				assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, 1))), "00"+c.result)
+				assert.Equal(t, hex.EncodeToString(h.Sum(make([]byte, 1))), "00"+c.result[:64])
 			})
 
 			// ensure that reset works by issuing the write again
 			t.Run("Reset", func(t *testing.T) {
+				_, _ = h.Write([]byte("some fake wrong data"))
 				h.Reset()
-				if n, err := h.Write([]byte(c.data)); err != nil {
-					t.Fatal(err)
-				} else if n != len(c.data) {
-					t.Fatal("short write")
-				}
-				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result)
+				n, err := h.Write([]byte(c.data))
+				assert.NoError(t, err)
+				assert.Equal(t, n, len(c.data))
+				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result[:64])
 			})
 
-			t.Run("XOF", func(t *testing.T) {
+			t.Run("Output", func(t *testing.T) {
 				t.Run("Read", func(t *testing.T) {
 					// read up to i bytes of output in batches of at most size j
 					for i := 0; i < len(c.result)/2; i++ {
 						for j := 1; j < i; j++ {
-							buf, r := make([]byte, i), h.XOF()
+							buf, r := make([]byte, i), h.Output()
 
 							for rem := buf; len(rem) > 0; {
 								tmp := rem
@@ -146,7 +171,7 @@ func TestAPI(t *testing.T) {
 				t.Run("SeekStart", func(t *testing.T) {
 					// seek to position i and read the remainder
 					for i := 0; i < len(c.result)/2; i++ {
-						buf, r := make([]byte, len(c.result)/2-i), h.XOF()
+						buf, r := make([]byte, len(c.result)/2-i), h.Output()
 
 						n64, err := r.Seek(int64(i), io.SeekStart)
 						assert.NoError(t, err)
@@ -161,7 +186,7 @@ func TestAPI(t *testing.T) {
 				})
 
 				t.Run("SeekCurrent", func(t *testing.T) {
-					buf, r := make([]byte, len(c.result)/2), h.XOF()
+					buf, r := make([]byte, len(c.result)/2), h.Output()
 
 					// read then seek backward the amount we just read
 					for i := 0; i < len(c.result)/2; i++ {
@@ -184,29 +209,20 @@ func TestAPI(t *testing.T) {
 func TestAPI_Errors(t *testing.T) {
 	var err error
 
-	_, err = NewSized(-1)
-	assert.Error(t, err)
-
 	_, err = NewKeyed(make([]byte, 31))
 	assert.Error(t, err)
 
-	_, err = NewKeyedSized(make([]byte, 32), -1)
+	out := New().Output()
+
+	_, err = out.Seek(-1, io.SeekStart)
 	assert.Error(t, err)
 
-	_, err = NewKeyedSized(make([]byte, 31), 8)
+	_, err = out.Seek(-1, io.SeekCurrent)
 	assert.Error(t, err)
 
-	xof := New().XOF()
-
-	_, err = xof.Seek(-1, io.SeekStart)
+	_, err = out.Seek(0, io.SeekEnd)
 	assert.Error(t, err)
 
-	_, err = xof.Seek(-1, io.SeekCurrent)
-	assert.Error(t, err)
-
-	_, err = xof.Seek(0, io.SeekEnd)
-	assert.Error(t, err)
-
-	_, err = xof.Seek(0, 9999)
+	_, err = out.Seek(0, 9999)
 	assert.Error(t, err)
 }
