@@ -2,7 +2,6 @@ package blake3
 
 import (
 	"encoding/hex"
-	"io"
 	"testing"
 
 	"github.com/zeebo/assert"
@@ -10,69 +9,63 @@ import (
 	"github.com/zeebo/blake3/internal/utils"
 )
 
-func testHasher(t *testing.T, h hasher, input []byte, hash string) {
-	// ensure reset works
-	h.update(input[:len(input)/2])
-	h.reset()
+func TestHasher_Vectors(t *testing.T) {
+	check := func(t *testing.T, h hasher, input []byte, hash string) {
+		// ensure reset works
+		h.update(input[:len(input)/2])
+		h.reset()
 
-	// write and finalize a bunch
-	var buf [32]byte
-	for i := range input {
-		h.update(input[i : i+1])
-		if i%8193 == 0 {
-			h.finalize(buf[:])
+		// write and finalize a bunch
+		for i := range input {
+			var tmp [32]byte
+			h.update(input[i : i+1])
+			switch i % 8193 {
+			case 0, 1, 2:
+				h.finalize(tmp[:])
+			default:
+			}
 		}
-	}
 
-	// check every output length requested
-	for i := 0; i <= len(hash)/2; i++ {
-		buf := make([]byte, i)
+		// check every output length requested
+		for i := 0; i <= len(hash)/2; i++ {
+			buf := make([]byte, i)
+			h.finalize(buf)
+			assert.Equal(t, hash[:2*i], hex.EncodeToString(buf))
+		}
+
+		// one more reset, full write, full read
+		h.reset()
+		h.update(input)
+		buf := make([]byte, len(hash)/2)
 		h.finalize(buf)
-		assert.Equal(t, hash[:2*i], hex.EncodeToString(buf))
+		assert.Equal(t, hash, hex.EncodeToString(buf))
 	}
-}
 
-func TestVectors_Hash(t *testing.T) {
-	for _, tv := range vectors {
-		h := hasher{key: consts.IV}
-		testHasher(t, h, tv.input(), tv.hash)
-	}
-}
-
-func TestVectors_KeyedHash(t *testing.T) {
-	for _, tv := range vectors {
-		h := hasher{flags: consts.Flag_Keyed}
-		utils.KeyFromBytes([]byte(testVectorKey), &h.key)
-		testHasher(t, h, tv.input(), tv.keyedHash)
-	}
-}
-
-func TestVectors_DeriveKey(t *testing.T) {
-	for _, tv := range vectors {
-		// DeriveKey is implemented quite differently from the other
-		// modes, it's basically a two-stage hash where the context is
-		// hashed into an IV for the "real" hash. At this point, we
-		// should have faith in the internal workings of hasher, so
-		// test key derivation through the API.
-		derived := make([]byte, hex.DecodedLen(len(tv.deriveKey)))
-		DeriveKey(testVectorContext, tv.input(), derived)
-		assert.Equal(t, hex.EncodeToString(derived), tv.deriveKey)
-	}
-}
-
-func TestVectors_NewDeriveKey(t *testing.T) {
-	for _, tv := range vectors {
-		h := NewDeriveKey(testVectorContext)
-		h.Write(tv.input())
-		derived := make([]byte, hex.DecodedLen(len(tv.deriveKey)))
-		xof := h.XOF()
-		n, err := io.ReadFull(xof, derived)
-		if g, e := n, len(derived); g != e {
-			t.Errorf("wrong read length: %v != %v", g, e)
+	t.Run("Basic", func(t *testing.T) {
+		for _, tv := range vectors {
+			h := hasher{key: consts.IV}
+			check(t, h, tv.input(), tv.hash)
 		}
-		if err != nil {
-			t.Errorf("error reading from hash: %v", err)
+	})
+
+	t.Run("Keyed", func(t *testing.T) {
+		for _, tv := range vectors {
+			h := hasher{flags: consts.Flag_Keyed}
+			utils.KeyFromBytes([]byte(testVectorKey), &h.key)
+			check(t, h, tv.input(), tv.keyedHash)
 		}
-		assert.Equal(t, hex.EncodeToString(derived), tv.deriveKey)
-	}
+	})
+
+	t.Run("DeriveKey", func(t *testing.T) {
+		var buf [32]byte
+		for _, tv := range vectors {
+			h := hasher{flags: consts.Flag_DeriveKeyContext, key: consts.IV}
+			h.updateString(testVectorContext)
+			h.finalize(buf[:])
+			h.reset()
+			h.flags = consts.Flag_DeriveKeyMaterial
+			utils.KeyFromBytes(buf[:], &h.key)
+			check(t, h, tv.input(), tv.deriveKey)
+		}
+	})
 }

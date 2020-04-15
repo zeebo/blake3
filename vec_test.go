@@ -149,12 +149,14 @@ var vectors = []testVec{
 	},
 
 	//
-	// additional vectors that have not been verified
+	// additional vectors that have not been verified with upstream.
+	// they mainly exist to check that our results do not change for very large inputs.
 	//
 
 	{
 		inputLen:  4 << 20, // 4 MB
 		hash:      "4e94e6f582581a0f3855f3ce504b153e951e65036fe9e2f010b7e25473c54f9837d7b96d9b118cc52d9355b3a29569cbc089752c10081c47bd92e4395e5c02189d2231f218722a0d99790d9c9b69355b0fd9ff5837128a14e369dbadf3eb8e0e1d127c3bb7d3346f57c45962b863a1e9a75d5178abfb0cbcb6e43c352fcd32eba985d2",
 		keyedHash: "182b531d06d2705f68e23dc6a5580481f3342ded15cece016b58e0922e75c0e337b279c31c1108cb768b12a56289d53bc20fb9397d25b2dd58a4489ad24edc9f3f7ba9ea8da9b2a13813d7d0126f612269ce8f44cab5afd623c1bdbfe1d28f03ad1dd2e7afd3fa7249fabb4466c83b86e3a231912a7c320985f7200544558f9a74d4bf",
+		deriveKey: "14689cc67a8329afabf4ddfb9c5bd23b910ffcc69fb59beb934f867608f1005a55b9f2cb7c44d358a2bf9158b4d6b0cb3d114b1f681f25ba5ef2c8a92789d0c44374f2629905ed4ffcdbdf652e1bd745635adbb280e0ba5aa2c7501266ce0ad558ebf576aa5bfc1b45db879bf680fde43ae56dcbe06f993eafc8a5effec9180da943e1",
 	},
 }

@@ -2,7 +2,6 @@ package blake3
 
 import (
 	"errors"
-	"io"
 
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
@@ -14,7 +13,8 @@ type Hasher struct {
 	h    hasher
 }
 
-// New returns a new Hasher with the default output size (32 bytes).
+// New returns a new Hasher that has a digest size of 32 bytes.
+// If you need more or less output bytes than that, use the Output method.
 func New() *Hasher {
 	return &Hasher{
 		size: 32,
@@ -24,21 +24,9 @@ func New() *Hasher {
 	}
 }
 
-// NewSized returns a new Hasher with the given output size.
-func NewSized(size int) (*Hasher, error) {
-	if size < 0 {
-		return nil, errors.New("invalid output size")
-	}
-
-	return &Hasher{
-		size: size,
-		h: hasher{
-			key: consts.IV,
-		},
-	}, nil
-}
-
-// NewKeyed returns a new Hasher that uses the 32 byte input key and default output size (32 bytes).
+// NewKeyed returns a new Hasher that uses the 32 byte input key and has
+// a digest size of 32 bytes.
+// If you need more or less output bytes than that, use the Output method.
 func NewKeyed(key []byte) (*Hasher, error) {
 	if len(key) != 32 {
 		return nil, errors.New("invalid key size")
@@ -55,66 +43,52 @@ func NewKeyed(key []byte) (*Hasher, error) {
 	return h, nil
 }
 
-// NewKeyedSized returns a new Hasher that uses the 32 byte input key and given output size.
-func NewKeyedSized(key []byte, size int) (*Hasher, error) {
-	if size < 0 {
-		return nil, errors.New("invalid output size")
-	}
-	if len(key) != 32 {
-		return nil, errors.New("invalid key size")
-	}
-
-	h := &Hasher{
-		size: size,
-		h: hasher{
-			flags: consts.Flag_Keyed,
-		},
-	}
-	utils.KeyFromBytes(key, &h.h.key)
-
-	return h, nil
-}
-
 // DeriveKey derives a key based on reusable key material of any
 // length, in the given context. The key will be stored in out, using
 // all of its current length.
 //
-// Context strings must be hardcoded
-// constants, and the recommended format is "[application] [commit
-// timestamp] [purpose]", e.g., "example.com 2019-12-25 16:18:03
-// session tokens v1".
+// Context strings must be hardcoded constants, and the recommended
+// format is "[application] [commit timestamp] [purpose]", e.g.,
+// "example.com 2019-12-25 16:18:03 session tokens v1".
 func DeriveKey(context string, material []byte, out []byte) {
 	h := NewDeriveKey(context)
 	_, _ = h.Write(material)
-	_, _ = io.ReadFull(h.XOF(), out)
+	_, _ = h.Output().Read(out)
 }
 
-// NewDeriveKey returns  from key material written to Hasher. See
-// DeriveKey.
+// NewDeriveKey returns a Hasher that is initialized with the context
+// string. See DeriveKey for details. It has a digest size of 32 bytes.
+// If you need more or less output bytes than that, use the Output method.
 func NewDeriveKey(context string) *Hasher {
 	// hash the context string and use that instead of IV
-	c := hasher{
-		key:   consts.IV,
-		flags: consts.Flag_DeriveKeyContext,
-	}
-	c.update([]byte(context))
-	b := make([]byte, 32)
-	c.finalize(b)
-
 	h := &Hasher{
 		size: 32,
 		h: hasher{
 			key:   consts.IV,
-			flags: consts.Flag_DeriveKeyMaterial,
+			flags: consts.Flag_DeriveKeyContext,
 		},
 	}
-	utils.KeyFromBytes(b, &h.h.key)
+
+	var buf [32]byte
+	_, _ = h.WriteString(context)
+	_, _ = h.Output().Read(buf[:])
+
+	h.Reset()
+	utils.KeyFromBytes(buf[:], &h.h.key)
+	h.h.flags = consts.Flag_DeriveKeyMaterial
+
 	return h
 }
 
 // Write implements part of the hash.Hash interface. It never returns an error.
 func (h *Hasher) Write(p []byte) (int, error) {
 	h.h.update(p)
+	return len(p), nil
+}
+
+// WriteString is like Write but specialized to strings to avoid allocations.
+func (h *Hasher) WriteString(p string) (int, error) {
+	h.h.updateString(p)
 	return len(p), nil
 }
 
@@ -150,9 +124,10 @@ func (h *Hasher) Sum(b []byte) []byte {
 	return append(b, tmp...)
 }
 
-// XOF returns an io.Reader containing 2^64 bytes of lazily generated hash output.
-func (h *Hasher) XOF() *XOF {
-	var x XOF
-	h.h.finalizeOutput(&x)
-	return &x
+// Output takes a snapshot of the hash state and returns an object that can
+// be used to read and seek through 2^64 bytes of digest output.
+func (h *Hasher) Output() *Output {
+	var out Output
+	h.h.finalizeOutput(&out)
+	return &out
 }
