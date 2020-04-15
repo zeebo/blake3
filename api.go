@@ -14,7 +14,9 @@ type Hasher struct {
 }
 
 // New returns a new Hasher that has a digest size of 32 bytes.
-// If you need more or less output bytes than that, use the Output method.
+//
+// If you need more or less output bytes than that, use the SetSize or
+// Digest methods.
 func New() *Hasher {
 	return &Hasher{
 		size: 32,
@@ -26,7 +28,9 @@ func New() *Hasher {
 
 // NewKeyed returns a new Hasher that uses the 32 byte input key and has
 // a digest size of 32 bytes.
-// If you need more or less output bytes than that, use the Output method.
+//
+// If you need more or less output bytes than that, use the SetSize or
+// Digest methods.
 func NewKeyed(key []byte) (*Hasher, error) {
 	if len(key) != 32 {
 		return nil, errors.New("invalid key size")
@@ -53,12 +57,14 @@ func NewKeyed(key []byte) (*Hasher, error) {
 func DeriveKey(context string, material []byte, out []byte) {
 	h := NewDeriveKey(context)
 	_, _ = h.Write(material)
-	_, _ = h.Output().Read(out)
+	_, _ = h.Digest().Read(out)
 }
 
 // NewDeriveKey returns a Hasher that is initialized with the context
 // string. See DeriveKey for details. It has a digest size of 32 bytes.
-// If you need more or less output bytes than that, use the Output method.
+//
+// If you need more or less output bytes than that, use the SetSize or
+// Digest methods.
 func NewDeriveKey(context string) *Hasher {
 	// hash the context string and use that instead of IV
 	h := &Hasher{
@@ -71,7 +77,7 @@ func NewDeriveKey(context string) *Hasher {
 
 	var buf [32]byte
 	_, _ = h.WriteString(context)
-	_, _ = h.Output().Read(buf[:])
+	_, _ = h.Digest().Read(buf[:])
 
 	h.Reset()
 	utils.KeyFromBytes(buf[:], &h.h.key)
@@ -99,9 +105,18 @@ func (h *Hasher) Reset() {
 }
 
 // Size implements part of the hash.Hash interface. It returns the number of
-// bytes the hash will output.
+// bytes the hash will output in Sum.
 func (h *Hasher) Size() int {
 	return h.size
+}
+
+// SetSize sets the size of the output Sum from the hash.Hash interface. If
+// the passed in value is not positive, the default size of 32 bytes is used.
+func (h *Hasher) SetSize(size int) {
+	if size <= 0 {
+		size = 32
+	}
+	h.size = size
 }
 
 // BlockSize implements part of the hash.Hash interface. It returns the most
@@ -124,10 +139,10 @@ func (h *Hasher) Sum(b []byte) []byte {
 	return append(b, tmp...)
 }
 
-// Output takes a snapshot of the hash state and returns an object that can
+// Digest takes a snapshot of the hash state and returns an object that can
 // be used to read and seek through 2^64 bytes of digest output.
-func (h *Hasher) Output() *Output {
-	var out Output
-	h.h.finalizeOutput(&out)
-	return &out
+func (h *Hasher) Digest() *Digest {
+	var d Digest
+	h.h.finalizeDigest(&d)
+	return &d
 }
