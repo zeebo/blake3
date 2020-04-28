@@ -1,3 +1,4 @@
+// Package blake3 provides an SSE4.1/AVX2 accelerated BLAKE3 implementation.
 package blake3
 
 import (
