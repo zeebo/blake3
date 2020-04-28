@@ -124,7 +124,7 @@ func TestAPI(t *testing.T) {
 				assert.Equal(t, h.Size(), 32)
 			})
 
-			// check that we can sum mutliple times, and that it does an append
+			// check that we can sum multiple times, and that it does an append
 			t.Run("Sum", func(t *testing.T) {
 				assert.Equal(t, hex.EncodeToString(h.Sum(nil)), c.result[:64])
 				for i := 0; i < 64; i++ {
