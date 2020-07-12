@@ -1,23 +1,5 @@
 package consts
 
-import (
-	"unsafe"
-
-	"golang.org/x/sys/cpu"
-)
-
-var (
-	HasAVX2 = cpu.X86.HasAVX2
-
-	// Note: some instructions don't seem available in the go assembler or avo. Until this
-	// has been fixed, we also require AVX when we require SSE41
-	HasSSE41 = cpu.X86.HasSSE41 && cpu.X86.HasAVX
-)
-
-// TODO: maybe this would be better if it was a const. then the compiler could
-// do dead code elimination.
-var IsLittleEndian = *(*uint32)(unsafe.Pointer(&[4]byte{0, 0, 0, 1})) != 1
-
 var IV = [...]uint32{IV0, IV1, IV2, IV3, IV4, IV5, IV6, IV7}
 
 const (
