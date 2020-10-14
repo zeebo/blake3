@@ -1,14 +1,7 @@
-// +build !amd64
+// +build !mips,!mips64,!ppc64,!s390x,!amd64,!386,!arm,!arm64,!mipsle,!mips64le,!ppc64le,!riscv64,!wasm
 
 package consts
 
 import "unsafe"
 
-// TODO: maybe this would be better if it was a const. then the compiler could
-// do dead code elimination.
-var IsLittleEndian = *(*uint32)(unsafe.Pointer(&[4]byte{0, 0, 0, 1})) != 1
-
-const (
-	HasAVX2  = false
-	HasSSE41 = false
-)
+var IsLittleEndian = *(*uint16)(unsafe.Pointer(&[2]byte{0, 1})) != 1
