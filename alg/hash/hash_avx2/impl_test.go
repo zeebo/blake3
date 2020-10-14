@@ -1,11 +1,12 @@
-package avx2
+package hash_avx2_test
 
 import (
 	"testing"
 
 	"github.com/zeebo/assert"
+	"github.com/zeebo/blake3/alg/hash/hash_avx2"
+	"github.com/zeebo/blake3/alg/hash/hash_pure"
 	"github.com/zeebo/blake3/internal/consts"
-	"github.com/zeebo/blake3/ref"
 	"github.com/zeebo/pcg"
 )
 
@@ -29,8 +30,8 @@ func TestHashF(t *testing.T) {
 			input[i] = byte(i+1) % 251
 		}
 
-		HashF(&input, uint64(n), ctr, flags, &key, &o1, &c1)
-		ref.HashF(&input, uint64(n), ctr, flags, &key, &o2, &c2)
+		hash_avx2.HashF(&input, uint64(n), ctr, flags, &key, &o1, &c1)
+		hash_pure.HashF(&input, uint64(n), ctr, flags, &key, &o2, &c2)
 
 		for i := 0; (i+1)*1024 <= n; i++ {
 			for j := 0; j < 8; j++ {
@@ -63,8 +64,8 @@ func TestHashP(t *testing.T) {
 			key[i] = pcg.Uint32()
 		}
 
-		HashP(&left, &right, 0, &key, &o1, n)
-		ref.HashP(&left, &right, 0, &key, &o2, n)
+		hash_avx2.HashP(&left, &right, 0, &key, &o1, n)
+		hash_pure.HashP(&left, &right, 0, &key, &o2, n)
 
 		for i := 0; i < n; i++ {
 			for j := 0; j < 8; j++ {

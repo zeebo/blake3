@@ -1,4 +1,4 @@
-package ref
+package compress_pure
 
 import (
 	"math/bits"

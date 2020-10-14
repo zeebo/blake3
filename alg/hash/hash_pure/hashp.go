@@ -1,4 +1,6 @@
-package ref
+package hash_pure
+
+import "github.com/zeebo/blake3/alg/compress"
 
 func HashP(left, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int) {
 	var tmp [16]uint32
@@ -22,7 +24,7 @@ func HashP(left, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint3
 		block[14] = right[i+48]
 		block[15] = right[i+56]
 
-		Compress(key, &block, 0, 64, flags, &tmp)
+		compress.Compress(key, &block, 0, 64, flags, &tmp)
 
 		out[i+0] = tmp[0]
 		out[i+8] = tmp[1]

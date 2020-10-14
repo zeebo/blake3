@@ -1,11 +1,12 @@
-package sse41
+package compress_sse41_test
 
 import (
 	"testing"
 
 	"github.com/zeebo/assert"
+	"github.com/zeebo/blake3/alg/compress/compress_pure"
+	"github.com/zeebo/blake3/alg/compress/compress_sse41"
 	"github.com/zeebo/blake3/internal/consts"
-	"github.com/zeebo/blake3/ref"
 	"github.com/zeebo/pcg"
 )
 
@@ -28,8 +29,8 @@ func TestCompress(t *testing.T) {
 			block[i] = pcg.Uint32()
 		}
 
-		Compress(&chain, &block, counter, blen, flags, &o1)
-		ref.Compress(&chain, &block, counter, blen, flags, &o2)
+		compress_sse41.Compress(&chain, &block, counter, blen, flags, &o1)
+		compress_pure.Compress(&chain, &block, counter, blen, flags, &o2)
 
 		assert.Equal(t, o1, o2)
 	}

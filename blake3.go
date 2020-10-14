@@ -4,6 +4,8 @@ import (
 	"math/bits"
 	"unsafe"
 
+	"github.com/zeebo/blake3/alg"
+	"github.com/zeebo/blake3/alg/compress"
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
 )
@@ -60,7 +62,7 @@ func (a *hasher) updateString(buf string) {
 func (a *hasher) consume(input *[8192]byte) {
 	var out chainVector
 	var chain [8]uint32
-	hashF(input, 8192, a.chunks, a.flags, &a.key, &out, &chain)
+	alg.HashF(input, 8192, a.chunks, a.flags, &a.key, &out, &chain)
 	a.stack.pushN(0, &out, 8, a.flags, &a.key)
 }
 
@@ -81,11 +83,7 @@ func (a *hasher) finalizeDigest(d *Digest) {
 
 	if a.len > 64 {
 		var buf chainVector
-		if a.len <= 2*consts.ChunkLen {
-			hashFSmall(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &d.chain)
-		} else {
-			hashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &d.chain)
-		}
+		alg.HashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &d.chain)
 
 		if a.len > consts.ChunkLen {
 			complete := (a.len - 1) / consts.ChunkLen
@@ -124,7 +122,7 @@ func (a *hasher) finalizeDigest(d *Digest) {
 	for occ := a.stack.occ; occ != 0; occ &= occ - 1 {
 		col := uint(bits.TrailingZeros64(occ)) % 64
 
-		compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &tmp)
+		compress.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &tmp)
 
 		*(*[8]uint32)(unsafe.Pointer(&d.block[0])) = a.stack.stack[col]
 		*(*[8]uint32)(unsafe.Pointer(&d.block[8])) = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
@@ -180,11 +178,7 @@ func (a *cvstack) pushL(l uint8, cv *chainVector, n int) {
 
 func (a *cvstack) flush(flags uint32, key *[8]uint32) {
 	var out chainVector
-	if a.bufn < 2 {
-		hashPSmall(&a.buf[0], &a.buf[1], flags|consts.Flag_Parent, key, &out, a.bufn)
-	} else {
-		hashP(&a.buf[0], &a.buf[1], flags|consts.Flag_Parent, key, &out, a.bufn)
-	}
+	alg.HashP(&a.buf[0], &a.buf[1], flags|consts.Flag_Parent, key, &out, a.bufn)
 
 	bufn, lvls := a.bufn, a.lvls
 	a.bufn, a.lvls = 0, [8]uint8{}
@@ -271,7 +265,7 @@ func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
 			utils.BytesToWords(buf, block)
 		}
 
-		compress(&d.chain, block, 0, consts.BlockLen, d.flags, &compressed)
+		compress.Compress(&d.chain, block, 0, consts.BlockLen, d.flags, &compressed)
 
 		d.chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
 		d.flags &^= consts.Flag_ChunkStart
