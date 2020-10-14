@@ -226,3 +226,45 @@ func TestAPI_Errors(t *testing.T) {
 	_, err = d.Seek(0, 9999)
 	assert.Error(t, err)
 }
+
+func TestSum256(t *testing.T) {
+	h := New()
+	x := make([]byte, 1<<16)
+
+	for i := range x {
+		x[i] = byte(i) % 251
+		if i%32 != 0 {
+			continue
+		}
+
+		h.Reset()
+		_, _ = h.Write(x[:i])
+
+		var exp [32]byte
+		_, _ = h.Digest().Read(exp[:])
+		got := Sum256(x[:i])
+
+		assert.Equal(t, hex.EncodeToString(got[:]), hex.EncodeToString(exp[:]))
+	}
+}
+
+func TestSum512(t *testing.T) {
+	h := New()
+	x := make([]byte, 1<<16)
+
+	for i := range x {
+		x[i] = byte(i) % 251
+		if i%32 != 0 {
+			continue
+		}
+
+		h.Reset()
+		_, _ = h.Write(x[:i])
+
+		var exp [64]byte
+		_, _ = h.Digest().Read(exp[:])
+		got := Sum512(x[:i])
+
+		assert.Equal(t, hex.EncodeToString(got[:]), hex.EncodeToString(exp[:]))
+	}
+}

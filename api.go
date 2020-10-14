@@ -135,3 +135,25 @@ func (h *Hasher) Digest() *Digest {
 	h.h.finalizeDigest(&d)
 	return &d
 }
+
+// Sum256 returns the first 256 bits of the unkeyed digest of the data.
+func Sum256(data []byte) (sum [32]byte) {
+	out := Sum512(data)
+	copy(sum[:], out[:32])
+	return sum
+}
+
+// Sum512 returns the first 512 bits of the unkeyed digest of the data.
+func Sum512(data []byte) (sum [64]byte) {
+	if len(data) <= consts.ChunkLen {
+		var d Digest
+		compressAll(&d, data, 0, consts.IV)
+		_, _ = d.Read(sum[:])
+		return sum
+	} else {
+		h := hasher{key: consts.IV}
+		h.update(data)
+		h.finalize(sum[:])
+		return sum
+	}
+}
