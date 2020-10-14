@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zeebo/blake3/alg"
+	"github.com/zeebo/blake3/internal/alg"
 	"github.com/zeebo/blake3/internal/consts"
 )
 

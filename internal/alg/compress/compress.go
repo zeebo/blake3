@@ -1,8 +1,8 @@
 package compress
 
 import (
-	"github.com/zeebo/blake3/alg/compress/compress_pure"
-	"github.com/zeebo/blake3/alg/compress/compress_sse41"
+	"github.com/zeebo/blake3/internal/alg/compress/compress_pure"
+	"github.com/zeebo/blake3/internal/alg/compress/compress_sse41"
 	"github.com/zeebo/blake3/internal/consts"
 )
 

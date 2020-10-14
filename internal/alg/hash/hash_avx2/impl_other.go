@@ -2,7 +2,7 @@
 
 package hash_avx2
 
-import "github.com/zeebo/blake3/alg/hash/hash_pure"
+import "github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 
 func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	hash_pure.HashF(input, length, counter, flags, key, out, chain)

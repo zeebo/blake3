@@ -5,7 +5,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/zeebo/blake3/alg/compress"
+	"github.com/zeebo/blake3/internal/alg"
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
 )
@@ -94,7 +94,7 @@ func (d *Digest) slowCopy(p []byte) (n int) {
 }
 
 func (d *Digest) fillBuf() {
-	compress.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &d.buf)
+	alg.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &d.buf)
 	d.counter++
 	d.bufn = consts.BlockLen
 }

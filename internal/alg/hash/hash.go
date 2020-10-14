@@ -1,8 +1,8 @@
 package hash
 
 import (
-	"github.com/zeebo/blake3/alg/hash/hash_avx2"
-	"github.com/zeebo/blake3/alg/hash/hash_pure"
+	"github.com/zeebo/blake3/internal/alg/hash/hash_avx2"
+	"github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 	"github.com/zeebo/blake3/internal/consts"
 )
 

@@ -1,8 +1,8 @@
 package alg
 
 import (
-	"github.com/zeebo/blake3/alg/compress"
-	"github.com/zeebo/blake3/alg/hash"
+	"github.com/zeebo/blake3/internal/alg/compress"
+	"github.com/zeebo/blake3/internal/alg/hash"
 )
 
 func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {

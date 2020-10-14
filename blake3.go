@@ -4,8 +4,7 @@ import (
 	"math/bits"
 	"unsafe"
 
-	"github.com/zeebo/blake3/alg"
-	"github.com/zeebo/blake3/alg/compress"
+	"github.com/zeebo/blake3/internal/alg"
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
 )
@@ -122,7 +121,7 @@ func (a *hasher) finalizeDigest(d *Digest) {
 	for occ := a.stack.occ; occ != 0; occ &= occ - 1 {
 		col := uint(bits.TrailingZeros64(occ)) % 64
 
-		compress.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &tmp)
+		alg.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &tmp)
 
 		*(*[8]uint32)(unsafe.Pointer(&d.block[0])) = a.stack.stack[col]
 		*(*[8]uint32)(unsafe.Pointer(&d.block[8])) = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
@@ -265,7 +264,7 @@ func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
 			utils.BytesToWords(buf, block)
 		}
 
-		compress.Compress(&d.chain, block, 0, consts.BlockLen, d.flags, &compressed)
+		alg.Compress(&d.chain, block, 0, consts.BlockLen, d.flags, &compressed)
 
 		d.chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
 		d.flags &^= consts.Flag_ChunkStart

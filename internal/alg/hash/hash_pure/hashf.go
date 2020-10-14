@@ -3,7 +3,7 @@ package hash_pure
 import (
 	"unsafe"
 
-	"github.com/zeebo/blake3/alg/compress"
+	"github.com/zeebo/blake3/internal/alg/compress"
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/blake3/internal/utils"
 )

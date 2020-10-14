@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/zeebo/assert"
-	"github.com/zeebo/blake3/alg/hash/hash_avx2"
-	"github.com/zeebo/blake3/alg/hash/hash_pure"
+	"github.com/zeebo/blake3/internal/alg/hash/hash_avx2"
+	"github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/pcg"
 )

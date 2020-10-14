@@ -1,6 +1,6 @@
 package hash_pure
 
-import "github.com/zeebo/blake3/alg/compress"
+import "github.com/zeebo/blake3/internal/alg/compress"
 
 func HashP(left, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int) {
 	var tmp [16]uint32
