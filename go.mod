@@ -4,6 +4,6 @@ go 1.13
 
 require (
 	github.com/zeebo/assert v1.1.0
-	github.com/zeebo/pcg v0.0.0-20181207190024-3cdc6b625a05
-	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
+	github.com/zeebo/pcg v1.0.0
+	golang.org/x/sys v0.0.0-20201014080544-cc95f250f6bc
 )
