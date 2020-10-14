@@ -69,3 +69,24 @@ func TestHasher_Vectors(t *testing.T) {
 		}
 	})
 }
+
+func TestHasherAlignment(t *testing.T) {
+	// On little endian architectures, we can do unaligned accesses of
+	// uint32 values during the hashing. This test is designed to cause
+	// those unaligned accesses to occur.
+
+	var buf [32]byte
+
+	x := make([]byte, 8194)
+	for i := range x {
+		x[i] = byte(i) % 251
+	}
+
+	h := hasher{key: consts.IV}
+	h.update(x[1:])
+	h.finalize(buf[:])
+
+	assert.Equal(t,
+		"981d32ed7aad9e408c5c36f6346c915ba11c2bd8b3e7d44902a11d7a141abdd9",
+		hex.EncodeToString(buf[:]))
+}
