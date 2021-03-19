@@ -133,16 +133,16 @@ func main() {
 
 		t2 := XMM()
 		MOVAPS(ms[3], t2)
-		VPUNPCKLDQ(ms[1], t2, t2)
+		PUNPCKLLQ(ms[1], t2)
 		PBLENDW(U8(0b11000000), ms[2], t2)
 		SHUFPS(pack(2, 3, 1, 0), t2, t2)
 		g(rows, t2, rot16, 12)
 
 		t3 := XMM()
 		MOVAPS(ms[1], tt)
-		VPUNPCKHDQ(ms[3], tt, tt)
+		PUNPCKHLQ(ms[3], tt)
 		MOVAPS(ms[2], t3)
-		VPUNPCKLDQ(tt, t3, t3)
+		PUNPCKLLQ(tt, t3)
 		SHUFPS(pack(0, 1, 3, 2), t3, t3)
 		g(rows, t3, rot8, 7)
 
