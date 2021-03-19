@@ -1423,6 +1423,7 @@ finalize:
 	VMOVDQU Y5, 160(SI)
 	VMOVDQU Y6, 192(SI)
 	VMOVDQU Y7, 224(SI)
+	VZEROUPPER
 	RET
 
 // func HashP(left *[32]uint32, right *[32]uint32, flags uint8, key *[8]uint32, out *[32]uint32, n int)
@@ -2556,4 +2557,5 @@ TEXT ·HashP(SB), NOSPLIT, $72-48
 	VMOVDQU Y4, 160(BP)
 	VMOVDQU Y5, 192(BP)
 	VMOVDQU Y6, 224(BP)
+	VZEROUPPER
 	RET

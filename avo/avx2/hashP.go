@@ -93,6 +93,7 @@ func HashP(c Ctx) {
 		}
 	}
 
+	VZEROUPPER()
 	RET()
 }
 

@@ -224,7 +224,7 @@ func HashF(c Ctx) {
 		}
 	}
 
-	Label("return")
+	VZEROUPPER()
 	RET()
 }
 
