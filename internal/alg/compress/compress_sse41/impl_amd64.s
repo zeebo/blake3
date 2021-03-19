@@ -81,7 +81,7 @@ DATA rot8_shuf<>+31(SB)/1, $0x1c
 GLOBL rot8_shuf<>(SB), RODATA|NOPTR, $32
 
 // func Compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, flags uint32, out *[16]uint32)
-// Requires: AVX, SSE, SSE2, SSE4.1, SSSE3
+// Requires: SSE, SSE2, SSE4.1, SSSE3
 TEXT ·Compress(SB), NOSPLIT, $0-40
 	MOVQ   chain+0(FP), AX
 	MOVQ   block+8(FP), CX
@@ -163,388 +163,388 @@ TEXT ·Compress(SB), NOSPLIT, $0-40
 	PSHUFD $0x93, X2, X2
 
 	// round 2
-	MOVAPS     X10, X7
-	SHUFPS     $0xd6, X4, X7
-	SHUFPS     $0x39, X7, X7
-	PADDD      X7, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X11
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X11
-	POR        X11, X1
-	MOVAPS     X5, X11
-	SHUFPS     $0xfa, X6, X11
-	PSHUFD     $0x0f, X10, X10
-	PBLENDW    $0x33, X10, X11
-	PADDD      X11, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X10
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X10
-	POR        X10, X1
-	PSHUFD     $0x93, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x39, X2, X2
-	MOVAPS     X6, X12
-	VPUNPCKLDQ X4, X12, X12
-	PBLENDW    $0xc0, X5, X12
-	SHUFPS     $0xb4, X12, X12
-	PADDD      X12, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X10
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X10
-	POR        X10, X1
-	MOVAPS     X4, X10
-	VPUNPCKHDQ X6, X10, X10
-	MOVAPS     X5, X4
-	VPUNPCKLDQ X10, X4, X4
-	SHUFPS     $0x1e, X4, X4
-	PADDD      X4, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X5
-	POR        X5, X1
-	PSHUFD     $0x39, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x93, X2, X2
+	MOVAPS    X10, X7
+	SHUFPS    $0xd6, X4, X7
+	SHUFPS    $0x39, X7, X7
+	PADDD     X7, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X11
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X11
+	POR       X11, X1
+	MOVAPS    X5, X11
+	SHUFPS    $0xfa, X6, X11
+	PSHUFD    $0x0f, X10, X10
+	PBLENDW   $0x33, X10, X11
+	PADDD     X11, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X10
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X10
+	POR       X10, X1
+	PSHUFD    $0x93, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x39, X2, X2
+	MOVAPS    X6, X12
+	PUNPCKLLQ X4, X12
+	PBLENDW   $0xc0, X5, X12
+	SHUFPS    $0xb4, X12, X12
+	PADDD     X12, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X10
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X10
+	POR       X10, X1
+	MOVAPS    X4, X10
+	PUNPCKHLQ X6, X10
+	MOVAPS    X5, X4
+	PUNPCKLLQ X10, X4
+	SHUFPS    $0x1e, X4, X4
+	PADDD     X4, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X5
+	POR       X5, X1
+	PSHUFD    $0x39, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x93, X2, X2
 
 	// round 3
-	MOVAPS     X7, X5
-	SHUFPS     $0xd6, X11, X5
-	SHUFPS     $0x39, X5, X5
-	PADDD      X5, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X6
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X6
-	POR        X6, X1
-	MOVAPS     X12, X6
-	SHUFPS     $0xfa, X4, X6
-	PSHUFD     $0x0f, X7, X7
-	PBLENDW    $0x33, X7, X6
-	PADDD      X6, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X7
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X7
-	POR        X7, X1
-	PSHUFD     $0x93, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x39, X2, X2
-	MOVAPS     X4, X10
-	VPUNPCKLDQ X11, X10, X10
-	PBLENDW    $0xc0, X12, X10
-	SHUFPS     $0xb4, X10, X10
-	PADDD      X10, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X7
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X7
-	POR        X7, X1
-	MOVAPS     X11, X7
-	VPUNPCKHDQ X4, X7, X7
-	MOVAPS     X12, X4
-	VPUNPCKLDQ X7, X4, X4
-	SHUFPS     $0x1e, X4, X4
-	PADDD      X4, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X7
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X7
-	POR        X7, X1
-	PSHUFD     $0x39, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x93, X2, X2
+	MOVAPS    X7, X5
+	SHUFPS    $0xd6, X11, X5
+	SHUFPS    $0x39, X5, X5
+	PADDD     X5, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X6
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X6
+	POR       X6, X1
+	MOVAPS    X12, X6
+	SHUFPS    $0xfa, X4, X6
+	PSHUFD    $0x0f, X7, X7
+	PBLENDW   $0x33, X7, X6
+	PADDD     X6, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X7
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X7
+	POR       X7, X1
+	PSHUFD    $0x93, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x39, X2, X2
+	MOVAPS    X4, X10
+	PUNPCKLLQ X11, X10
+	PBLENDW   $0xc0, X12, X10
+	SHUFPS    $0xb4, X10, X10
+	PADDD     X10, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X7
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X7
+	POR       X7, X1
+	MOVAPS    X11, X7
+	PUNPCKHLQ X4, X7
+	MOVAPS    X12, X4
+	PUNPCKLLQ X7, X4
+	SHUFPS    $0x1e, X4, X4
+	PADDD     X4, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X7
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X7
+	POR       X7, X1
+	PSHUFD    $0x39, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x93, X2, X2
 
 	// round 4
-	MOVAPS     X5, X7
-	SHUFPS     $0xd6, X6, X7
-	SHUFPS     $0x39, X7, X7
-	PADDD      X7, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X11
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X11
-	POR        X11, X1
-	MOVAPS     X10, X11
-	SHUFPS     $0xfa, X4, X11
-	PSHUFD     $0x0f, X5, X5
-	PBLENDW    $0x33, X5, X11
-	PADDD      X11, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X5
-	POR        X5, X1
-	PSHUFD     $0x93, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x39, X2, X2
-	MOVAPS     X4, X12
-	VPUNPCKLDQ X6, X12, X12
-	PBLENDW    $0xc0, X10, X12
-	SHUFPS     $0xb4, X12, X12
-	PADDD      X12, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X5
-	POR        X5, X1
-	MOVAPS     X6, X5
-	VPUNPCKHDQ X4, X5, X5
-	MOVAPS     X10, X4
-	VPUNPCKLDQ X5, X4, X4
-	SHUFPS     $0x1e, X4, X4
-	PADDD      X4, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X5
-	POR        X5, X1
-	PSHUFD     $0x39, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x93, X2, X2
+	MOVAPS    X5, X7
+	SHUFPS    $0xd6, X6, X7
+	SHUFPS    $0x39, X7, X7
+	PADDD     X7, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X11
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X11
+	POR       X11, X1
+	MOVAPS    X10, X11
+	SHUFPS    $0xfa, X4, X11
+	PSHUFD    $0x0f, X5, X5
+	PBLENDW   $0x33, X5, X11
+	PADDD     X11, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X5
+	POR       X5, X1
+	PSHUFD    $0x93, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x39, X2, X2
+	MOVAPS    X4, X12
+	PUNPCKLLQ X6, X12
+	PBLENDW   $0xc0, X10, X12
+	SHUFPS    $0xb4, X12, X12
+	PADDD     X12, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X5
+	POR       X5, X1
+	MOVAPS    X6, X5
+	PUNPCKHLQ X4, X5
+	MOVAPS    X10, X4
+	PUNPCKLLQ X5, X4
+	SHUFPS    $0x1e, X4, X4
+	PADDD     X4, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X5
+	POR       X5, X1
+	PSHUFD    $0x39, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x93, X2, X2
 
 	// round 5
-	MOVAPS     X7, X5
-	SHUFPS     $0xd6, X11, X5
-	SHUFPS     $0x39, X5, X5
-	PADDD      X5, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X6
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X6
-	POR        X6, X1
-	MOVAPS     X12, X6
-	SHUFPS     $0xfa, X4, X6
-	PSHUFD     $0x0f, X7, X7
-	PBLENDW    $0x33, X7, X6
-	PADDD      X6, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X7
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X7
-	POR        X7, X1
-	PSHUFD     $0x93, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x39, X2, X2
-	MOVAPS     X4, X10
-	VPUNPCKLDQ X11, X10, X10
-	PBLENDW    $0xc0, X12, X10
-	SHUFPS     $0xb4, X10, X10
-	PADDD      X10, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X7
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X7
-	POR        X7, X1
-	MOVAPS     X11, X7
-	VPUNPCKHDQ X4, X7, X7
-	MOVAPS     X12, X4
-	VPUNPCKLDQ X7, X4, X4
-	SHUFPS     $0x1e, X4, X4
-	PADDD      X4, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X7
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X7
-	POR        X7, X1
-	PSHUFD     $0x39, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x93, X2, X2
+	MOVAPS    X7, X5
+	SHUFPS    $0xd6, X11, X5
+	SHUFPS    $0x39, X5, X5
+	PADDD     X5, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X6
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X6
+	POR       X6, X1
+	MOVAPS    X12, X6
+	SHUFPS    $0xfa, X4, X6
+	PSHUFD    $0x0f, X7, X7
+	PBLENDW   $0x33, X7, X6
+	PADDD     X6, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X7
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X7
+	POR       X7, X1
+	PSHUFD    $0x93, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x39, X2, X2
+	MOVAPS    X4, X10
+	PUNPCKLLQ X11, X10
+	PBLENDW   $0xc0, X12, X10
+	SHUFPS    $0xb4, X10, X10
+	PADDD     X10, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X7
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X7
+	POR       X7, X1
+	MOVAPS    X11, X7
+	PUNPCKHLQ X4, X7
+	MOVAPS    X12, X4
+	PUNPCKLLQ X7, X4
+	SHUFPS    $0x1e, X4, X4
+	PADDD     X4, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X7
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X7
+	POR       X7, X1
+	PSHUFD    $0x39, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x93, X2, X2
 
 	// round 6
-	MOVAPS     X5, X7
-	SHUFPS     $0xd6, X6, X7
-	SHUFPS     $0x39, X7, X7
-	PADDD      X7, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X11
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X11
-	POR        X11, X1
-	MOVAPS     X10, X11
-	SHUFPS     $0xfa, X4, X11
-	PSHUFD     $0x0f, X5, X5
-	PBLENDW    $0x33, X5, X11
-	PADDD      X11, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X5
-	POR        X5, X1
-	PSHUFD     $0x93, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x39, X2, X2
-	MOVAPS     X4, X12
-	VPUNPCKLDQ X6, X12, X12
-	PBLENDW    $0xc0, X10, X12
-	SHUFPS     $0xb4, X12, X12
-	PADDD      X12, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X5
-	POR        X5, X1
-	MOVAPS     X6, X5
-	VPUNPCKHDQ X4, X5, X5
-	MOVAPS     X10, X4
-	VPUNPCKLDQ X5, X4, X4
-	SHUFPS     $0x1e, X4, X4
-	PADDD      X4, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X5
-	POR        X5, X1
-	PSHUFD     $0x39, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x93, X2, X2
+	MOVAPS    X5, X7
+	SHUFPS    $0xd6, X6, X7
+	SHUFPS    $0x39, X7, X7
+	PADDD     X7, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X11
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X11
+	POR       X11, X1
+	MOVAPS    X10, X11
+	SHUFPS    $0xfa, X4, X11
+	PSHUFD    $0x0f, X5, X5
+	PBLENDW   $0x33, X5, X11
+	PADDD     X11, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X5
+	POR       X5, X1
+	PSHUFD    $0x93, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x39, X2, X2
+	MOVAPS    X4, X12
+	PUNPCKLLQ X6, X12
+	PBLENDW   $0xc0, X10, X12
+	SHUFPS    $0xb4, X12, X12
+	PADDD     X12, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X5
+	POR       X5, X1
+	MOVAPS    X6, X5
+	PUNPCKHLQ X4, X5
+	MOVAPS    X10, X4
+	PUNPCKLLQ X5, X4
+	SHUFPS    $0x1e, X4, X4
+	PADDD     X4, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X5
+	POR       X5, X1
+	PSHUFD    $0x39, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x93, X2, X2
 
 	// round 7
-	MOVAPS     X7, X5
-	SHUFPS     $0xd6, X11, X5
-	SHUFPS     $0x39, X5, X5
-	PADDD      X5, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X5
-	POR        X5, X1
-	MOVAPS     X12, X5
-	SHUFPS     $0xfa, X4, X5
-	PSHUFD     $0x0f, X7, X6
-	PBLENDW    $0x33, X6, X5
-	PADDD      X5, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X5
-	POR        X5, X1
-	PSHUFD     $0x93, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x39, X2, X2
-	MOVAPS     X4, X5
-	VPUNPCKLDQ X11, X5, X5
-	PBLENDW    $0xc0, X12, X5
-	SHUFPS     $0xb4, X5, X5
-	PADDD      X5, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X8, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X5
-	PSRLL      $0x0c, X1
-	PSLLL      $0x14, X5
-	POR        X5, X1
-	MOVAPS     X11, X6
-	VPUNPCKHDQ X4, X6, X6
-	MOVAPS     X12, X4
-	VPUNPCKLDQ X6, X4, X4
-	SHUFPS     $0x1e, X4, X4
-	PADDD      X4, X0
-	PADDD      X1, X0
-	PXOR       X0, X3
-	PSHUFB     X9, X3
-	PADDD      X3, X2
-	PXOR       X2, X1
-	MOVAPS     X1, X4
-	PSRLL      $0x07, X1
-	PSLLL      $0x19, X4
-	POR        X4, X1
-	PSHUFD     $0x39, X0, X0
-	PSHUFD     $0x4e, X3, X3
-	PSHUFD     $0x93, X2, X2
+	MOVAPS    X7, X5
+	SHUFPS    $0xd6, X11, X5
+	SHUFPS    $0x39, X5, X5
+	PADDD     X5, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X5
+	POR       X5, X1
+	MOVAPS    X12, X5
+	SHUFPS    $0xfa, X4, X5
+	PSHUFD    $0x0f, X7, X6
+	PBLENDW   $0x33, X6, X5
+	PADDD     X5, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X5
+	POR       X5, X1
+	PSHUFD    $0x93, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x39, X2, X2
+	MOVAPS    X4, X5
+	PUNPCKLLQ X11, X5
+	PBLENDW   $0xc0, X12, X5
+	SHUFPS    $0xb4, X5, X5
+	PADDD     X5, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X8, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X5
+	PSRLL     $0x0c, X1
+	PSLLL     $0x14, X5
+	POR       X5, X1
+	MOVAPS    X11, X6
+	PUNPCKHLQ X4, X6
+	MOVAPS    X12, X4
+	PUNPCKLLQ X6, X4
+	SHUFPS    $0x1e, X4, X4
+	PADDD     X4, X0
+	PADDD     X1, X0
+	PXOR      X0, X3
+	PSHUFB    X9, X3
+	PADDD     X3, X2
+	PXOR      X2, X1
+	MOVAPS    X1, X4
+	PSRLL     $0x07, X1
+	PSLLL     $0x19, X4
+	POR       X4, X1
+	PSHUFD    $0x39, X0, X0
+	PSHUFD    $0x4e, X3, X3
+	PSHUFD    $0x93, X2, X2
 
 	// finalize
 	PXOR   X2, X0
