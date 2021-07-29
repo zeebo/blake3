@@ -270,17 +270,20 @@ func TestSum512(t *testing.T) {
 }
 
 func TestClone(t *testing.T) {
-	key := make([]byte, 32)
-	for i := 0; i < len(key); i++ {
-		key[i] = byte(i)
-	}
-	h, _ := NewKeyed(key)
-	_, _ = h.Write([]byte{0x1})
-	sum1 := h.Sum(nil)
-	assert.Equal(t, hex.EncodeToString(sum1), hex.EncodeToString(h.Clone().Sum(nil)))
-	h2 := h.Clone()
-	h2.Write([]byte{0x2})
-	assert.Equal(t, hex.EncodeToString(sum1), hex.EncodeToString(h.Sum(nil)))
-	h.Write([]byte{0x2})
-	assert.Equal(t, hex.EncodeToString(h.Sum(nil)), hex.EncodeToString(h2.Sum(nil)))
+	sum := func(h *Hasher) string { return hex.EncodeToString(h.Sum(nil)) }
+
+	h1 := New()
+	h1.WriteString("1")
+
+	h0 := h1.Clone()
+	assert.Equal(t, sum(h1), sum(h0))
+
+	h2 := h1.Clone()
+	assert.Equal(t, sum(h1), sum(h2))
+
+	h2.WriteString("2")
+	assert.Equal(t, sum(h1), sum(h0))
+
+	h1.WriteString("2")
+	assert.Equal(t, sum(h1), sum(h2))
 }

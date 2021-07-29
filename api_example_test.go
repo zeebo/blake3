@@ -95,6 +95,41 @@ func ExampleHasher_Digest() {
 	// 1b55688951738e3a7155d6398eb56c6bc35d5bca5f139d98eb7409be51d1be32
 }
 
+func ExampleHasher_Clone() {
+	h1 := blake3.New()
+	h1.WriteString("some")
+
+	h2 := h1.Clone()
+	fmt.Println("before:")
+	fmt.Printf("h1: %x\n", h1.Sum(nil))
+	fmt.Printf("h2: %x\n\n", h2.Sum(nil))
+
+	h2.WriteString(" data")
+
+	fmt.Println("h2 modified:")
+	fmt.Printf("h1: %x\n", h1.Sum(nil))
+	fmt.Printf("h2: %x\n\n", h2.Sum(nil))
+
+	h1.WriteString(" data")
+
+	fmt.Println("h1 converged:")
+	fmt.Printf("h1: %x\n", h1.Sum(nil))
+	fmt.Printf("h2: %x\n", h2.Sum(nil))
+
+	//output:
+	// before:
+	// h1: 2f610cf2e7e0dc09384cbaa75b2ae5d9704ac9a5ac7f28684342856e2867c707
+	// h2: 2f610cf2e7e0dc09384cbaa75b2ae5d9704ac9a5ac7f28684342856e2867c707
+	//
+	// h2 modified:
+	// h1: 2f610cf2e7e0dc09384cbaa75b2ae5d9704ac9a5ac7f28684342856e2867c707
+	// h2: b224a1da2bf5e72b337dc6dde457a05265a06dec8875be379e2ad2be5edb3bf2
+	//
+	// h1 converged:
+	// h1: b224a1da2bf5e72b337dc6dde457a05265a06dec8875be379e2ad2be5edb3bf2
+	// h2: b224a1da2bf5e72b337dc6dde457a05265a06dec8875be379e2ad2be5edb3bf2
+}
+
 func ExampleDigest_Seek() {
 	h := blake3.New()
 	h.Write([]byte("some data"))
