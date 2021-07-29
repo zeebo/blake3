@@ -30,17 +30,6 @@ func (a *hasher) reset() {
 	a.stack.bufn = 0
 }
 
-func (a *hasher) clone() hasher {
-	var out hasher
-	out.len = a.len
-	out.chunks = a.chunks
-	out.flags = a.flags
-	copy(out.key[:], a.key[:])
-	out.stack = a.stack.clone()
-	copy(out.buf[:], a.buf[:])
-	return out
-}
-
 func (a *hasher) update(buf []byte) {
 	// relies on the first two words of a string being the same as a slice
 	a.updateString(*(*string)(unsafe.Pointer(&buf)))
@@ -160,16 +149,6 @@ type cvstack struct {
 	bufn  int      // how many pairs are loaded into buf
 	buf   [2]chainVector
 	stack [64][8]uint32
-}
-
-func (a *cvstack) clone() cvstack {
-	var out cvstack
-	out.occ = a.occ
-	copy(out.lvls[:], a.lvls[:])
-	out.bufn = a.bufn
-	copy(out.buf[:], a.buf[:])
-	copy(out.stack[:], a.stack[:])
-	return out
 }
 
 func (a *cvstack) pushN(l uint8, cv *chainVector, n int, flags uint32, key *[8]uint32) {

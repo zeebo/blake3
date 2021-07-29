@@ -106,7 +106,7 @@ func (h *Hasher) Reset() {
 //
 // Modifying the resulting Hasher will not modify the original Hasher, and vice versa.
 func (h *Hasher) Clone() *Hasher {
-	return &Hasher{size: h.size, h: h.h.clone()}
+	return &Hasher{size: h.size, h: h.h}
 }
 
 // Size implements part of the hash.Hash interface. It returns the number of
