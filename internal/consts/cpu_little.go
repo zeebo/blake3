@@ -3,4 +3,4 @@
 
 package consts
 
-const IsLittleEndian = true
+const OptimizeLittleEndian = true

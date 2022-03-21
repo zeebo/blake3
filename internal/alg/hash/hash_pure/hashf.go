@@ -28,7 +28,7 @@ func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint
 			}
 
 			var blockPtr *[16]uint32
-			if consts.IsLittleEndian {
+			if consts.OptimizeLittleEndian {
 				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n]))
 			} else {
 				var block [16]uint32

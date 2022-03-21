@@ -9,7 +9,7 @@ import (
 )
 
 func TestBytesToWords(t *testing.T) {
-	if !consts.IsLittleEndian {
+	if !consts.OptimizeLittleEndian {
 		t.SkipNow()
 	}
 

@@ -105,7 +105,7 @@ func (a *hasher) finalizeDigest(d *Digest) {
 		base -= 64
 	}
 
-	if consts.IsLittleEndian {
+	if consts.OptimizeLittleEndian {
 		copy((*[64]byte)(unsafe.Pointer(&d.block[0]))[:], a.buf[base:a.len])
 	} else {
 		var tmp [64]byte
@@ -257,7 +257,7 @@ func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
 		buf := (*[64]byte)(unsafe.Pointer(&in[0]))
 
 		var block *[16]uint32
-		if consts.IsLittleEndian {
+		if consts.OptimizeLittleEndian {
 			block = (*[16]uint32)(unsafe.Pointer(buf))
 		} else {
 			block = &d.block
@@ -272,7 +272,7 @@ func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
 		in = in[64:]
 	}
 
-	if consts.IsLittleEndian {
+	if consts.OptimizeLittleEndian {
 		copy((*[64]byte)(unsafe.Pointer(&d.block[0]))[:], in)
 	} else {
 		var tmp [64]byte

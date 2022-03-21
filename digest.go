@@ -36,7 +36,7 @@ func (d *Digest) Read(p []byte) (n int, err error) {
 	for len(p) >= 64 {
 		d.fillBuf()
 
-		if consts.IsLittleEndian {
+		if consts.OptimizeLittleEndian {
 			*(*[64]byte)(unsafe.Pointer(&p[0])) = *(*[64]byte)(unsafe.Pointer(&d.buf[0]))
 		} else {
 			utils.WordsToBytes(&d.buf, p)
@@ -83,7 +83,7 @@ func (d *Digest) setPosition(pos uint64) {
 
 func (d *Digest) slowCopy(p []byte) (n int) {
 	off := uint(consts.BlockLen-d.bufn) % consts.BlockLen
-	if consts.IsLittleEndian {
+	if consts.OptimizeLittleEndian {
 		n = copy(p, (*[consts.BlockLen]byte)(unsafe.Pointer(&d.buf[0]))[off:])
 	} else {
 		var tmp [consts.BlockLen]byte
