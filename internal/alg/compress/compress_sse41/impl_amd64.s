@@ -87,8 +87,8 @@ TEXT ·Compress(SB), NOSPLIT, $0-40
 	MOVQ   block+8(FP), CX
 	MOVQ   counter+16(FP), DX
 	MOVL   blen+24(FP), BX
-	MOVL   flags+28(FP), BP
-	MOVQ   out+32(FP), SI
+	MOVL   flags+28(FP), SI
+	MOVQ   out+32(FP), DI
 	MOVUPS (AX), X0
 	MOVUPS 16(AX), X1
 	MOVUPS iv<>+0(SB), X2
@@ -96,7 +96,7 @@ TEXT ·Compress(SB), NOSPLIT, $0-40
 	SHRQ   $0x20, DX
 	PINSRD $0x01, DX, X3
 	PINSRD $0x02, BX, X3
-	PINSRD $0x03, BP, X3
+	PINSRD $0x03, SI, X3
 	MOVUPS (CX), X4
 	MOVUPS 16(CX), X5
 	MOVUPS 32(CX), X6
@@ -553,8 +553,8 @@ TEXT ·Compress(SB), NOSPLIT, $0-40
 	PXOR   X4, X2
 	MOVUPS 16(AX), X4
 	PXOR   X4, X3
-	MOVUPS X0, (SI)
-	MOVUPS X1, 16(SI)
-	MOVUPS X2, 32(SI)
-	MOVUPS X3, 48(SI)
+	MOVUPS X0, (DI)
+	MOVUPS X1, 16(DI)
+	MOVUPS X2, 32(DI)
+	MOVUPS X3, 48(DI)
 	RET
