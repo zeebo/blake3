@@ -6,6 +6,10 @@ internal/alg/hash/hash_avx2/impl_amd64.s: avo/avx2/*.go
 internal/alg/compress/compress_sse41/impl_amd64.s: avo/sse41/*.go
 	( cd avo; go run ./sse41 ) > internal/alg/compress/compress_sse41/impl_amd64.s
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 .PHONY: clean
 clean:
 	rm -f internal/alg/hash/hash_avx2/impl_amd64.s
