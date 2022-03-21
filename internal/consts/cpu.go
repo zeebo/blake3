@@ -3,15 +3,15 @@ package consts
 import (
 	"os"
 
-	"golang.org/x/sys/cpu"
+	"github.com/klauspost/cpuid/v2"
 )
 
 var (
-	HasAVX2 = cpu.X86.HasAVX2 &&
+	HasAVX2 = cpuid.CPU.Has(cpuid.AVX2) &&
 		os.Getenv("BLAKE3_DISABLE_AVX2") == "" &&
 		os.Getenv("BLAKE3_PUREGO") == ""
 
-	HasSSE41 = cpu.X86.HasSSE41 &&
+	HasSSE41 = cpuid.CPU.Has(cpuid.SSE4) &&
 		os.Getenv("BLAKE3_DISABLE_SSE41") == "" &&
 		os.Getenv("BLAKE3_PUREGO") == ""
 )
