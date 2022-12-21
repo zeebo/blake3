@@ -26,6 +26,16 @@ func New() *Hasher {
 	}
 }
 
+// New512 returns a new Hasher that has a digest size of 64 byties.
+func New512() *Hasher {
+	return &Hasher{
+		size: 64,
+		h: hasher{
+			key: consts.IV,
+		},
+	}
+}
+
 // NewKeyed returns a new Hasher that uses the 32 byte input key and has
 // a digest size of 32 bytes.
 //
