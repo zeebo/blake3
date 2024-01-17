@@ -134,6 +134,12 @@ func (h *Hasher) Sum(b []byte) []byte {
 	return append(b, tmp...)
 }
 
+// Copy the digest of the Hasher to the provided buffer and return bytes copied.
+func (h *Hasher) SumTo(b []byte) int {
+	h.h.finalize(b)
+	return h.size
+}
+
 // Digest takes a snapshot of the hash state and returns an object that can
 // be used to read and seek through 2^64 bytes of digest output.
 func (h *Hasher) Digest() *Digest {
