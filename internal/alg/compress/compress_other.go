@@ -1,7 +1,7 @@
-//go:build !amd64
-// +build !amd64
+//go:build purego || !amd64
+// +build purego !amd64
 
-package compress_sse41
+package compress
 
 import "github.com/zeebo/blake3/internal/alg/compress/compress_pure"
 

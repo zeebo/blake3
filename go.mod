@@ -1,6 +1,6 @@
 module github.com/zeebo/blake3
 
-go 1.13
+go 1.18
 
 require (
 	github.com/klauspost/cpuid/v2 v2.0.12
