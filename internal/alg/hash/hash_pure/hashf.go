@@ -10,6 +10,7 @@ import (
 
 func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32) {
 	var tmp [16]uint32
+	var block [16]uint32
 
 	for i := uint64(0); consts.ChunkLen*i < length && i < 8; i++ {
 		bchain := *key
@@ -31,14 +32,13 @@ func HashF(input *[8192]byte, length, counter uint64, flags uint32, key *[8]uint
 			if consts.OptimizeLittleEndian {
 				blockPtr = (*[16]uint32)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n]))
 			} else {
-				var block [16]uint32
-				utils.BytesToWords((*[64]uint8)(unsafe.Pointer(&input[consts.ChunkLen*i+consts.BlockLen*n])), &block)
+				utils.BytesToWords((*[64]uint8)(input[consts.ChunkLen*i+consts.BlockLen*n:]), &block)
 				blockPtr = &block
 			}
 
 			compress.Compress(&bchain, blockPtr, counter, consts.BlockLen, bflags, &tmp)
 
-			bchain = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
+			bchain = *(*[8]uint32)(tmp[0:8])
 			bflags = flags
 		}
 

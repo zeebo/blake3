@@ -31,8 +31,7 @@ func (a *hasher) reset() {
 }
 
 func (a *hasher) update(buf []byte) {
-	// relies on the first two words of a string being the same as a slice
-	a.updateString(*(*string)(unsafe.Pointer(&buf)))
+	a.updateString(unsafe.String(unsafe.SliceData(buf), len(buf)))
 }
 
 func (a *hasher) updateString(buf string) {
@@ -40,8 +39,7 @@ func (a *hasher) updateString(buf string) {
 
 	for len(buf) > 0 {
 		if a.len == 0 && len(buf) > 8192 {
-			// relies on the data pointer being the first word in the string header
-			input = (*[8192]byte)(*(*unsafe.Pointer)(unsafe.Pointer(&buf)))
+			input = (*[8192]byte)(unsafe.Pointer(unsafe.StringData(buf)))
 			buf = buf[8192:]
 		} else if a.len < 8192 {
 			n := copy(a.buf[a.len:], buf)
@@ -123,8 +121,8 @@ func (a *hasher) finalizeDigest(d *Digest) {
 
 		alg.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &tmp)
 
-		*(*[8]uint32)(unsafe.Pointer(&d.block[0])) = a.stack.stack[col]
-		*(*[8]uint32)(unsafe.Pointer(&d.block[8])) = *(*[8]uint32)(unsafe.Pointer(&tmp[0]))
+		*(*[8]uint32)(d.block[0:8]) = a.stack.stack[col]
+		*(*[8]uint32)(d.block[8:16]) = *(*[8]uint32)(tmp[0:8])
 
 		if occ == a.stack.occ {
 			d.chain = a.key
@@ -192,55 +190,43 @@ func (a *cvstack) flush(flags uint32, key *[8]uint32) {
 //
 
 func copyChain(in *chainVector, icol int, out *chainVector, ocol int) {
-	type u = uintptr
-	type p = unsafe.Pointer
-	type a = *uint32
+	i := unsafe.Add(unsafe.Pointer(in), icol*4)
+	o := unsafe.Add(unsafe.Pointer(out), ocol*4)
 
-	i := p(u(p(in)) + u(icol*4))
-	o := p(u(p(out)) + u(ocol*4))
-
-	*a(p(u(o) + 0*32)) = *a(p(u(i) + 0*32))
-	*a(p(u(o) + 1*32)) = *a(p(u(i) + 1*32))
-	*a(p(u(o) + 2*32)) = *a(p(u(i) + 2*32))
-	*a(p(u(o) + 3*32)) = *a(p(u(i) + 3*32))
-	*a(p(u(o) + 4*32)) = *a(p(u(i) + 4*32))
-	*a(p(u(o) + 5*32)) = *a(p(u(i) + 5*32))
-	*a(p(u(o) + 6*32)) = *a(p(u(i) + 6*32))
-	*a(p(u(o) + 7*32)) = *a(p(u(i) + 7*32))
+	*(*uint32)(unsafe.Add(o, 0*32)) = *(*uint32)(unsafe.Add(i, 0*32))
+	*(*uint32)(unsafe.Add(o, 1*32)) = *(*uint32)(unsafe.Add(i, 1*32))
+	*(*uint32)(unsafe.Add(o, 2*32)) = *(*uint32)(unsafe.Add(i, 2*32))
+	*(*uint32)(unsafe.Add(o, 3*32)) = *(*uint32)(unsafe.Add(i, 3*32))
+	*(*uint32)(unsafe.Add(o, 4*32)) = *(*uint32)(unsafe.Add(i, 4*32))
+	*(*uint32)(unsafe.Add(o, 5*32)) = *(*uint32)(unsafe.Add(i, 5*32))
+	*(*uint32)(unsafe.Add(o, 6*32)) = *(*uint32)(unsafe.Add(i, 6*32))
+	*(*uint32)(unsafe.Add(o, 7*32)) = *(*uint32)(unsafe.Add(i, 7*32))
 }
 
 func readChain(in *chainVector, col int, out *[8]uint32) {
-	type u = uintptr
-	type p = unsafe.Pointer
-	type a = *uint32
+	i := unsafe.Add(unsafe.Pointer(in), col*4)
 
-	i := p(u(p(in)) + u(col*4))
-
-	out[0] = *a(p(u(i) + 0*32))
-	out[1] = *a(p(u(i) + 1*32))
-	out[2] = *a(p(u(i) + 2*32))
-	out[3] = *a(p(u(i) + 3*32))
-	out[4] = *a(p(u(i) + 4*32))
-	out[5] = *a(p(u(i) + 5*32))
-	out[6] = *a(p(u(i) + 6*32))
-	out[7] = *a(p(u(i) + 7*32))
+	out[0] = *(*uint32)(unsafe.Add(i, 0*32))
+	out[1] = *(*uint32)(unsafe.Add(i, 1*32))
+	out[2] = *(*uint32)(unsafe.Add(i, 2*32))
+	out[3] = *(*uint32)(unsafe.Add(i, 3*32))
+	out[4] = *(*uint32)(unsafe.Add(i, 4*32))
+	out[5] = *(*uint32)(unsafe.Add(i, 5*32))
+	out[6] = *(*uint32)(unsafe.Add(i, 6*32))
+	out[7] = *(*uint32)(unsafe.Add(i, 7*32))
 }
 
 func writeChain(in *[8]uint32, out *chainVector, col int) {
-	type u = uintptr
-	type p = unsafe.Pointer
-	type a = *uint32
+	o := unsafe.Add(unsafe.Pointer(out), col*4)
 
-	o := p(u(p(out)) + u(col*4))
-
-	*a(p(u(o) + 0*32)) = in[0]
-	*a(p(u(o) + 1*32)) = in[1]
-	*a(p(u(o) + 2*32)) = in[2]
-	*a(p(u(o) + 3*32)) = in[3]
-	*a(p(u(o) + 4*32)) = in[4]
-	*a(p(u(o) + 5*32)) = in[5]
-	*a(p(u(o) + 6*32)) = in[6]
-	*a(p(u(o) + 7*32)) = in[7]
+	*(*uint32)(unsafe.Add(o, 0*32)) = in[0]
+	*(*uint32)(unsafe.Add(o, 1*32)) = in[1]
+	*(*uint32)(unsafe.Add(o, 2*32)) = in[2]
+	*(*uint32)(unsafe.Add(o, 3*32)) = in[3]
+	*(*uint32)(unsafe.Add(o, 4*32)) = in[4]
+	*(*uint32)(unsafe.Add(o, 5*32)) = in[5]
+	*(*uint32)(unsafe.Add(o, 6*32)) = in[6]
+	*(*uint32)(unsafe.Add(o, 7*32)) = in[7]
 }
 
 //
@@ -254,7 +240,7 @@ func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
 	d.flags = flags | consts.Flag_ChunkStart
 
 	for len(in) > 64 {
-		buf := (*[64]byte)(unsafe.Pointer(&in[0]))
+		buf := (*[64]byte)(in)
 
 		var block *[16]uint32
 		if consts.OptimizeLittleEndian {
@@ -266,7 +252,7 @@ func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
 
 		alg.Compress(&d.chain, block, 0, consts.BlockLen, d.flags, &compressed)
 
-		d.chain = *(*[8]uint32)(unsafe.Pointer(&compressed[0]))
+		d.chain = *(*[8]uint32)(compressed[0:8])
 		d.flags &^= consts.Flag_ChunkStart
 
 		in = in[64:]

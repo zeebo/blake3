@@ -3,7 +3,9 @@ package blake3
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"io"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -286,4 +288,50 @@ func TestClone(t *testing.T) {
 
 	h1.WriteString("2")
 	assert.Equal(t, sum(h1), sum(h2))
+}
+
+func BenchmarkSum256(b *testing.B) {
+	run := func(b *testing.B, size int64) {
+		b.Run(fmt.Sprint(size), func(b *testing.B) {
+			buf := make([]byte, size)
+			b.SetBytes(size)
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			var sum [32]byte
+			for i := 0; i < b.N; i++ {
+				sum = Sum256(buf)
+			}
+			runtime.KeepAlive(sum)
+		})
+	}
+
+	run(b, 0)
+	run(b, 32)
+	run(b, 64)
+	run(b, 1024)
+	run(b, 1024*1024)
+}
+
+func BenchmarkSum512(b *testing.B) {
+	run := func(b *testing.B, size int64) {
+		b.Run(fmt.Sprint(size), func(b *testing.B) {
+			buf := make([]byte, size)
+			b.SetBytes(size)
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			var sum [64]byte
+			for i := 0; i < b.N; i++ {
+				sum = Sum512(buf)
+			}
+			runtime.KeepAlive(sum)
+		})
+	}
+
+	run(b, 0)
+	run(b, 32)
+	run(b, 64)
+	run(b, 1024)
+	run(b, 1024*1024)
 }

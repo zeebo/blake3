@@ -2,11 +2,7 @@ package utils
 
 import (
 	"encoding/binary"
-	"unsafe"
 )
-
-func SliceToArray32(bytes []byte) *[32]uint8 { return (*[32]uint8)(unsafe.Pointer(&bytes[0])) }
-func SliceToArray64(bytes []byte) *[64]uint8 { return (*[64]uint8)(unsafe.Pointer(&bytes[0])) }
 
 func BytesToWords(bytes *[64]uint8, words *[16]uint32) {
 	words[0] = binary.LittleEndian.Uint32(bytes[0*4:])
