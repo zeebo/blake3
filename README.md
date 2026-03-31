@@ -75,3 +75,7 @@ The downside of internal buffering is most apparent with small sizes as most tim
 | 1024 kib |   `880µs`   |   `883µs`   |   `878µs`  | |  `596MB/s`       |  `595MB/s`       |  `598MB/s`  |
 
 The speed caps out at around 1 kib, so most rows have been elided from the presentation.
+
+## License
+
+This project is available under **MIT OR CC0-1.0** (SPDX `MIT OR CC0-1.0`): you may comply with either license.
