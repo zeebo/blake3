@@ -75,3 +75,17 @@ The downside of internal buffering is most apparent with small sizes as most tim
 | 1024 kib |   `880µs`   |   `883µs`   |   `878µs`  | |  `596MB/s`       |  `595MB/s`       |  `598MB/s`  |
 
 The speed caps out at around 1 kib, so most rows have been elided from the presentation.
+
+### ARM64 (NEON)
+
+Measured on an Apple M4 using the Full Buffer benchmark. The NEON backend hashes four chunks per pass where AVX2 does eight, so rates are lower than the amd64 numbers above. Inputs of two chunks or fewer use the pure implementation.
+
+| Size     | NEON       | Pure Go    | | NEON Rate    | Pure Go Rate |
+|----------|------------|------------|-|--------------|--------------|
+| 1 kib    |  `1.10µs`  |  `1.08µs`  | |   `927MB/s`  |   `952MB/s`  |
+| 4 kib    |  `2.11µs`  |  `4.03µs`  | |  `1.94GB/s`  |  `1.02GB/s`  |
+| 8 kib    |  `3.95µs`  |  `7.89µs`  | |  `2.08GB/s`  |  `1.04GB/s`  |
+| 16 kib   |  `7.57µs`  |  `15.7µs`  | |  `2.17GB/s`  |  `1.04GB/s`  |
+| 64 kib   |  `29.0µs`  |  `62.2µs`  | |  `2.26GB/s`  |  `1.05GB/s`  |
+| 256 kib  |   `119µs`  |   `250µs`  | |  `2.20GB/s`  |  `1.05GB/s`  |
+| 1024 kib |   `459µs`  |  `1.00ms`  | |  `2.29GB/s`  |  `1.05GB/s`  |
