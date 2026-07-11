@@ -6,21 +6,28 @@ import (
 )
 
 type asm struct {
-	w io.Writer
+	w   io.Writer
+	err error
+}
+
+func (a *asm) writef(format string, args ...interface{}) {
+	if a.err == nil {
+		_, a.err = fmt.Fprintf(a.w, format, args...)
+	}
 }
 
 func (a *asm) line(format string, args ...interface{}) {
-	fmt.Fprintf(a.w, format+"\n", args...)
+	a.writef(format+"\n", args...)
 }
 
 func (a *asm) op(format string, args ...interface{}) {
-	fmt.Fprintf(a.w, "\t"+format+"\n", args...)
+	a.writef("\t"+format+"\n", args...)
 }
 
 func (a *asm) label(name string) {
-	fmt.Fprintf(a.w, "\n%s:\n", name)
+	a.writef("\n%s:\n", name)
 }
 
 func (a *asm) comment(format string, args ...interface{}) {
-	fmt.Fprintf(a.w, "\t// "+format+"\n", args...)
+	a.writef("\t// "+format+"\n", args...)
 }
