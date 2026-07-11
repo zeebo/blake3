@@ -1,9 +1,8 @@
 package main
 
-// emitHashP emits parent hashing. Because left/right/out use the transposed
-// layout, message vector m[j] for four consecutive parents is a contiguous
-// 16-byte quad in left (j < 8) or right (j >= 8), so no transpose or stack
-// is needed: every message load is a single FMOVQ with a baked-in offset.
+// The transposed layout makes message vector m[j] for four consecutive
+// parents a contiguous quad in left (j < 8) or right (j >= 8), so message
+// loads are single FMOVQs and no transpose or stack is needed.
 func emitHashP(a *asm) {
 	a.line("")
 	a.line("// func HashP(left *[64]uint32, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int)")

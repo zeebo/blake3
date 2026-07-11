@@ -16,10 +16,8 @@ const (
 	stashOff    = 288
 )
 
-// emitHashF emits chunk hashing. Chunks map to vector lanes, four at a time:
-// group 0 covers chunks 0-3 and group 1 (entered only when length > 4096)
-// covers chunks 4-7. Each group runs a uniform loop over 64-byte blocks;
-// lanes past the end of the input compute garbage that the caller ignores.
+// Chunks map to vector lanes four at a time; each group runs a uniform block
+// loop, and lanes past the input compute garbage that the caller ignores.
 func emitHashF(a *asm) {
 	a.line("")
 	a.line("// func HashF(input *[8192]byte, length uint64, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32)")

@@ -1,19 +1,14 @@
 package main
 
-// gStates lists the state rows (a, b, c, d) mixed by each of the eight G
-// calls in a round: four column mixes followed by four diagonal mixes.
 var gStates = [8][4]int{
 	{0, 4, 8, 12}, {1, 5, 9, 13}, {2, 6, 10, 14}, {3, 7, 11, 15},
 	{0, 5, 10, 15}, {1, 6, 11, 12}, {2, 7, 8, 13}, {3, 4, 9, 14},
 }
 
-// loadMsg emits an instruction loading message vector m[idx] into V<vreg>.
 type loadMsg func(a *asm, idx, vreg int)
 
-// emitG emits one BLAKE3 G mix on four transposed state rows. V16/V17 hold
-// the message operands, V18 is a rotate temporary, and V31 holds the
-// rotate-right-8 TBL indices. All rotates are right rotations, so the
-// VSHL/VSRI immediates are mirrored relative to ChaCha kernels.
+// BLAKE3 rotates right, so the VSHL/VSRI immediates are mirrored relative
+// to ChaCha kernels. V31 holds the rotate-right-8 TBL indices.
 func emitG(a *asm, va, vb, vc, vd, mx, my int, load loadMsg) {
 	load(a, mx, 16)
 	a.op("VADD V%d.S4, V%d.S4, V%d.S4", vb, va, va)
@@ -45,7 +40,6 @@ func emitRounds(a *asm, load loadMsg) {
 	}
 }
 
-// emitKeyBroadcast fills V0-V7 with key words broadcast across all lanes.
 func emitKeyBroadcast(a *asm, keyReg string) {
 	a.op("VLD1 (%s), [V28.S4, V29.S4]", keyReg)
 	for i := range 8 {
@@ -53,7 +47,6 @@ func emitKeyBroadcast(a *asm, keyReg string) {
 	}
 }
 
-// emitFeedForward folds the state back into the chaining value: v[i] ^= v[i+8].
 func emitFeedForward(a *asm) {
 	for i := range 8 {
 		a.op("VEOR V%d.B16, V%d.B16, V%d.B16", 8+i, i, i)
