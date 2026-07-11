@@ -28,8 +28,8 @@ var msgSchedule = func() [7][16]int {
 var rot8Shuf = [4]uint32{0x00030201, 0x04070605, 0x080B0A09, 0x0C0F0E0D}
 
 func emitData(a *asm) {
-	for r := range 4 {
-		for l := range 4 {
+	for r := 0; r < 4; r++ {
+		for l := 0; l < 4; l++ {
 			a.line("DATA iv_rows<>+%d(SB)/4, $0x%08x", 16*r+4*l, iv[r])
 		}
 	}

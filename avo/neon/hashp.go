@@ -18,7 +18,7 @@ func emitHashP(a *asm) {
 	a.op("VLD1 (R11), [V31.B16]")
 	a.op("MOVD $64, R16")
 
-	for g := range 2 {
+	for g := 0; g < 2; g++ {
 		a.line("")
 		a.comment("---- parents %d-%d ----", 4*g, 4*g+3)
 		if g == 1 {
@@ -41,7 +41,7 @@ func emitHashP(a *asm) {
 		})
 
 		emitFeedForward(a)
-		for i := range 8 {
+		for i := 0; i < 8; i++ {
 			a.op("FMOVQ F%d, %d(R4)", i, 32*i+16*g)
 		}
 	}

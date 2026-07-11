@@ -42,13 +42,13 @@ func emitRounds(a *asm, load loadMsg) {
 
 func emitKeyBroadcast(a *asm, keyReg string) {
 	a.op("VLD1 (%s), [V28.S4, V29.S4]", keyReg)
-	for i := range 8 {
+	for i := 0; i < 8; i++ {
 		a.op("VDUP V%d.S[%d], V%d.S4", 28+i/4, i%4, i)
 	}
 }
 
 func emitFeedForward(a *asm) {
-	for i := range 8 {
+	for i := 0; i < 8; i++ {
 		a.op("VEOR V%d.B16, V%d.B16, V%d.B16", 8+i, i, i)
 	}
 }

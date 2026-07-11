@@ -52,7 +52,7 @@ func emitHashF(a *asm) {
 	a.op("MOVD $64, R16")
 	a.op("AND $3, R7, R17")
 
-	for g := range 2 {
+	for g := 0; g < 2; g++ {
 		emitFGroup(a, g)
 	}
 
@@ -71,7 +71,7 @@ func emitFGroup(a *asm, g int) {
 	}
 
 	a.comment("counter lane vectors, split into low and high words")
-	for i := range 4 {
+	for i := 0; i < 4; i++ {
 		a.op("ADD $%d, R2, R25", 4*g+i)
 		a.op("VMOV R25, V12.S[%d]", i)
 		a.op("LSR $32, R25, R26")
@@ -119,11 +119,11 @@ func emitFGroup(a *asm, g int) {
 	a.comment("extract the CV entering the block that holds the final byte")
 	a.op("CMP R23, R9")
 	a.op("BNE noextract" + sfx)
-	for i := range 8 {
+	for i := 0; i < 8; i++ {
 		a.op("FMOVQ F%d, %d(R10)", i, stashOff+16*i)
 	}
 	a.op("ADD R17<<2, R10, R25")
-	for i := range 8 {
+	for i := 0; i < 8; i++ {
 		a.op("MOVWU %d(R25), R26", stashOff+16*i)
 		a.op("MOVW R26, %d(R6)", 4*i)
 	}
@@ -144,7 +144,7 @@ func emitFGroup(a *asm, g int) {
 	a.op("VLD1.P 64(R20), [V23.S4, V24.S4, V25.S4, V26.S4]")
 	a.op("VLD1.P 64(R21), [V27.S4, V28.S4, V29.S4, V30.S4]")
 	a.op("VLD1.P 64(R22), [V8.S4, V9.S4, V10.S4, V11.S4]")
-	for w := range 4 {
+	for w := 0; w < 4; w++ {
 		l0, l1, l2, l3 := 19+w, 23+w, 27+w, 8+w
 		a.op("VZIP1 V%d.S4, V%d.S4, V12.S4", l1, l0)
 		a.op("VZIP2 V%d.S4, V%d.S4, V13.S4", l1, l0)
@@ -181,7 +181,7 @@ func emitFGroup(a *asm, g int) {
 
 	a.label("groupdone" + sfx)
 	a.comment("store transposed output rows")
-	for i := range 8 {
+	for i := 0; i < 8; i++ {
 		a.op("FMOVQ F%d, %d(R5)", i, 32*i+16*g)
 	}
 }
