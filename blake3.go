@@ -139,6 +139,8 @@ func (a *hasher) finalizeDigest(d *Digest) {
 // chain value stack
 //
 
+// A chainVector holds eight transposed chains:
+// word w of chain c is at index c + w*8.
 type chainVector = [64]uint32
 
 type cvstack struct {
@@ -190,43 +192,46 @@ func (a *cvstack) flush(flags uint32, key *[8]uint32) {
 //
 
 func copyChain(in *chainVector, icol int, out *chainVector, ocol int) {
-	i := unsafe.Add(unsafe.Pointer(in), icol*4)
-	o := unsafe.Add(unsafe.Pointer(out), ocol*4)
+	// bounds check hint to compiler
+	icol &= 7
+	ocol &= 7
 
-	*(*uint32)(unsafe.Add(o, 0*32)) = *(*uint32)(unsafe.Add(i, 0*32))
-	*(*uint32)(unsafe.Add(o, 1*32)) = *(*uint32)(unsafe.Add(i, 1*32))
-	*(*uint32)(unsafe.Add(o, 2*32)) = *(*uint32)(unsafe.Add(i, 2*32))
-	*(*uint32)(unsafe.Add(o, 3*32)) = *(*uint32)(unsafe.Add(i, 3*32))
-	*(*uint32)(unsafe.Add(o, 4*32)) = *(*uint32)(unsafe.Add(i, 4*32))
-	*(*uint32)(unsafe.Add(o, 5*32)) = *(*uint32)(unsafe.Add(i, 5*32))
-	*(*uint32)(unsafe.Add(o, 6*32)) = *(*uint32)(unsafe.Add(i, 6*32))
-	*(*uint32)(unsafe.Add(o, 7*32)) = *(*uint32)(unsafe.Add(i, 7*32))
+	out[ocol+0*8] = in[icol+0*8]
+	out[ocol+1*8] = in[icol+1*8]
+	out[ocol+2*8] = in[icol+2*8]
+	out[ocol+3*8] = in[icol+3*8]
+	out[ocol+4*8] = in[icol+4*8]
+	out[ocol+5*8] = in[icol+5*8]
+	out[ocol+6*8] = in[icol+6*8]
+	out[ocol+7*8] = in[icol+7*8]
 }
 
 func readChain(in *chainVector, col int, out *[8]uint32) {
-	i := unsafe.Add(unsafe.Pointer(in), col*4)
+	// bounds check hint to compiler
+	col &= 7
 
-	out[0] = *(*uint32)(unsafe.Add(i, 0*32))
-	out[1] = *(*uint32)(unsafe.Add(i, 1*32))
-	out[2] = *(*uint32)(unsafe.Add(i, 2*32))
-	out[3] = *(*uint32)(unsafe.Add(i, 3*32))
-	out[4] = *(*uint32)(unsafe.Add(i, 4*32))
-	out[5] = *(*uint32)(unsafe.Add(i, 5*32))
-	out[6] = *(*uint32)(unsafe.Add(i, 6*32))
-	out[7] = *(*uint32)(unsafe.Add(i, 7*32))
+	out[0] = in[col+0*8]
+	out[1] = in[col+1*8]
+	out[2] = in[col+2*8]
+	out[3] = in[col+3*8]
+	out[4] = in[col+4*8]
+	out[5] = in[col+5*8]
+	out[6] = in[col+6*8]
+	out[7] = in[col+7*8]
 }
 
 func writeChain(in *[8]uint32, out *chainVector, col int) {
-	o := unsafe.Add(unsafe.Pointer(out), col*4)
+	// bounds check hint to compiler
+	col &= 7
 
-	*(*uint32)(unsafe.Add(o, 0*32)) = in[0]
-	*(*uint32)(unsafe.Add(o, 1*32)) = in[1]
-	*(*uint32)(unsafe.Add(o, 2*32)) = in[2]
-	*(*uint32)(unsafe.Add(o, 3*32)) = in[3]
-	*(*uint32)(unsafe.Add(o, 4*32)) = in[4]
-	*(*uint32)(unsafe.Add(o, 5*32)) = in[5]
-	*(*uint32)(unsafe.Add(o, 6*32)) = in[6]
-	*(*uint32)(unsafe.Add(o, 7*32)) = in[7]
+	out[col+0*8] = in[0]
+	out[col+1*8] = in[1]
+	out[col+2*8] = in[2]
+	out[col+3*8] = in[3]
+	out[col+4*8] = in[4]
+	out[col+5*8] = in[5]
+	out[col+6*8] = in[6]
+	out[col+7*8] = in[7]
 }
 
 //
