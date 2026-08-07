@@ -2,24 +2,33 @@ package utils
 
 import (
 	"testing"
-	"unsafe"
 
 	"github.com/zeebo/assert"
-	"github.com/zeebo/blake3/internal/consts"
 )
 
-func TestBytesToWords(t *testing.T) {
-	if !consts.OptimizeLittleEndian {
-		t.SkipNow()
+func TestChainFromBytes(t *testing.T) {
+	var chain [32]byte
+	for i := range chain {
+		chain[i] = byte(i)
 	}
 
-	var bytes [64]uint8
-	for i := range bytes {
-		bytes[i] = byte(i)
+	words := ChainFromBytes(&chain)
+	for i, w := range words {
+		b := 4 * uint32(i)
+		assert.Equal(t, b|(b+1)<<8|(b+2)<<16|(b+3)<<24, w)
+	}
+}
+
+func TestChainToBytes(t *testing.T) {
+	var chain [8]uint32
+	for i := range chain {
+		b := 4 * uint32(i)
+		chain[i] = b | (b+1)<<8 | (b+2)<<16 | (b+3)<<24
 	}
 
-	var words [16]uint32
-	BytesToWords(&bytes, &words)
-
-	assert.Equal(t, *(*[16]uint32)(unsafe.Pointer(&bytes[0])), words)
+	var dst [32]byte
+	ChainToBytes(&chain, &dst)
+	for i, v := range dst {
+		assert.Equal(t, byte(i), v)
+	}
 }

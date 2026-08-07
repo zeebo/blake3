@@ -16,7 +16,7 @@ func TestHashF(t *testing.T) {
 	}
 
 	var input [8192]byte
-	var key [8]uint32
+	var key [32]byte
 
 	for n := 0; n <= 8192; n++ {
 		var c1, c2 [8]uint32
@@ -24,7 +24,7 @@ func TestHashF(t *testing.T) {
 
 		ctr, flags := pcg.Uint64(), pcg.Uint32()
 		for i := range &key {
-			key[i] = pcg.Uint32()
+			key[i] = byte(pcg.Uint32())
 		}
 		for i := 0; i < n; i++ {
 			input[i] = byte(i+1) % 251
@@ -49,7 +49,7 @@ func TestHashP(t *testing.T) {
 		t.SkipNow()
 	}
 
-	var key [8]uint32
+	var key [32]byte
 	var left, right [64]uint32
 
 	for i := 0; i < 64; i++ {
@@ -61,7 +61,7 @@ func TestHashP(t *testing.T) {
 		var o1, o2 [64]uint32
 
 		for i := range &key {
-			key[i] = pcg.Uint32()
+			key[i] = byte(pcg.Uint32())
 		}
 
 		hash_neon.HashP(&left, &right, 0, &key, &o1, n)

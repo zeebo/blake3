@@ -13,7 +13,7 @@ func HashF(c Ctx) {
 		length uint64,
 		counter uint64,
 		flags uint32,
-		key *[8]uint32,
+		key *[32]byte,
 		out *[32]uint32,
 		chain *[8]uint32,
 	)`)

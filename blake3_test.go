@@ -6,7 +6,6 @@ import (
 
 	"github.com/zeebo/assert"
 	"github.com/zeebo/blake3/internal/consts"
-	"github.com/zeebo/blake3/internal/utils"
 )
 
 func TestHasher_Vectors(t *testing.T) {
@@ -51,7 +50,7 @@ func TestHasher_Vectors(t *testing.T) {
 	t.Run("Keyed", func(t *testing.T) {
 		for _, tv := range vectors {
 			h := hasher{flags: consts.Flag_Keyed}
-			utils.KeyFromBytes([]byte(testVectorKey), &h.key)
+			copy(h.key[:], testVectorKey)
 			check(t, h, tv.input(), tv.keyedHash)
 		}
 	})
@@ -64,7 +63,7 @@ func TestHasher_Vectors(t *testing.T) {
 			h.finalize(buf[:])
 			h.reset()
 			h.flags = consts.Flag_DeriveKeyMaterial
-			utils.KeyFromBytes(buf[:], &h.key)
+			h.key = buf
 			check(t, h, tv.input(), tv.deriveKey)
 		}
 	})

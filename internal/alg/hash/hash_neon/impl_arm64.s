@@ -26,7 +26,7 @@ DATA rot8_shuf<>+8(SB)/4, $0x080b0a09
 DATA rot8_shuf<>+12(SB)/4, $0x0c0f0e0d
 GLOBL rot8_shuf<>(SB), RODATA|NOPTR, $16
 
-// func HashF(input *[8192]byte, length uint64, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32)
+// func HashF(input *[8192]byte, length uint64, counter uint64, flags uint32, key *[32]byte, out *[64]uint32, chain *[8]uint32)
 TEXT ·HashF(SB), NOSPLIT, $432-56
 	MOVD input+0(FP), R0
 	MOVD length+8(FP), R1
@@ -2436,7 +2436,7 @@ groupdone_g1:
 done:
 	RET
 
-// func HashP(left *[64]uint32, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int)
+// func HashP(left *[64]uint32, right *[64]uint32, flags uint32, key *[32]byte, out *[64]uint32, n int)
 TEXT ·HashP(SB), NOSPLIT, $0-48
 	MOVD left+0(FP), R0
 	MOVD right+8(FP), R1

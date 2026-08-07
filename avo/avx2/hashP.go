@@ -12,7 +12,7 @@ func HashP(c Ctx) {
 		left *[32]uint32,
 		right *[32]uint32,
 		flags uint8,
-		key *[8]uint32,
+		key *[32]byte,
 		out *[32]uint32,
 		n int,
 	)`)

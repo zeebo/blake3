@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/zeebo/blake3/internal/consts"
-	"github.com/zeebo/blake3/internal/utils"
 )
 
 // Hasher is a hash.Hash for BLAKE3.
@@ -41,7 +40,7 @@ func NewKeyed(key []byte) (*Hasher, error) {
 			flags: consts.Flag_Keyed,
 		},
 	}
-	utils.KeyFromBytes(key, &h.h.key)
+	copy(h.h.key[:], key)
 
 	return h, nil
 }
@@ -78,7 +77,7 @@ func NewDeriveKey(context string) *Hasher {
 	_, _ = h.Digest().Read(buf[:])
 
 	h.Reset()
-	utils.KeyFromBytes(buf[:], &h.h.key)
+	h.h.key = buf
 	h.h.flags = consts.Flag_DeriveKeyMaterial
 
 	return h
@@ -164,7 +163,7 @@ func Sum512(data []byte) (sum [64]byte) {
 
 func sumSmall(data []byte, out []byte) {
 	var d Digest
-	compressAll(&d, data, 0, consts.IV)
+	compressAll(&d, data, 0, &consts.IV)
 	_, _ = d.Read(out[:])
 }
 

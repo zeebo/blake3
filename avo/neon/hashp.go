@@ -5,7 +5,7 @@ package main
 // loads are single FMOVQs and no transpose or stack is needed.
 func emitHashP(a *asm) {
 	a.line("")
-	a.line("// func HashP(left *[64]uint32, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int)")
+	a.line("// func HashP(left *[64]uint32, right *[64]uint32, flags uint32, key *[32]byte, out *[64]uint32, n int)")
 	a.line("TEXT ·HashP(SB), NOSPLIT, $0-48")
 	a.op("MOVD left+0(FP), R0")
 	a.op("MOVD right+8(FP), R1")
