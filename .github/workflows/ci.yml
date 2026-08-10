@@ -1,0 +1,117 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+      - name: Install Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: stable
+      - name: Check formatting
+        run: go run golang.org/x/tools/cmd/goimports@v0.48.0 -w . && git diff --exit-code
+      - name: Check the assembly matches its generators
+        run: make clean && make asm && git diff --exit-code
+
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        go: ["1.24.x", "stable"]
+        include:
+          - os: macos-latest
+            go: stable
+          - os: windows-latest
+            go: stable
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+      - name: Install Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Test
+        run: go test ./...
+      - name: Test the pure Go build
+        run: go test -tags=purego ./...
+
+  # Backend selection depends on CPU features, so emulate one CPU per backend.
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+      - name: Install Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: stable
+      - name: Install qemu
+        run: sudo apt-get -qq update && sudo apt-get -qq install -y qemu-user
+      - name: Haswell, the first AVX2 part
+        run: go test -exec='qemu-x86_64 -cpu Haswell' ./...
+        env:
+          BLAKE3_TEST_REQUIRE_ASM: avx2,sse41
+      - name: Penryn, the first SSE4.1 part
+        run: go test -exec='qemu-x86_64 -cpu Penryn' ./...
+        env:
+          BLAKE3_TEST_REQUIRE_ASM: sse41
+      - name: qemu64, no SIMD at all
+        run: go test -exec='qemu-x86_64 -cpu qemu64' ./...
+
+  # Byte/word conversion is endianness sensitive, so emulate a big-endian CPU.
+  bigendian:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+      - name: Install Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: stable
+      - name: Install qemu
+        run: sudo apt-get -qq update && sudo apt-get -qq install -y qemu-user
+      - name: Test on s390x
+        env:
+          GOARCH: s390x
+        run: |
+          go test -exec=qemu-s390x ./...
+          go test -exec=qemu-s390x -tags=purego ./...
+
+  # asmdecl checks the .s signatures; the rest checks the build constraints.
+  vet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+      - name: Install Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: stable
+      - name: Vet every architecture
+        run: |
+          err=0
+          for arch in 386 amd64 arm arm64 loong64 mips mips64 mips64le mipsle ppc64 ppc64le riscv64 s390x; do
+            GOOS=linux GOARCH=$arch go vet ./... || err=1
+            GOOS=linux GOARCH=$arch go vet -tags=purego ./... || err=1
+          done
+          GOOS=js GOARCH=wasm go vet ./... || err=1
+          GOOS=js GOARCH=wasm go vet -tags=purego ./... || err=1
+          exit $err
