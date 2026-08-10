@@ -37,11 +37,7 @@ func HashF(c Ctx) {
 		Comment("Allocate local space and align it")
 		local := AllocLocal(roundSize + 32)
 		LEAQ(local.Offset(31), stash)
-		// TODO: avo improvement
-		tmp := GP64()
-		MOVQ(U64(31), tmp)
-		NOTQ(tmp)
-		ANDQ(tmp, stash)
+		ANDQ(I32(^31), stash)
 	}
 
 	alloc := NewAlloc(Mem{Base: stash})

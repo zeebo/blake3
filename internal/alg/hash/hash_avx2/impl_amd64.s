@@ -123,9 +123,7 @@ TEXT ·HashF(SB), $688-56
 
 	// Allocate local space and align it
 	LEAQ 31(SP), R11
-	MOVQ $0x000000000000001f, R9
-	NOTQ R9
-	ANDQ R9, R11
+	ANDQ $-32, R11
 
 	// Skip if the length is zero
 	XORQ  R9, R9
@@ -1437,9 +1435,7 @@ TEXT ·HashP(SB), NOSPLIT, $72-48
 
 	// Allocate local space and align it
 	LEAQ 31(SP), DI
-	MOVQ $0x000000000000001f, R8
-	NOTQ R8
-	ANDQ R8, DI
+	ANDQ $-32, DI
 
 	// Set up flags value
 	MOVL DX, 64(SP)
