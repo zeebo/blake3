@@ -33,23 +33,36 @@ func HashF(c Ctx) {
 	blocks := GP64()
 	stash := GP64()
 
+	// All of the locals share one 32-byte aligned arena, so no vector slot straddles a cache line.
+	const (
+		arenaMsg     = 0
+		arenaSpills  = arenaMsg + 16*32
+		arenaCtrLo   = arenaSpills + roundSize
+		arenaCtrHi   = arenaCtrLo + 32
+		arenaTmp     = arenaCtrHi + 32
+		arenaFlags   = arenaTmp + 32
+		arenaCounter = arenaFlags + 8
+		arenaSize    = arenaCounter + 8
+	)
+
 	{
 		Comment("Allocate local space and align it")
-		local := AllocLocal(roundSize + 32)
+		local := AllocLocal(arenaSize + 32)
 		LEAQ(local.Offset(31), stash)
 		ANDQ(I32(^31), stash)
 	}
 
-	alloc := NewAlloc(Mem{Base: stash})
+	var (
+		msg         = Mem{Base: stash}.Offset(arenaMsg)
+		ctr_lo_mem  = Mem{Base: stash}.Offset(arenaCtrLo)
+		ctr_hi_mem  = Mem{Base: stash}.Offset(arenaCtrHi)
+		tmp         = Mem{Base: stash}.Offset(arenaTmp)
+		flags_mem   = Mem{Base: stash}.Offset(arenaFlags)
+		counter_mem = Mem{Base: stash}.Offset(arenaCounter)
+	)
+
+	alloc := NewAlloc(Mem{Base: stash}.Offset(arenaSpills))
 	defer alloc.Free()
-
-	flags_mem := AllocLocal(8)
-	counter_mem := AllocLocal(8)
-
-	tmp := AllocLocal(32)
-	ctr_lo_mem := AllocLocal(32)
-	ctr_hi_mem := AllocLocal(32)
-	msg := AllocLocal(32 * 16)
 
 	var (
 		h_vecs    []*Value
