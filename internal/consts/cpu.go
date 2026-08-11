@@ -6,15 +6,15 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/klauspost/cpuid/v2"
+	"golang.org/x/sys/cpu"
 )
 
 var (
-	HasAVX2 = cpuid.CPU.Has(cpuid.AVX2) &&
+	HasAVX2 = cpu.X86.HasAVX2 &&
 		os.Getenv("BLAKE3_DISABLE_AVX2") == "" &&
 		os.Getenv("BLAKE3_PUREGO") == ""
 
-	HasSSE41 = cpuid.CPU.Has(cpuid.SSE4) &&
+	HasSSE41 = cpu.X86.HasSSE41 &&
 		os.Getenv("BLAKE3_DISABLE_SSE41") == "" &&
 		os.Getenv("BLAKE3_PUREGO") == ""
 
