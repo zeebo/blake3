@@ -80,7 +80,7 @@ DATA rot8_shuf<>+30(SB)/1, $0x1f
 DATA rot8_shuf<>+31(SB)/1, $0x1c
 GLOBL rot8_shuf<>(SB), RODATA|NOPTR, $32
 
-// func Compress(chain *[8]uint32, block *[16]uint32, counter uint64, blen uint32, flags uint32, out *[16]uint32)
+// func Compress(chain *[32]byte, block *[64]byte, counter uint64, blen uint32, flags uint32, out *[64]byte)
 // Requires: SSE, SSE2, SSE4.1, SSSE3
 TEXT ·Compress(SB), NOSPLIT, $0-40
 	MOVQ   chain+0(FP), AX

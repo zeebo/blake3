@@ -3,22 +3,20 @@ package blake3
 import (
 	"fmt"
 	"io"
-	"unsafe"
 
 	"github.com/zeebo/blake3/internal/alg"
 	"github.com/zeebo/blake3/internal/consts"
-	"github.com/zeebo/blake3/internal/utils"
 )
 
 // Digest captures the state of a Hasher allowing reading and seeking through
 // the output stream.
 type Digest struct {
 	counter uint64
-	chain   [8]uint32
-	block   [16]uint32
+	chain   [32]byte
+	block   [64]byte
 	blen    uint32
 	flags   uint32
-	buf     [16]uint32
+	buf     [64]byte
 	bufn    int
 }
 
@@ -36,11 +34,7 @@ func (d *Digest) Read(p []byte) (n int, err error) {
 	for len(p) >= 64 {
 		d.fillBuf()
 
-		if consts.OptimizeLittleEndian {
-			*(*[64]byte)(unsafe.Pointer(&p[0])) = *(*[64]byte)(unsafe.Pointer(&d.buf[0]))
-		} else {
-			utils.WordsToBytes(&d.buf, p)
-		}
+		*(*[64]byte)(p) = d.buf
 
 		p = p[64:]
 		d.bufn = 0
@@ -83,14 +77,7 @@ func (d *Digest) setPosition(pos uint64) {
 
 func (d *Digest) slowCopy(p []byte) (n int) {
 	off := uint(consts.BlockLen-d.bufn) % consts.BlockLen
-	if consts.OptimizeLittleEndian {
-		n = copy(p, (*[consts.BlockLen]byte)(unsafe.Pointer(&d.buf[0]))[off:])
-	} else {
-		var tmp [consts.BlockLen]byte
-		utils.WordsToBytes(&d.buf, tmp[:])
-		n = copy(p, tmp[off:])
-	}
-	return n
+	return copy(p, d.buf[off:])
 }
 
 func (d *Digest) fillBuf() {

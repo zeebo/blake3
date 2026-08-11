@@ -17,7 +17,7 @@ type hasher struct {
 	len    uint64
 	chunks uint64
 	flags  uint32
-	key    [8]uint32
+	key    [32]byte
 	stack  cvstack
 	buf    [8192]byte
 }
@@ -71,7 +71,7 @@ func (a *hasher) finalize(p []byte) {
 
 func (a *hasher) finalizeDigest(d *Digest) {
 	if a.chunks == 0 && a.len <= consts.ChunkLen {
-		compressAll(d, a.buf[:a.len], a.flags, a.key)
+		compressAll(d, a.buf[:a.len], a.flags, &a.key)
 		return
 	}
 
@@ -80,7 +80,8 @@ func (a *hasher) finalizeDigest(d *Digest) {
 
 	if a.len > 64 {
 		var buf chainVector
-		alg.HashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &d.chain)
+		chain := utils.ChainFromBytes(&a.key)
+		alg.HashF(&a.buf, a.len, a.chunks, a.flags, &a.key, &buf, &chain)
 
 		if a.len > consts.ChunkLen {
 			complete := (a.len - 1) / consts.ChunkLen
@@ -88,6 +89,8 @@ func (a *hasher) finalizeDigest(d *Digest) {
 			a.chunks += complete
 			a.len = uint64(copy(a.buf[:], a.buf[complete*consts.ChunkLen:a.len]))
 		}
+
+		utils.ChainToBytes(&chain, &d.chain)
 	}
 
 	if a.len <= 64 {
@@ -103,26 +106,20 @@ func (a *hasher) finalizeDigest(d *Digest) {
 		base -= 64
 	}
 
-	if consts.OptimizeLittleEndian {
-		copy((*[64]byte)(unsafe.Pointer(&d.block[0]))[:], a.buf[base:a.len])
-	} else {
-		var tmp [64]byte
-		copy(tmp[:], a.buf[base:a.len])
-		utils.BytesToWords(&tmp, &d.block)
-	}
+	copy(d.block[:], a.buf[base:a.len])
 
 	for a.stack.bufn > 0 {
 		a.stack.flush(a.flags, &a.key)
 	}
 
-	var tmp [16]uint32
+	var tmp [64]byte
 	for occ := a.stack.occ; occ != 0; occ &= occ - 1 {
 		col := uint(bits.TrailingZeros64(occ)) % 64
 
 		alg.Compress(&d.chain, &d.block, d.counter, d.blen, d.flags, &tmp)
 
-		*(*[8]uint32)(d.block[0:8]) = a.stack.stack[col]
-		*(*[8]uint32)(d.block[8:16]) = *(*[8]uint32)(tmp[0:8])
+		utils.ChainToBytes(&a.stack.stack[col], (*[32]byte)(d.block[0:32]))
+		copy(d.block[32:], tmp[:32])
 
 		if occ == a.stack.occ {
 			d.chain = a.key
@@ -151,7 +148,7 @@ type cvstack struct {
 	stack [64][8]uint32
 }
 
-func (a *cvstack) pushN(l uint8, cv *chainVector, n int, flags uint32, key *[8]uint32) {
+func (a *cvstack) pushN(l uint8, cv *chainVector, n int, flags uint32, key *[32]byte) {
 	for i := 0; i < n; i++ {
 		a.pushL(l, cv, i)
 		for a.bufn == 8 {
@@ -175,7 +172,7 @@ func (a *cvstack) pushL(l uint8, cv *chainVector, n int) {
 	a.occ ^= bit
 }
 
-func (a *cvstack) flush(flags uint32, key *[8]uint32) {
+func (a *cvstack) flush(flags uint32, key *[32]byte) {
 	var out chainVector
 	alg.HashP(&a.buf[0], &a.buf[1], flags|consts.Flag_Parent, key, &out, a.bufn)
 
@@ -238,38 +235,23 @@ func writeChain(in *[8]uint32, out *chainVector, col int) {
 // compress <= chunkLen bytes in one shot
 //
 
-func compressAll(d *Digest, in []byte, flags uint32, key [8]uint32) {
-	var compressed [16]uint32
+func compressAll(d *Digest, in []byte, flags uint32, key *[32]byte) {
+	var tmp [2][64]byte
 
-	d.chain = key
+	chain := key
 	d.flags = flags | consts.Flag_ChunkStart
 
-	for len(in) > 64 {
-		buf := (*[64]byte)(in)
+	for i := 0; len(in) > 64; i++ {
+		alg.Compress(chain, (*[64]byte)(in), 0, consts.BlockLen, d.flags, &tmp[i&1])
 
-		var block *[16]uint32
-		if consts.OptimizeLittleEndian {
-			block = (*[16]uint32)(unsafe.Pointer(buf))
-		} else {
-			block = &d.block
-			utils.BytesToWords(buf, block)
-		}
-
-		alg.Compress(&d.chain, block, 0, consts.BlockLen, d.flags, &compressed)
-
-		d.chain = *(*[8]uint32)(compressed[0:8])
+		chain = (*[32]byte)(tmp[i&1][0:32])
 		d.flags &^= consts.Flag_ChunkStart
 
 		in = in[64:]
 	}
 
-	if consts.OptimizeLittleEndian {
-		copy((*[64]byte)(unsafe.Pointer(&d.block[0]))[:], in)
-	} else {
-		var tmp [64]byte
-		copy(tmp[:], in)
-		utils.BytesToWords(&tmp, &d.block)
-	}
+	d.chain = *chain
+	copy(d.block[:], in)
 
 	d.blen = uint32(len(in))
 	d.flags |= consts.Flag_ChunkEnd | consts.Flag_Root

@@ -1,6 +1,16 @@
 package consts
 
-var IV = [...]uint32{IV0, IV1, IV2, IV3, IV4, IV5, IV6, IV7}
+// IV is IV0 through IV7 serialized little-endian.
+var IV = [32]byte{
+	IV0 & 0xff, IV0 >> 8 & 0xff, IV0 >> 16 & 0xff, IV0 >> 24,
+	IV1 & 0xff, IV1 >> 8 & 0xff, IV1 >> 16 & 0xff, IV1 >> 24,
+	IV2 & 0xff, IV2 >> 8 & 0xff, IV2 >> 16 & 0xff, IV2 >> 24,
+	IV3 & 0xff, IV3 >> 8 & 0xff, IV3 >> 16 & 0xff, IV3 >> 24,
+	IV4 & 0xff, IV4 >> 8 & 0xff, IV4 >> 16 & 0xff, IV4 >> 24,
+	IV5 & 0xff, IV5 >> 8 & 0xff, IV5 >> 16 & 0xff, IV5 >> 24,
+	IV6 & 0xff, IV6 >> 8 & 0xff, IV6 >> 16 & 0xff, IV6 >> 24,
+	IV7 & 0xff, IV7 >> 8 & 0xff, IV7 >> 16 & 0xff, IV7 >> 24,
+}
 
 const (
 	IV0 = 0x6A09E667
