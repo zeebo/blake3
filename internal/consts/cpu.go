@@ -10,6 +10,10 @@ import (
 )
 
 var (
+	HasAVX512 = cpu.X86.HasAVX512 && cpu.X86.HasAVX512VL &&
+		os.Getenv("BLAKE3_DISABLE_AVX512") == "" &&
+		os.Getenv("BLAKE3_PUREGO") == ""
+
 	HasAVX2 = cpu.X86.HasAVX2 &&
 		os.Getenv("BLAKE3_DISABLE_AVX2") == "" &&
 		os.Getenv("BLAKE3_PUREGO") == ""

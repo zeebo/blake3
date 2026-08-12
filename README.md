@@ -6,7 +6,7 @@
   <a href="https://sourcegraph.com/github.com/zeebo/blake3?badge"><img src="https://sourcegraph.com/github.com/zeebo/blake3/-/badge.svg?style=flat-square" alt="SourceGraph" /></a>
 </p>
 
-Pure Go implementation of [BLAKE3](https://blake3.io) with AVX2, SSE4.1, and NEON acceleration.
+Pure Go implementation of [BLAKE3](https://blake3.io) with AVX-512, AVX2, SSE4.1, and NEON acceleration.
 
 Special thanks to the excellent [avo](https://github.com/mmcloughlin/avo) making writing vectorized version much easier.
 

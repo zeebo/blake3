@@ -12,7 +12,7 @@ func TestRequireAssembly(t *testing.T) {
 		t.SkipNow()
 	}
 
-	selected := map[string]bool{"avx2": HasAVX2, "sse41": HasSSE41, "neon": HasNEON}
+	selected := map[string]bool{"avx512": HasAVX512, "avx2": HasAVX2, "sse41": HasSSE41, "neon": HasNEON}
 	for _, name := range strings.Split(require, ",") {
 		switch ok, known := selected[name]; {
 		case !known:
