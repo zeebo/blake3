@@ -73,6 +73,16 @@ jobs:
           BLAKE3_TEST_REQUIRE_ASM: sse41
       - name: qemu64, no SIMD at all
         run: go test -exec='qemu-x86_64 -cpu qemu64' ./...
+      - name: Neoverse N2, an SVE2 part
+        run: go test -exec='qemu-aarch64 -cpu neoverse-n2' ./...
+        env:
+          GOARCH: arm64
+          BLAKE3_TEST_REQUIRE_ASM: sve2,neon
+      - name: Neoverse V1, SVE but not SVE2
+        run: go test -exec='qemu-aarch64 -cpu neoverse-v1' ./...
+        env:
+          GOARCH: arm64
+          BLAKE3_TEST_REQUIRE_ASM: neon
 
   # Byte/word conversion is endianness sensitive, so emulate a big-endian CPU.
   bigendian:

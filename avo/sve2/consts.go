@@ -25,8 +25,6 @@ var msgSchedule = func() [7][16]int {
 	return s
 }()
 
-var rot8Shuf = [4]uint32{0x00030201, 0x04070605, 0x080B0A09, 0x0C0F0E0D}
-
 func emitData(a *asm) {
 	for r := 0; r < 4; r++ {
 		for l := 0; l < 4; l++ {
@@ -34,9 +32,4 @@ func emitData(a *asm) {
 		}
 	}
 	a.line("GLOBL iv_rows<>(SB), RODATA|NOPTR, $64")
-	a.line("")
-	for i, w := range rot8Shuf {
-		a.line("DATA rot8_shuf<>+%d(SB)/4, $0x%08x", 4*i, w)
-	}
-	a.line("GLOBL rot8_shuf<>(SB), RODATA|NOPTR, $16")
 }

@@ -47,8 +47,6 @@ func emitHashF(a *asm) {
 
 	a.op("ORR $%d, R3, R12", flagChunkStart)
 	a.op("MOVD $iv_rows<>(SB), R15")
-	a.op("MOVD $rot8_shuf<>(SB), R11")
-	a.op("VLD1 (R11), [V31.B16]")
 	a.op("MOVD $64, R16")
 	a.op("AND $3, R7, R17")
 

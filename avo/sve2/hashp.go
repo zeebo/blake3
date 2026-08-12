@@ -14,8 +14,6 @@ func emitHashP(a *asm) {
 	a.op("MOVD out+32(FP), R4")
 	a.op("MOVD n+40(FP), R5")
 	a.op("MOVD $iv_rows<>(SB), R15")
-	a.op("MOVD $rot8_shuf<>(SB), R11")
-	a.op("VLD1 (R11), [V31.B16]")
 	a.op("MOVD $64, R16")
 
 	for g := 0; g < 2; g++ {

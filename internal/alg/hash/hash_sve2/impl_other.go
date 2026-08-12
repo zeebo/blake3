@@ -1,6 +1,6 @@
 //go:build !arm64
 
-package hash_neon
+package hash_sve2
 
 import "github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 
