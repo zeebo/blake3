@@ -1,4 +1,4 @@
-asm: internal/alg/hash/hash_avx512/impl_amd64.s internal/alg/hash/hash_avx2/impl_amd64.s internal/alg/compress/compress_sse41/impl_amd64.s internal/alg/hash/hash_neon/impl_arm64.s
+asm: internal/alg/hash/hash_avx512/impl_amd64.s internal/alg/hash/hash_avx2/impl_amd64.s internal/alg/compress/compress_sse41/impl_amd64.s internal/alg/hash/hash_sve2/impl_arm64.s internal/alg/hash/hash_neon/impl_arm64.s
 
 internal/alg/hash/hash_avx512/impl_amd64.s: avo/avx512/*.go
 	( cd avo; go run ./avx512 ) > internal/alg/hash/hash_avx512/impl_amd64.s
@@ -8,6 +8,9 @@ internal/alg/hash/hash_avx2/impl_amd64.s: avo/avx2/*.go
 
 internal/alg/compress/compress_sse41/impl_amd64.s: avo/sse41/*.go
 	( cd avo; go run ./sse41 ) > internal/alg/compress/compress_sse41/impl_amd64.s
+
+internal/alg/hash/hash_sve2/impl_arm64.s: avo/sve2/*.go
+	( cd avo; go run ./sve2 ) > internal/alg/hash/hash_sve2/impl_arm64.s
 
 internal/alg/hash/hash_neon/impl_arm64.s: avo/neon/*.go
 	( cd avo; go run ./neon ) > internal/alg/hash/hash_neon/impl_arm64.s
@@ -21,6 +24,7 @@ clean:
 	rm -f internal/alg/hash/hash_avx512/impl_amd64.s
 	rm -f internal/alg/hash/hash_avx2/impl_amd64.s
 	rm -f internal/alg/compress/compress_sse41/impl_amd64.s
+	rm -f internal/alg/hash/hash_sve2/impl_arm64.s
 	rm -f internal/alg/hash/hash_neon/impl_arm64.s
 
 .PHONY: test
