@@ -3,7 +3,8 @@
 package consts
 
 const (
-	HasAVX2  = false
-	HasSSE41 = false
-	HasNEON  = false
+	HasAVX512 = false
+	HasAVX2   = false
+	HasSSE41  = false
+	HasNEON   = false
 )

@@ -1,17 +1,17 @@
-package hash_avx2_test
+package hash_avx512_test
 
 import (
 	"testing"
 
 	"github.com/zeebo/assert"
-	"github.com/zeebo/blake3/internal/alg/hash/hash_avx2"
+	"github.com/zeebo/blake3/internal/alg/hash/hash_avx512"
 	"github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 	"github.com/zeebo/blake3/internal/consts"
 	"github.com/zeebo/pcg"
 )
 
 func TestHashF(t *testing.T) {
-	if !consts.HasAVX2 {
+	if !consts.HasAVX512 {
 		t.SkipNow()
 	}
 
@@ -30,7 +30,7 @@ func TestHashF(t *testing.T) {
 			input[i] = byte(i+1) % 251
 		}
 
-		hash_avx2.HashF(&input, uint64(n), ctr, flags, &key, &o1, &c1)
+		hash_avx512.HashF(&input, uint64(n), ctr, flags, &key, &o1, &c1)
 		hash_pure.HashF(&input, uint64(n), ctr, flags, &key, &o2, &c2)
 
 		for i := 0; (i+1)*1024 <= n; i++ {
@@ -45,7 +45,7 @@ func TestHashF(t *testing.T) {
 }
 
 func TestHashP(t *testing.T) {
-	if !consts.HasAVX2 {
+	if !consts.HasAVX512 {
 		t.SkipNow()
 	}
 
@@ -64,7 +64,7 @@ func TestHashP(t *testing.T) {
 			key[i] = pcg.Uint32()
 		}
 
-		hash_avx2.HashP(&left, &right, 0, &key, &o1, n)
+		hash_avx512.HashP(&left, &right, 0, &key, &o1, n)
 		hash_pure.HashP(&left, &right, 0, &key, &o2, n)
 
 		for i := 0; i < n; i++ {

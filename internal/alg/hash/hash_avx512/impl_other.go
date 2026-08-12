@@ -1,7 +1,7 @@
 //go:build !amd64
 // +build !amd64
 
-package hash_avx2
+package hash_avx512
 
 import "github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 
