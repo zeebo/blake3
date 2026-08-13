@@ -39,7 +39,7 @@ func (a *hasher) updateString(buf string) {
 
 	for len(buf) > 0 {
 		if a.len == 0 && len(buf) > 8192 {
-			input = (*[8192]byte)(unsafe.Pointer(unsafe.StringData(buf)))
+			input = (*[8192]byte)(unsafe.Slice(unsafe.StringData(buf), len(buf)))
 			buf = buf[8192:]
 		} else if a.len < 8192 {
 			n := copy(a.buf[a.len:], buf)
