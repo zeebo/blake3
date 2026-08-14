@@ -53,13 +53,13 @@ func transpose(c Ctx, alloc *Alloc, vs []*Value) {
 	vs[0], vs[1], vs[2], vs[3] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 	vs[4], vs[5], vs[6], vs[7] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
 
-	VINSERTI128(Imm(1), LL4567.Get().(VecPhysical).AsX(), LL0123.Get(), vs[0].Get())
+	VINSERTI128(Imm(1), LL4567.Get().AsX(), LL0123.Get(), vs[0].Get())
 	VPERM2I128(Imm(49), LL4567.Consume(), LL0123.Consume(), vs[4].Get())
-	VINSERTI128(Imm(1), HL4567.Get().(VecPhysical).AsX(), HL0123.Get(), vs[1].Get())
+	VINSERTI128(Imm(1), HL4567.Get().AsX(), HL0123.Get(), vs[1].Get())
 	VPERM2I128(Imm(49), HL4567.Consume(), HL0123.Consume(), vs[5].Get())
-	VINSERTI128(Imm(1), LH4567.Get().(VecPhysical).AsX(), LH0123.Get(), vs[2].Get())
+	VINSERTI128(Imm(1), LH4567.Get().AsX(), LH0123.Get(), vs[2].Get())
 	VPERM2I128(Imm(49), LH4567.Consume(), LH0123.Consume(), vs[6].Get())
-	VINSERTI128(Imm(1), HH4567.Get().(VecPhysical).AsX(), HH0123.Get(), vs[3].Get())
+	VINSERTI128(Imm(1), HH4567.Get().AsX(), HH0123.Get(), vs[3].Get())
 	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), vs[7].Get())
 }
 
@@ -73,17 +73,6 @@ func transposeMsg(c Ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
 		for i, v := range vs {
 			VMOVDQU(v.Consume(), msg.Offset(32*i+256*j))
 		}
-	}
-}
-
-func transposeMsgN(c Ctx, alloc *Alloc, block GPVirtual, input, msg Mem, j int) {
-	vs := alloc.Values(8)
-	for i, v := range vs {
-		VMOVDQU(input.Offset(1024*i+32*j).Idx(block, 1), v.Get())
-	}
-	transpose(c, alloc, vs)
-	for i, v := range vs {
-		VMOVDQU(v.Consume(), msg.Offset(32*i+256*j))
 	}
 }
 

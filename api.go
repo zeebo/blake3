@@ -1,4 +1,5 @@
-// Package blake3 provides an SSE4.1/AVX2 accelerated BLAKE3 implementation.
+// Package blake3 implements the BLAKE3 hash algorithm as defined in
+// https://c2sp.org/BLAKE3@v1.0.0.
 package blake3
 
 import (
@@ -16,7 +17,7 @@ type Hasher struct {
 
 // New returns a new Hasher that has a digest size of 32 bytes.
 //
-// If you need more or less output bytes than that, use Digest method.
+// If you need more or less output bytes than that, use the Digest method.
 func New() *Hasher {
 	return &Hasher{
 		size: 32,

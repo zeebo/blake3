@@ -85,7 +85,7 @@ func (a *Alloc) newStateLive(reg int) stateLive {
 }
 
 func (a *Alloc) newStateSpilled(slot int) stateSpilled {
-	return stateSpilled{Slot: slot, mem: a.m, span: a.span, aligned: true}
+	return stateSpilled{Slot: slot, mem: a.m, span: a.span}
 }
 
 func (a *Alloc) Debug(name string) func() {
@@ -243,10 +243,9 @@ func (s stateLive) Register() VecPhysical { return s.phys[s.Reg] }
 type stateSpilled struct {
 	stateBase
 
-	mem     Mem
-	Slot    int
-	span    int
-	aligned bool
+	mem  Mem
+	Slot int
+	span int
 }
 
 func (s stateSpilled) Op() Op         { return s.GetMem() }
@@ -316,7 +315,7 @@ func (v *Value) Become(reg int) {
 }
 
 func (v *Value) displaceTo(dest valueState) {
-	if state, ok := dest.(stateSpilled); ok && state.aligned {
+	if _, ok := dest.(stateSpilled); ok {
 		VMOVDQA(v.Get(), dest.Op())
 	} else {
 		VMOVDQU(v.Get(), dest.Op())
@@ -406,11 +405,7 @@ func (v *Value) Get() VecPhysical {
 	case stateLive:
 	case stateSpilled:
 		reg := v.allocReg()
-		if state.aligned {
-			VMOVDQA(state.GetMem(), v.a.phys[reg])
-		} else {
-			VMOVDQU(state.GetMem(), v.a.phys[reg])
-		}
+		VMOVDQA(state.GetMem(), v.a.phys[reg])
 		v.setState(v.a.newStateLive(reg))
 	case stateLazy:
 		reg := v.allocReg()

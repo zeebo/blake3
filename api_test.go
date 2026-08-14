@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
 	"runtime"
 	"strings"
@@ -11,6 +12,10 @@ import (
 
 	"github.com/zeebo/assert"
 )
+
+// Make sure Hasher implements hash.Hash and Digest implements io.ReadSeeker.
+var _ hash.Hash = (*Hasher)(nil)
+var _ io.ReadSeeker = (*Digest)(nil)
 
 func TestAPI_Vectors(t *testing.T) {
 	check := func(t *testing.T, h *Hasher, input []byte, hash string) {
