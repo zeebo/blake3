@@ -9,11 +9,11 @@ import (
 
 func HashP(c Ctx) {
 	TEXT("HashP", NOSPLIT, `func(
-		left *[32]uint32,
-		right *[32]uint32,
-		flags uint8,
+		left *[64]uint32,
+		right *[64]uint32,
+		flags uint32,
 		key *[8]uint32,
-		out *[32]uint32,
+		out *[64]uint32,
 		n int,
 	)`)
 
