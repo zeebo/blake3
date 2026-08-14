@@ -110,7 +110,7 @@ DATA counter<>+48(SB)/8, $0x0000000000000006
 DATA counter<>+56(SB)/8, $0x0000000000000007
 GLOBL counter<>(SB), RODATA|NOPTR, $64
 
-// func HashF(input *[8192]byte, length uint64, counter uint64, flags uint32, key *[8]uint32, out *[32]uint32, chain *[8]uint32)
+// func HashF(input *[8192]byte, length uint64, counter uint64, flags uint32, key *[8]uint32, out *[64]uint32, chain *[8]uint32)
 // Requires: AVX, AVX2
 TEXT ·HashF(SB), $688-56
 	MOVQ input+0(FP), AX
@@ -1424,14 +1424,14 @@ finalize:
 	VZEROUPPER
 	RET
 
-// func HashP(left *[32]uint32, right *[32]uint32, flags uint8, key *[8]uint32, out *[32]uint32, n int)
+// func HashP(left *[64]uint32, right *[64]uint32, flags uint32, key *[8]uint32, out *[64]uint32, n int)
 // Requires: AVX, AVX2
 TEXT ·HashP(SB), NOSPLIT, $72-48
-	MOVQ    left+0(FP), AX
-	MOVQ    right+8(FP), CX
-	MOVBLZX flags+16(FP), DX
-	MOVQ    key+24(FP), BX
-	MOVQ    out+32(FP), SI
+	MOVQ left+0(FP), AX
+	MOVQ right+8(FP), CX
+	MOVL flags+16(FP), DX
+	MOVQ key+24(FP), BX
+	MOVQ out+32(FP), SI
 
 	// Allocate local space and align it
 	LEAQ 31(SP), DI
