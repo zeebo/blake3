@@ -4,7 +4,7 @@ import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
-	. "github.com/zeebo/blake3/avo"
+	. "github.com/zeebo/blake3/_asm"
 )
 
 var msgSched = [7][16]int{
@@ -132,33 +132,31 @@ func round(c Ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 	}
 
 	partials := []struct {
-		ms  []Mem
-		tab Mem
-		rot int
+		ms   []Mem
+		rotD int
+		rotB int
 	}{
-		{ms(0, 2, 4, 6), c.Rot16, 12},
-		{ms(1, 3, 5, 7), c.Rot8, 7},
-		{ms(8, 10, 12, 14), c.Rot16, 12},
-		{ms(9, 11, 13, 15), c.Rot8, 7},
+		{ms(0, 2, 4, 6), 16, 12},
+		{ms(1, 3, 5, 7), 8, 7},
+		{ms(8, 10, 12, 14), 16, 12},
+		{ms(9, 11, 13, 15), 8, 7},
 	}
 
 	for i, p := range partials {
 		addms(alloc, p.ms, vs[0:4])
 
-		tab := alloc.ValueFrom(p.tab)
 		for j := 0; j < 4; j++ {
 			vs[0+j] = add(alloc, vs[4+j], vs[0+j])
 			vs[12+j] = xor(alloc, vs[0+j], vs[12+j])
-			vs[12+j] = rotTv(alloc, tab, vs[12+j])
+			vs[12+j] = rotN(alloc, p.rotD, vs[12+j])
 		}
-		tab.Free()
 
 		for j := 0; j < 4; j++ {
 			vs[8+j] = add(alloc, vs[12+j], vs[8+j])
 			vs[4+j] = xor(alloc, vs[8+j], vs[4+j])
 		}
 
-		rotNs(alloc, p.rot, vs[4:8])
+		rotNs(alloc, p.rotB, vs[4:8])
 
 		// roll the blocks
 		if i == 1 {
@@ -211,10 +209,8 @@ func xorb(alloc *Alloc, a, b *Value) *Value {
 }
 
 func rotN(alloc *Alloc, n int, a *Value) *Value {
-	tmp, o := alloc.Value(), alloc.Value()
-	VPSRLD(U8(n), a.Get(), tmp.Get())
-	VPSLLD(U8(32-n), a.Get(), a.Get())
-	VPOR(tmp.ConsumeOp(), a.Consume(), o.Get())
+	o := alloc.Value()
+	VPRORD(U8(n), a.ConsumeOp(), o.Get())
 	return o
 }
 
@@ -222,10 +218,4 @@ func rotNs(alloc *Alloc, n int, as []*Value) {
 	for i, a := range as {
 		as[i] = rotN(alloc, n, a)
 	}
-}
-
-func rotTv(alloc *Alloc, tab, a *Value) *Value {
-	o := alloc.Value()
-	VPSHUFB(tab.GetOp(), a.Consume(), o.Get())
-	return o
 }
