@@ -4,7 +4,7 @@ import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
-	. "github.com/zeebo/blake3/avo"
+	. "github.com/zeebo/blake3/_asm"
 )
 
 func HashP(c Ctx) {

@@ -142,5 +142,5 @@ jobs:
           err=0
           go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./... || err=1
           # ST1001 - Dot imports are discouraged
-          (cd avo && go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 -checks=inherit,-ST1001 ./...) || err=1
+          (cd _asm && go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 -checks=inherit,-ST1001 ./...) || err=1
           exit $err

@@ -1,4 +1,4 @@
-module github.com/zeebo/blake3/avo
+module github.com/zeebo/blake3/_asm
 
 go 1.13
 
