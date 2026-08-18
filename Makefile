@@ -1,16 +1,19 @@
 ASM := \
-	internal/alg/hash/hash_avx512/impl_amd64.s \
-	internal/alg/hash/hash_avx2/impl_amd64.s \
-	internal/alg/compress/compress_sse41/impl_amd64.s \
-	internal/alg/hash/hash_sve2/impl_arm64.s \
-	internal/alg/hash/hash_neon/impl_arm64.s
+	internal/alg/hash/hash_avx512/hash_amd64.s \
+	internal/alg/hash/hash_avx2/hash_amd64.s \
+	internal/alg/compress/compress_sse41/compress_amd64.s \
+	internal/alg/hash/hash_sve2/hash_arm64.s \
+	internal/alg/hash/hash_neon/hash_arm64.s
 
 asm: $(ASM)
 
-internal/alg/%/impl_amd64.s: _asm/%/*.go
+internal/alg/%/hash_amd64.s: _asm/%/*.go
 	( cd _asm; go run ./$* ) > $@
 
-internal/alg/%/impl_arm64.s: _asm/%/*.go
+internal/alg/%/hash_arm64.s: _asm/%/*.go
+	( cd _asm; go run ./$* ) > $@
+
+internal/alg/%/compress_amd64.s: _asm/%/*.go
 	( cd _asm; go run ./$* ) > $@
 
 .PHONY: fmt
