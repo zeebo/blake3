@@ -26,11 +26,15 @@ func Compress(
 }
 
 func g(a, b, c, d, mx, my uint32) (uint32, uint32, uint32, uint32) {
-	a += b + mx
+	// split adds; b is ready last, so add it last
+	a += mx
+	a += b
 	d = bits.RotateLeft32(d^a, -16)
 	c += d
 	b = bits.RotateLeft32(b^c, -12)
-	a += b + my
+	// split adds; b is ready last, so add it last
+	a += my
+	a += b
 	d = bits.RotateLeft32(d^a, -8)
 	c += d
 	b = bits.RotateLeft32(b^c, -7)
