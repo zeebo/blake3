@@ -15,26 +15,6 @@ func main() {
 		DATA(4*n, v)
 	}
 
-	rot16Mem := GLOBL("rot16_shuf", RODATA|NOPTR)
-	for n, v := range []U8{
-		0x02, 0x03, 0x00, 0x01, 0x06, 0x07, 0x04, 0x05,
-		0x0A, 0x0B, 0x08, 0x09, 0x0E, 0x0F, 0x0C, 0x0D,
-		0x12, 0x13, 0x10, 0x11, 0x16, 0x17, 0x14, 0x15,
-		0x1A, 0x1B, 0x18, 0x19, 0x1E, 0x1F, 0x1C, 0x1D,
-	} {
-		DATA(n, v)
-	}
-
-	rot8Mem := GLOBL("rot8_shuf", RODATA|NOPTR)
-	for n, v := range []U8{
-		0x01, 0x02, 0x03, 0x00, 0x05, 0x06, 0x07, 0x04,
-		0x09, 0x0A, 0x0B, 0x08, 0x0D, 0x0E, 0x0F, 0x0C,
-		0x11, 0x12, 0x13, 0x10, 0x15, 0x16, 0x17, 0x14,
-		0x19, 0x1A, 0x1B, 0x18, 0x1D, 0x1E, 0x1F, 0x1C,
-	} {
-		DATA(n, v)
-	}
-
 	TEXT("Compress", NOSPLIT, `func(
 		chain *[8]uint32,
 		block *[16]uint32,
@@ -55,53 +35,45 @@ func main() {
 
 	rows := []VecVirtual{XMM(), XMM(), XMM(), XMM()}
 
-	MOVUPS(chain.Offset(0*16), rows[0])
-	MOVUPS(chain.Offset(1*16), rows[1])
-	MOVUPS(ivMem, rows[2])
+	VMOVDQU(chain.Offset(0*16), rows[0])
+	VMOVDQU(chain.Offset(1*16), rows[1])
+	VMOVDQU(ivMem, rows[2])
 
-	PINSRD(U8(0), counter.As32(), rows[3])
+	VMOVD(counter.As32(), rows[3])
 	SHRQ(U8(32), counter)
-	PINSRD(U8(1), counter.As32(), rows[3])
-	PINSRD(U8(2), blen, rows[3])
-	PINSRD(U8(3), flags, rows[3])
+	VPINSRD(U8(1), counter.As32(), rows[3], rows[3])
+	VPINSRD(U8(2), blen, rows[3], rows[3])
+	VPINSRD(U8(3), flags, rows[3], rows[3])
 
 	ms := []VecVirtual{XMM(), XMM(), XMM(), XMM()}
 
-	MOVUPS(block.Offset(0*16), ms[0])
-	MOVUPS(block.Offset(1*16), ms[1])
-	MOVUPS(block.Offset(2*16), ms[2])
-	MOVUPS(block.Offset(3*16), ms[3])
-
-	rot16, rot8 := XMM(), XMM()
-	MOVUPS(rot16Mem, rot16)
-	MOVUPS(rot8Mem, rot8)
+	VMOVDQU(block.Offset(0*16), ms[0])
+	VMOVDQU(block.Offset(1*16), ms[1])
+	VMOVDQU(block.Offset(2*16), ms[2])
+	VMOVDQU(block.Offset(3*16), ms[3])
 
 	{
 		Comment("round 1")
 
 		t0 := XMM()
-		MOVAPS(ms[0], t0)                   // 3 2 1 0
-		SHUFPS(pack(2, 0, 2, 0), ms[1], t0) // 6 4 2 0
-		g(rows, t0, rot16, 12)              // 6 4 2 0
+		VSHUFPS(pack(2, 0, 2, 0), ms[1], ms[0], t0) // 6 4 2 0
+		g(rows, t0, 16, 12)                         // 6 4 2 0
 
 		t1 := XMM()
-		MOVAPS(ms[0], t1)                   // 3 2 1 0
-		SHUFPS(pack(3, 1, 3, 1), ms[1], t1) // 7 5 3 1
-		g(rows, t1, rot8, 7)                // 7 5 3 1
+		VSHUFPS(pack(3, 1, 3, 1), ms[1], ms[0], t1) // 7 5 3 1
+		g(rows, t1, 8, 7)                           // 7 5 3 1
 
 		diagonalize(rows)
 
 		t2 := XMM()
-		MOVAPS(ms[2], t2)                   // b a 9 8
-		SHUFPS(pack(2, 0, 2, 0), ms[3], t2) // e c a 8
-		SHUFPS(pack(2, 1, 0, 3), t2, t2)    // c a 8 e
-		g(rows, t2, rot16, 12)              // c a 8 e
+		VSHUFPS(pack(2, 0, 2, 0), ms[3], ms[2], t2) // e c a 8
+		VSHUFPS(pack(2, 1, 0, 3), t2, t2, t2)       // c a 8 e
+		g(rows, t2, 16, 12)                         // c a 8 e
 
 		t3 := XMM()
-		MOVAPS(ms[2], t3)                   // b a 9 8
-		SHUFPS(pack(3, 1, 3, 1), ms[3], t3) // f d b 9
-		SHUFPS(pack(2, 1, 0, 3), t3, t3)    // d b 9 f
-		g(rows, t3, rot8, 7)                // d b 9 f
+		VSHUFPS(pack(3, 1, 3, 1), ms[3], ms[2], t3) // f d b 9
+		VSHUFPS(pack(2, 1, 0, 3), t3, t3, t3)       // d b 9 f
+		g(rows, t3, 8, 7)                           // d b 9 f
 
 		undiagonalize(rows)
 
@@ -117,34 +89,29 @@ func main() {
 		Commentf("round %d", i+1)
 
 		t0 := XMM()
-		MOVAPS(ms[0], t0)
-		SHUFPS(pack(3, 1, 1, 2), ms[1], t0)
-		SHUFPS(pack(0, 3, 2, 1), t0, t0)
-		g(rows, t0, rot16, 12)
+		VSHUFPS(pack(3, 1, 1, 2), ms[1], ms[0], t0)
+		VSHUFPS(pack(0, 3, 2, 1), t0, t0, t0)
+		g(rows, t0, 16, 12)
 
 		t1 := XMM()
-		MOVAPS(ms[2], t1)
-		SHUFPS(pack(3, 3, 2, 2), ms[3], t1)
-		PSHUFD(pack(0, 0, 3, 3), ms[0], tt)
-		PBLENDW(U8(0b00110011), tt, t1)
-		g(rows, t1, rot8, 7)
+		VSHUFPS(pack(3, 3, 2, 2), ms[3], ms[2], t1)
+		VPSHUFD(pack(0, 0, 3, 3), ms[0], tt)
+		VPBLENDW(U8(0b00110011), tt, t1, t1)
+		g(rows, t1, 8, 7)
 
 		diagonalize(rows)
 
 		t2 := XMM()
-		MOVAPS(ms[3], t2)
-		PUNPCKLLQ(ms[1], t2)
-		PBLENDW(U8(0b11000000), ms[2], t2)
-		SHUFPS(pack(2, 3, 1, 0), t2, t2)
-		g(rows, t2, rot16, 12)
+		VPUNPCKLDQ(ms[1], ms[3], t2)
+		VPBLENDW(U8(0b11000000), ms[2], t2, t2)
+		VSHUFPS(pack(2, 3, 1, 0), t2, t2, t2)
+		g(rows, t2, 16, 12)
 
 		t3 := XMM()
-		MOVAPS(ms[1], tt)
-		PUNPCKHLQ(ms[3], tt)
-		MOVAPS(ms[2], t3)
-		PUNPCKLLQ(tt, t3)
-		SHUFPS(pack(0, 1, 3, 2), t3, t3)
-		g(rows, t3, rot8, 7)
+		VPUNPCKHDQ(ms[3], ms[1], tt)
+		VPUNPCKLDQ(tt, ms[2], t3)
+		VSHUFPS(pack(0, 1, 3, 2), t3, t3, t3)
+		g(rows, t3, 8, 7)
 
 		undiagonalize(rows)
 
@@ -156,38 +123,30 @@ func main() {
 
 	Comment("finalize")
 
-	PXOR(rows[2], rows[0])
-	PXOR(rows[3], rows[1])
+	VPXOR(rows[2], rows[0], rows[0])
+	VPXOR(rows[3], rows[1], rows[1])
 
-	tmp := XMM()
-	MOVUPS(chain.Offset(0*16), tmp)
-	PXOR(tmp, rows[2])
-	MOVUPS(chain.Offset(1*16), tmp)
-	PXOR(tmp, rows[3])
+	VPXOR(chain.Offset(0*16), rows[2], rows[2])
+	VPXOR(chain.Offset(1*16), rows[3], rows[3])
 
-	MOVUPS(rows[0], out.Offset(0*16))
-	MOVUPS(rows[1], out.Offset(1*16))
-	MOVUPS(rows[2], out.Offset(2*16))
-	MOVUPS(rows[3], out.Offset(3*16))
+	VMOVDQU(rows[0], out.Offset(0*16))
+	VMOVDQU(rows[1], out.Offset(1*16))
+	VMOVDQU(rows[2], out.Offset(2*16))
+	VMOVDQU(rows[3], out.Offset(3*16))
 
 	RET()
 
 	Generate()
 }
 
-func g(rows []VecVirtual, m VecVirtual, tab VecVirtual, n int) {
-	PADDD(m, rows[0])
-	PADDD(rows[1], rows[0])
-	PXOR(rows[0], rows[3])
-	PSHUFB(tab, rows[3])
-	PADDD(rows[3], rows[2])
-	PXOR(rows[2], rows[1])
-
-	tmp := XMM()
-	MOVAPS(rows[1], tmp)
-	PSRLL(U8(n), rows[1])
-	PSLLL(U8(32-n), tmp)
-	POR(tmp, rows[1])
+func g(rows []VecVirtual, m VecVirtual, d, b int) {
+	VPADDD(m, rows[0], rows[0])
+	VPADDD(rows[1], rows[0], rows[0])
+	VPXOR(rows[0], rows[3], rows[3])
+	VPRORD(U8(d), rows[3], rows[3])
+	VPADDD(rows[3], rows[2], rows[2])
+	VPXOR(rows[2], rows[1], rows[1])
+	VPRORD(U8(b), rows[1], rows[1])
 }
 
 func pack(a, b, c, d int) U8 {
@@ -195,13 +154,13 @@ func pack(a, b, c, d int) U8 {
 }
 
 func diagonalize(rows []VecVirtual) {
-	PSHUFD(pack(2, 1, 0, 3), rows[0], rows[0])
-	PSHUFD(pack(1, 0, 3, 2), rows[3], rows[3])
-	PSHUFD(pack(0, 3, 2, 1), rows[2], rows[2])
+	VPSHUFD(pack(2, 1, 0, 3), rows[0], rows[0])
+	VPSHUFD(pack(1, 0, 3, 2), rows[3], rows[3])
+	VPSHUFD(pack(0, 3, 2, 1), rows[2], rows[2])
 }
 
 func undiagonalize(rows []VecVirtual) {
-	PSHUFD(pack(0, 3, 2, 1), rows[0], rows[0])
-	PSHUFD(pack(1, 0, 3, 2), rows[3], rows[3])
-	PSHUFD(pack(2, 1, 0, 3), rows[2], rows[2])
+	VPSHUFD(pack(0, 3, 2, 1), rows[0], rows[0])
+	VPSHUFD(pack(1, 0, 3, 2), rows[3], rows[3])
+	VPSHUFD(pack(2, 1, 0, 3), rows[2], rows[2])
 }
