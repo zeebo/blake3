@@ -15,12 +15,11 @@ func Compress(
 	out *[16]uint32,
 ) {
 
-	*out = [16]uint32{
-		chain[0], chain[1], chain[2], chain[3],
-		chain[4], chain[5], chain[6], chain[7],
-		consts.IV0, consts.IV1, consts.IV2, consts.IV3,
-		uint32(counter), uint32(counter >> 32), blen, flags,
-	}
+	// write the words individually; a composite literal copies through the stack
+	out[0], out[1], out[2], out[3] = chain[0], chain[1], chain[2], chain[3]
+	out[4], out[5], out[6], out[7] = chain[4], chain[5], chain[6], chain[7]
+	out[8], out[9], out[10], out[11] = consts.IV0, consts.IV1, consts.IV2, consts.IV3
+	out[12], out[13], out[14], out[15] = uint32(counter), uint32(counter>>32), blen, flags
 
 	rcompress(out, block)
 }
