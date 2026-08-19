@@ -1,6 +1,7 @@
 ASM := \
 	internal/alg/hash/hash_avx512/impl_amd64.s \
 	internal/alg/hash/hash_avx2/impl_amd64.s \
+	internal/alg/compress/compress_avx512/impl_amd64.s \
 	internal/alg/compress/compress_sse41/impl_amd64.s \
 	internal/alg/hash/hash_sve2/impl_arm64.s \
 	internal/alg/hash/hash_neon/impl_arm64.s
