@@ -6,10 +6,10 @@ import (
 )
 
 type Ctx struct {
-	IV       Mem
-	BlockLen Mem
-	Zero     Mem
-	Counter  Mem
+	IV        Mem
+	BlockLen  Mem
+	Zero      Mem
+	Transpose Mem
 }
 
 func NewCtx() (c Ctx) {
@@ -31,9 +31,18 @@ func NewCtx() (c Ctx) {
 		DATA(4*i, U32(0))
 	}
 
-	c.Counter = GLOBL("counter", RODATA|NOPTR)
-	for i := 0; i < 8; i++ {
-		DATA(8*i, U64(i))
+	// One VPERMT2D index per word in a row, gathering that word from all eight chunks.
+	c.Transpose = GLOBL("transpose_idx", RODATA|NOPTR)
+	for w := 0; w < 4; w++ {
+		for i := 0; i < 4; i++ {
+			DATA(64*w+4*i, U32(uint32(w+4*i)))
+		}
+		for i := 0; i < 4; i++ {
+			DATA(64*w+16+4*i, U32(uint32(16+w+4*i)))
+		}
+		for i := 8; i < 16; i++ {
+			DATA(64*w+4*i, U32(0))
+		}
 	}
 
 	return c

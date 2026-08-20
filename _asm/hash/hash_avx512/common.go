@@ -3,7 +3,6 @@ package main
 import (
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
-	. "github.com/mmcloughlin/avo/reg"
 	. "github.com/zeebo/blake3/_asm"
 )
 
@@ -24,80 +23,6 @@ const (
 	flag_chunkEnd   = 1 << 1
 	flag_parent     = 1 << 2
 )
-
-func transpose(c Ctx, alloc *Alloc, vs []*Value) {
-	L01, H01, L23, H23 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-	L45, H45, L67, H67 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-
-	VPUNPCKLDQ(vs[1].GetOp(), vs[0].Get(), L01.Get())
-	VPUNPCKHDQ(vs[1].ConsumeOp(), vs[0].Consume(), H01.Get())
-	VPUNPCKLDQ(vs[3].GetOp(), vs[2].Get(), L23.Get())
-	VPUNPCKHDQ(vs[3].ConsumeOp(), vs[2].Consume(), H23.Get())
-	VPUNPCKLDQ(vs[5].GetOp(), vs[4].Get(), L45.Get())
-	VPUNPCKHDQ(vs[5].ConsumeOp(), vs[4].Consume(), H45.Get())
-	VPUNPCKLDQ(vs[7].GetOp(), vs[6].Get(), L67.Get())
-	VPUNPCKHDQ(vs[7].ConsumeOp(), vs[6].Consume(), H67.Get())
-
-	LL0123, HL0123, LH0123, HH0123 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-	LL4567, HL4567, LH4567, HH4567 := alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-
-	VPUNPCKLQDQ(L23.GetOp(), L01.Get(), LL0123.Get())
-	VPUNPCKHQDQ(L23.ConsumeOp(), L01.Consume(), HL0123.Get())
-	VPUNPCKLQDQ(H23.GetOp(), H01.Get(), LH0123.Get())
-	VPUNPCKHQDQ(H23.ConsumeOp(), H01.Consume(), HH0123.Get())
-	VPUNPCKLQDQ(L67.GetOp(), L45.Get(), LL4567.Get())
-	VPUNPCKHQDQ(L67.ConsumeOp(), L45.Consume(), HL4567.Get())
-	VPUNPCKLQDQ(H67.GetOp(), H45.Get(), LH4567.Get())
-	VPUNPCKHQDQ(H67.ConsumeOp(), H45.Consume(), HH4567.Get())
-
-	vs[0], vs[1], vs[2], vs[3] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-	vs[4], vs[5], vs[6], vs[7] = alloc.Value(), alloc.Value(), alloc.Value(), alloc.Value()
-
-	VINSERTI128(Imm(1), LL4567.Get().AsX(), LL0123.Get(), vs[0].Get())
-	VPERM2I128(Imm(49), LL4567.Consume(), LL0123.Consume(), vs[4].Get())
-	VINSERTI128(Imm(1), HL4567.Get().AsX(), HL0123.Get(), vs[1].Get())
-	VPERM2I128(Imm(49), HL4567.Consume(), HL0123.Consume(), vs[5].Get())
-	VINSERTI128(Imm(1), LH4567.Get().AsX(), LH0123.Get(), vs[2].Get())
-	VPERM2I128(Imm(49), LH4567.Consume(), LH0123.Consume(), vs[6].Get())
-	VINSERTI128(Imm(1), HH4567.Get().AsX(), HH0123.Get(), vs[3].Get())
-	VPERM2I128(Imm(49), HH4567.Consume(), HH0123.Consume(), vs[7].Get())
-}
-
-func transposeMsg(c Ctx, alloc *Alloc, block GPVirtual, input, msg Mem) {
-	for j := 0; j < 2; j++ {
-		vs := alloc.Values(8)
-		for i, v := range vs {
-			VMOVDQU(input.Offset(1024*i+32*j).Idx(block, 1), v.Get())
-		}
-		transpose(c, alloc, vs)
-		for i, v := range vs {
-			VMOVDQU(v.Consume(), msg.Offset(32*i+256*j))
-		}
-	}
-}
-
-func loadCounter(c Ctx, alloc *Alloc, mem, lo_mem, hi_mem Mem) {
-	ctr0, ctr1 := alloc.Value(), alloc.Value()
-	VPBROADCASTQ(mem, ctr0.Get())
-	VPADDQ(c.Counter, ctr0.Get(), ctr0.Get())
-	VPBROADCASTQ(mem, ctr1.Get())
-	VPADDQ(c.Counter.Offset(32), ctr1.Get(), ctr1.Get())
-
-	L, H := alloc.Value(), alloc.Value()
-	VPUNPCKLDQ(ctr1.GetOp(), ctr0.Get(), L.Get())
-	VPUNPCKHDQ(ctr1.ConsumeOp(), ctr0.Consume(), H.Get())
-
-	LLH, HLH := alloc.Value(), alloc.Value()
-	VPUNPCKLDQ(H.GetOp(), L.Get(), LLH.Get())
-	VPUNPCKHDQ(H.ConsumeOp(), L.Consume(), HLH.Get())
-
-	ctrl, ctrh := alloc.Value(), alloc.Value()
-	VPERMQ(U8(0b11_01_10_00), LLH.ConsumeOp(), ctrl.Get())
-	VPERMQ(U8(0b11_01_10_00), HLH.ConsumeOp(), ctrh.Get())
-
-	VMOVDQU(ctrl.Consume(), lo_mem)
-	VMOVDQU(ctrh.Consume(), hi_mem)
-}
 
 func finalizeRounds(alloc *Alloc, vs, h_vecs []*Value, h_regs []int) {
 	finalized := [8]bool{}
