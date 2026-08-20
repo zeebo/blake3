@@ -16,6 +16,17 @@ var ymmRegs = [...]VecPhysical{
 	Y12, Y13, Y14, Y15,
 }
 
+var ZmmRegs = [...]VecPhysical{
+	Z0, Z1, Z2, Z3,
+	Z4, Z5, Z6, Z7,
+	Z8, Z9, Z10, Z11,
+	Z12, Z13, Z14, Z15,
+	Z16, Z17, Z18, Z19,
+	Z20, Z21, Z22, Z23,
+	Z24, Z25, Z26, Z27,
+	Z28, Z29, Z30, Z31,
+}
+
 //
 // used set
 //
