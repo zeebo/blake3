@@ -158,6 +158,11 @@ func round(c Ctx, alloc *Alloc, vs []*Value, r int, m func(n int) Mem) {
 			vs[4+j] = xor(alloc, vs[8+j], vs[4+j])
 		}
 
+		// keep vs[0:4] resident: the next addms already uses the memory operand
+		for _, v := range vs[0:4] {
+			v.Touch()
+		}
+
 		rotNs(alloc, p.rot, vs[4:8])
 
 		// roll the blocks
@@ -187,24 +192,31 @@ func addms(alloc *Alloc, mps []Mem, as []*Value) {
 
 func add(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
-	VPADDD(a.Get(), b.Consume(), o.Get())
+	if !b.HasReg() && a.HasReg() {
+		VPADDD(b.ConsumeOp(), a.Get(), o.Get())
+	} else {
+		VPADDD(a.GetOp(), b.Consume(), o.Get())
+	}
 	return o
 }
 
+// xor keeps a alive, so only a spilled b can take the memory operand
 func xor(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
-	VPXOR(a.Get(), b.Consume(), o.Get())
+	if !b.HasReg() && a.HasReg() {
+		VPXOR(b.ConsumeOp(), a.Get(), o.Get())
+	} else {
+		VPXOR(a.GetOp(), b.Consume(), o.Get())
+	}
 	return o
 }
 
+// xorb frees both, so either operand can take the memory operand
 func xorb(alloc *Alloc, a, b *Value) *Value {
 	o := alloc.Value()
-	switch {
-	case a.HasReg():
+	if a.HasReg() {
 		VPXOR(b.ConsumeOp(), a.Consume(), o.Get())
-	case b.HasReg():
-		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())
-	default:
+	} else {
 		VPXOR(a.ConsumeOp(), b.Consume(), o.Get())
 	}
 	return o
