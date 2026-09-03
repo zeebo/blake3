@@ -1,6 +1,6 @@
-//go:build !arm64
+//go:build !amd64 && !arm64
 
-package hash_sve2
+package hash
 
 import "github.com/zeebo/blake3/internal/alg/hash/hash_pure"
 

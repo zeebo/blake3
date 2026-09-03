@@ -1,7 +1,6 @@
 //go:build !amd64
-// +build !amd64
 
-package compress_avx512
+package compress
 
 import "github.com/zeebo/blake3/internal/alg/compress/compress_pure"
 
